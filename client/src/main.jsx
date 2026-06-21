@@ -26,6 +26,7 @@ if (savedTheme === 'dark') {
 }
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+console.log("GOOGLE CLIENT ID:", googleClientId);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -38,3 +39,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </GoogleOAuthProvider>
   </React.StrictMode>
 );
+
