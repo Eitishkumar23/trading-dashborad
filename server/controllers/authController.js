@@ -104,35 +104,41 @@ export const googleAuth = async (req, res) => {
       return res.status(400).json({ message: 'Google credential token is required' });
     }
 
-    // Verify the Google ID token via Google's public tokeninfo endpoint
-    const googleRes = await axios.get(
-      `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
-    );
+    let googleData;
 
-    const { sub: googleId, email, name, picture } = googleRes.data;
+    // Try as ID token first
+    try {
+      const googleRes = await axios.get(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
+      );
+      const { sub: googleId, email, name, picture } = googleRes.data;
+      googleData = { googleId, email, name, picture };
+    } catch {
+      // If ID token fails, try as access_token
+      const googleRes = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo`,
+        { headers: { Authorization: `Bearer ${credential}` } }
+      );
+      const { sub: googleId, email, name, picture } = googleRes.data;
+      googleData = { googleId, email, name, picture };
+    }
+
+    const { googleId, email, name, picture } = googleData;
 
     if (!email) {
       return res.status(400).json({ message: 'Could not retrieve email from Google' });
     }
 
-    // Find existing user or create a new one (find by email OR googleId)
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
     if (user) {
-      // If the user was originally email/password, link the Google account
       if (!user.googleId) {
         user.googleId = googleId;
         user.avatar = user.avatar || picture;
         await user.save();
       }
     } else {
-      // Brand new Google user — no password required
-      user = await User.create({
-        name,
-        email,
-        googleId,
-        avatar: picture,
-      });
+      user = await User.create({ name, email, googleId, avatar: picture });
     }
 
     res.json({
@@ -143,7 +149,6 @@ export const googleAuth = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
-    // Google tokeninfo returns 400 for invalid tokens
     if (error.response?.status === 400) {
       return res.status(401).json({ message: 'Invalid Google token. Please try again.' });
     }
