@@ -60,7 +60,8 @@ const Login = () => {
       dispatch(authStart());
 
       // tokenResponse.credential is the Google ID token (JWT)
-      const res = await authAPI.googleAuth(tokenResponse.credential);
+      const token = tokenResponse.credential || tokenResponse.access_token;
+      const res = await authAPI.googleAuth(token);
       dispatch(authSuccess({ user: res.data, token: res.data.token }));
       navigate('/dashboard');
     } catch (error) {
@@ -80,8 +81,8 @@ const Login = () => {
       setGoogleLoading(false);
     },
     flow: 'implicit',
-    ux_mode: 'redirect',
-    redirect_uri: 'https://trading-dashborad.vercel.app',
+    // ux_mode: 'redirect',
+    // redirect_uri: 'https://trading-dashborad.vercel.app',
   });
 
   /* ─── Demo Seed Access ─── */
