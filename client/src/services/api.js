@@ -3,7 +3,7 @@ import { store } from '../redux/store.js';
 import { logout } from '../redux/authSlice.js';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'https://trading-dashboard.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -59,12 +59,12 @@ export const marketAPI = {
   getMarkets: () => API.get('/market'),
   searchMarkets: (query) => API.get(`/market/search?q=${query}`),
   getOverview: () => API.get('/market/overview'),
-  
+
   // Watchlist
   getWatchlist: () => API.get('/market/watchlist'),
   addToWatchlist: (symbol, assetType) => API.post('/market/watchlist', { symbol, assetType }),
   removeFromWatchlist: (symbol) => API.delete(`/market/watchlist/${symbol}`),
-  
+
   // Alerts
   getAlerts: () => API.get('/market/alerts'),
   createAlert: (data) => API.post('/market/alerts', data), // { symbol, condition, value }
