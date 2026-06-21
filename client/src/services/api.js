@@ -3,7 +3,9 @@ import { store } from '../redux/store.js';
 import { logout } from '../redux/authSlice.js';
 
 const API = axios.create({
-  baseURL: 'https://trading-dashboard.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_URL
+    ? `${import.meta.env.VITE_API_URL}/api`
+    : 'https://trading-dashborad.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
