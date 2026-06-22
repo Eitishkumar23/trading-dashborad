@@ -2,6 +2,8 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
 
+const ADMIN_EMAIL = 'eitishkoundal34@gmail.com';
+
 // Helper to generate JWT
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'ai_trading_secret_key_2026', {
@@ -39,6 +41,7 @@ export const registerUser = async (req, res) => {
         email: user.email,
         avatar: user.avatar,
         token: generateToken(user._id),
+        isAdmin: user.email === ADMIN_EMAIL,
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -68,6 +71,7 @@ export const loginUser = async (req, res) => {
         email: user.email,
         avatar: user.avatar,
         token: generateToken(user._id),
+        isAdmin: user.email === ADMIN_EMAIL,
       });
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
@@ -147,6 +151,7 @@ export const googleAuth = async (req, res) => {
       email: user.email,
       avatar: user.avatar || picture,
       token: generateToken(user._id),
+      isAdmin: user.email === ADMIN_EMAIL,
     });
   } catch (error) {
     if (error.response?.status === 400) {

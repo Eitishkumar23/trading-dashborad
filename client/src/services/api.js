@@ -78,4 +78,11 @@ export const portfolioAPI = {
   getDashboard: () => API.get('/portfolio/dashboard'),
 };
 
+export const adminAPI = {
+  getAssets: () => API.get('/admin/assets'),
+  addAsset: (data) => API.post('/admin/assets', data),
+  updateAsset: (symbol, data) => API.put(`/admin/assets/${symbol}`, data),
+  deleteAsset: (symbol) => API.delete(`/admin/assets/${symbol}`),
+};
+
 export default API;

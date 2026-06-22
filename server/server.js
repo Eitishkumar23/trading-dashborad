@@ -9,6 +9,7 @@ import walletRoutes from './routes/walletRoutes.js';
 import tradeRoutes from './routes/tradeRoutes.js';
 import marketRoutes from './routes/marketRoutes.js';
 import portfolioRoutes from './routes/portfolioRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 // Model imports (for seeding)
 import User from './models/User.js';
@@ -33,6 +34,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/trade', tradeRoutes);
 app.use('/api/market', marketRoutes);
 app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/admin', adminRoutes);
 
 // @desc    Seed demo database profile
 // @route   POST /api/seed

@@ -9,6 +9,7 @@ const initialState = {
   isAuthenticated: !!token,
   loading: false,
   error: null,
+  isAdmin: user?.isAdmin || false,
 };
 
 const authSlice = createSlice({
@@ -24,6 +25,7 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.user = action.payload.user;
       state.token = action.payload.token;
+      state.isAdmin = action.payload.user?.isAdmin || false;
       state.error = null;
       localStorage.setItem('token', action.payload.token);
       localStorage.setItem('user', JSON.stringify(action.payload.user));
@@ -36,6 +38,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      state.isAdmin = false;
       state.loading = false;
       state.error = null;
       localStorage.removeItem('token');

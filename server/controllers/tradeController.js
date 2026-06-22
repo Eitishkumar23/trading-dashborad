@@ -1,6 +1,7 @@
 import Holding from '../models/Holding.js';
 import Transaction from '../models/Transaction.js';
 import WalletTransaction from '../models/WalletTransaction.js';
+import AssetLimit from '../models/AssetLimit.js';
 
 // Helper to get wallet balance
 const getBalanceHelper = async (userId) => {
@@ -23,6 +24,11 @@ export const buyAsset = async (req, res) => {
 
     if (!symbol || !assetType || !quantity || !price || quantity <= 0 || price <= 0) {
       return res.status(400).json({ message: 'Invalid trade input details' });
+    }
+
+    const assetLimit = await AssetLimit.findOne({ symbol: symbol.toUpperCase() });
+    if (assetLimit && assetLimit.remainingQuantity < quantity) {
+      return res.status(400).json({ message: 'Insufficient asset availability' });
     }
 
     const totalCost = quantity * price;
@@ -72,6 +78,11 @@ export const buyAsset = async (req, res) => {
       price,
       totalAmount: totalCost,
     });
+
+    if (assetLimit) {
+      assetLimit.remainingQuantity -= quantity;
+      await assetLimit.save();
+    }
 
     const newWalletBalance = await getBalanceHelper(req.user._id);
 
