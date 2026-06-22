@@ -43,7 +43,7 @@ const Analytics = () => {
       <div className="space-y-6">
         <div className="h-10 w-48 skeleton rounded-xl bg-slate-200 dark:bg-slate-800/50" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1,2,3,4].map(n => <div key={n} className="h-80 skeleton rounded-3xl bg-slate-200 dark:bg-slate-800/50" />)}
+          {[1, 2, 3, 4].map(n => <div key={n} className="h-80 skeleton rounded-3xl bg-slate-200 dark:bg-slate-800/50" />)}
         </div>
       </div>
     );
@@ -90,7 +90,11 @@ const Analytics = () => {
                 <Pie data={distribution} cx="50%" cy="50%" innerRadius={70} outerRadius={95} paddingAngle={3} dataKey="value">
                   {distribution.map((_, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip
+                  contentStyle={tooltipContentStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
+                />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px' }} />
               </PieChart>
             </ResponsiveContainer>
@@ -123,8 +127,12 @@ const Analytics = () => {
               <LineChart data={growth} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-                <Tooltip content={<CustomTooltip />} />
+                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                <Tooltip
+                  contentStyle={tooltipContentStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
+                />
                 <Line type="monotone" dataKey="value" name="Net Worth" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 3, fill: '#3b82f6' }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -148,7 +156,11 @@ const Analytics = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} />
                 <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `${v}%`} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip
+                  contentStyle={tooltipContentStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
+                />
                 <Bar dataKey="value" name="Allocation" radius={[8, 8, 0, 0]}>
                   {allocation.map((_, i) => <Cell key={i} fill={i === 0 ? '#3b82f6' : '#8b5cf6'} />)}
                 </Bar>
@@ -172,9 +184,13 @@ const Analytics = () => {
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={profitByAsset} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `₹${(v/1000).toFixed(1)}k`} />
+                <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `₹${(v / 1000).toFixed(1)}k`} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} width={50} />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip
+                  contentStyle={tooltipContentStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
+                />
                 <Bar dataKey="profit" name="P&L" radius={[0, 8, 8, 0]}>
                   {profitByAsset.map((entry, i) => <Cell key={i} fill={entry.profit >= 0 ? '#10b981' : '#f43f5e'} />)}
                 </Bar>
