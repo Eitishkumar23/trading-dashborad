@@ -241,9 +241,9 @@ const DashboardLayout = () => {
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col p-4 lg:p-6 lg:pl-2 min-h-screen overflow-x-hidden">
+      <div className="flex-1 flex flex-col p-4 lg:py-4 lg:px-6 lg:pl-2 lg:h-screen lg:overflow-hidden min-h-screen overflow-x-hidden">
         {/* Top Header Navbar */}
-        <header className="glass-panel rounded-3xl p-4 mb-6 flex items-center justify-between z-20 border border-slate-200/50 dark:border-slate-800/50">
+        <header className="glass-panel rounded-3xl p-4 lg:mb-4 mb-6 flex-shrink-0 flex items-center justify-between z-20 border border-slate-200/50 dark:border-slate-800/50">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -370,7 +370,7 @@ const DashboardLayout = () => {
         </header>
 
         {/* Dynamic Nested Routes */}
-        <main className="flex-1">
+        <main className="flex-1 lg:overflow-y-auto min-h-0">
           <Outlet />
         </main>
       </div>

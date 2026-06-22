@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend,
@@ -14,6 +15,29 @@ const Analytics = () => {
   const { data, isLoading } = useDashboard();
   const [growthPeriod, setGrowthPeriod] = useState('7D');
 
+  const { mode } = useSelector((state) => state.theme);
+  const isDark = mode === 'dark';
+
+  const tooltipContentStyle = {
+    backgroundColor: isDark ? '#111827' : '#ffffff',
+    borderColor: isDark ? '#374151' : '#e5e7eb',
+    borderRadius: '12px',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    padding: '8px 12px',
+  };
+
+  const tooltipLabelStyle = {
+    color: isDark ? '#9ca3af' : '#4b5563',
+    fontWeight: '600',
+    fontSize: '11px',
+    marginBottom: '4px',
+  };
+
+  const tooltipItemStyle = {
+    color: isDark ? '#ffffff' : '#111827',
+    fontSize: '11px',
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -27,22 +51,6 @@ const Analytics = () => {
 
   const { charts, metrics } = data || { charts: {}, metrics: {} };
   const { distribution = [], allocation = [], profitByAsset = [], growth = [] } = charts;
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 text-xs shadow-xl">
-          <p className="text-slate-400 mb-1">{label}</p>
-          {payload.map((p, i) => (
-            <p key={i} className="font-bold" style={{ color: p.color || '#10b981' }}>
-              {p.name}: {typeof p.value === 'number' && p.name !== 'value' ? `${p.value}%` : `₹${Number(p.value).toLocaleString()}`}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12">

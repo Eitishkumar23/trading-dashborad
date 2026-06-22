@@ -31,7 +31,7 @@ const Market = () => {
 
   // Fetch wallet balance
   useEffect(() => {
-    walletAPI.getDetails().then(({ data }) => setWalletBalance(data.balance)).catch(() => {});
+    walletAPI.getDetails().then(({ data }) => setWalletBalance(data.balance)).catch(() => { });
   }, [buySuccess]);
 
   // Debounced live search
@@ -52,10 +52,10 @@ const Market = () => {
   const filteredMarkets = searchQuery
     ? searchResults
     : activeTab === 'stocks'
-    ? markets.filter((m) => m.assetType === 'STOCK')
-    : activeTab === 'crypto'
-    ? markets.filter((m) => m.assetType === 'CRYPTO')
-    : markets;
+      ? markets.filter((m) => m.assetType === 'STOCK')
+      : activeTab === 'crypto'
+        ? markets.filter((m) => m.assetType === 'CRYPTO')
+        : markets;
 
   const handleToggleWatchlist = async (symbol, assetType) => {
     if (watchlistSymbols.includes(symbol)) {
@@ -97,12 +97,15 @@ const Market = () => {
   const totalCost = parseFloat(buyQuantity) * (buyModal?.price || 0);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="lg:h-full lg:overflow-hidden flex flex-col gap-4 pb-2"
+    >
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex-shrink-0 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Live Market</h1>
-          <p className="text-sm text-light-muted dark:text-dark-muted">Live prices update every 5 seconds</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 glass-panel rounded-2xl text-sm font-semibold border border-slate-200/50 dark:border-dark-border">
           <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse" />
@@ -110,145 +113,156 @@ const Market = () => {
         </div>
       </div>
 
-      {/* Overview Cards */}
-      {overview && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { label: 'Top Gainers', data: overview.gainers?.slice(0, 3), color: 'text-brand-500', icon: TrendingUp },
-            { label: 'Trending', data: overview.trending?.slice(0, 3), color: 'text-amber-500', icon: Flame },
-            { label: 'Top Losers', data: overview.losers?.slice(0, 3), color: 'text-danger-500', icon: TrendingDown },
-          ].map(({ label, data, color, icon: Icon }) => (
-            <div key={label} className="glass-panel p-4 rounded-3xl border border-slate-200/50 dark:border-dark-border">
-              <div className={`flex items-center gap-2 text-xs font-extrabold uppercase mb-3 ${color}`}>
-                <Icon size={14} /><span>{label}</span>
-              </div>
-              <div className="space-y-2">
-                {data?.map((a) => (
-                  <div key={a.symbol} className="flex items-center justify-between text-sm">
-                    <span className="font-semibold">{a.symbol}</span>
-                    <span className={`font-bold ${a.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
-                      {a.change >= 0 ? '+' : ''}{a.change}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Search + Tabs */}
-      <div className="glass-panel p-4 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by symbol or name..."
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-900/40 rounded-2xl text-sm border border-slate-200/50 dark:border-slate-800/40 focus:border-brand-500 outline-none transition-colors"
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted">
-              <X size={14} />
-            </button>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {['all', 'stocks', 'crypto'].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-2xl text-xs font-bold capitalize transition-all ${
-                activeTab === tab ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
-              }`}
-            >
-              {tab === 'all' ? 'All Assets' : tab === 'stocks' ? 'Stocks' : 'Crypto'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Market Table */}
-      <div className="glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-xs uppercase font-bold text-light-muted dark:text-dark-muted">
-                <th className="px-6 py-4 text-left">#</th>
-                <th className="px-6 py-4 text-left">Asset</th>
-                <th className="px-6 py-4 text-left">Type</th>
-                <th className="px-6 py-4 text-right">Price (₹)</th>
-                <th className="px-6 py-4 text-right">24h Change</th>
-                <th className="px-6 py-4 text-right">High</th>
-                <th className="px-6 py-4 text-right">Low</th>
-                <th className="px-6 py-4 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                [...Array(8)].map((_, i) => (
-                  <tr key={i} className="border-b border-slate-100/50 dark:border-slate-800/20">
-                    {[...Array(8)].map((__, j) => (
-                      <td key={j} className="px-6 py-4">
-                        <div className="h-4 bg-slate-200 dark:bg-slate-800/50 rounded skeleton" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : (
-                filteredMarkets.map((asset, idx) => (
-                  <motion.tr
-                    key={asset.symbol}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50 dark:hover:bg-slate-800/15 transition-colors group"
-                  >
-                    <td className="px-6 py-4 text-light-muted dark:text-dark-muted text-xs">{idx + 1}</td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-bold">{asset.symbol}</p>
-                        <p className="text-xs text-light-muted dark:text-dark-muted">{asset.name}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
-                        asset.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'
-                      }`}>
-                        {asset.assetType}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right font-bold">₹{asset.price.toLocaleString()}</td>
-                    <td className={`px-6 py-4 text-right font-bold ${asset.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
-                      <div className="flex items-center justify-end gap-1">
-                        {asset.change >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                        <span>{asset.change >= 0 ? '+' : ''}{asset.change}%</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right text-xs text-light-muted dark:text-dark-muted">₹{asset.high.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-right text-xs text-light-muted dark:text-dark-muted">₹{asset.low.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => handleToggleWatchlist(asset.symbol, asset.assetType)}
-                          className={`p-2 rounded-xl transition-colors ${watchlistSymbols.includes(asset.symbol) ? 'text-amber-500 bg-amber-500/10' : 'text-light-muted dark:text-dark-muted hover:text-amber-500 hover:bg-amber-500/10'}`}
-                        >
-                          {watchlistSymbols.includes(asset.symbol) ? <Star size={15} fill="currentColor" /> : <Star size={15} />}
-                        </button>
-                        <button
-                          onClick={() => openBuyModal(asset)}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500 hover:text-white text-brand-500 rounded-xl text-xs font-bold transition-all duration-200 border border-brand-500/20 hover:border-brand-500 hover:shadow-lg hover:shadow-brand-500/20"
-                        >
-                          <ShoppingCart size={12} />
-                          <span>Buy</span>
-                        </button>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))
+      {/* Main 77/23 Layout */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:overflow-hidden min-h-0">
+        {/* Left column (77%): Search/Tabs + Asset Table */}
+        <div className="w-full lg:w-[77%] flex flex-col gap-4 lg:overflow-hidden min-h-0">
+          {/* Search + Tabs */}
+          <div className="flex-shrink-0 glass-panel p-3 rounded-2xl border border-slate-200/50 dark:border-dark-border flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by symbol or name..."
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-900/40 rounded-2xl text-sm border border-slate-200/50 dark:border-slate-800/40 focus:border-brand-500 outline-none transition-colors"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted">
+                  <X size={14} />
+                </button>
               )}
-            </tbody>
-          </table>
+            </div>
+            <div className="flex gap-2">
+              {['all', 'stocks', 'crypto'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-2xl text-xs font-bold capitalize transition-all ${
+                    activeTab === tab
+                      ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
+                      : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+                  }`}
+                >
+                  {tab === 'all' ? 'All Assets' : tab === 'stocks' ? 'Stocks' : 'Crypto'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Market Table */}
+          <div className="flex-1 glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border overflow-hidden flex flex-col min-h-0">
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-xs uppercase font-bold text-light-muted dark:text-dark-muted sticky top-0 bg-slate-50/90 dark:bg-[#101423]/90 backdrop-blur-md z-10">
+                    <th className="px-4 py-3 lg:px-3 text-left">Asset</th>
+                    <th className="px-4 py-3 lg:px-3 text-left">Type</th>
+                    <th className="px-4 py-3 lg:px-3 text-right">Price (₹)</th>
+                    <th className="px-4 py-3 lg:px-3 text-right">24h Change</th>
+                    <th className="px-4 py-3 lg:px-3 text-right">High</th>
+                    <th className="px-4 py-3 lg:px-3 text-right">Low</th>
+                    <th className="px-4 py-3 lg:px-3 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    [...Array(8)].map((_, i) => (
+                      <tr key={i} className="border-b border-slate-100/50 dark:border-slate-800/20">
+                        {[...Array(7)].map((__, j) => (
+                          <td key={j} className="px-4 py-3 lg:px-3">
+                            <div className="h-4 bg-slate-200 dark:bg-slate-800/50 rounded skeleton" />
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : (
+                    filteredMarkets.map((asset) => (
+                      <motion.tr
+                        key={asset.symbol}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50 dark:hover:bg-slate-800/15 transition-colors group"
+                      >
+                        <td className="px-4 py-3 lg:px-3">
+                          <div>
+                            <p className="font-bold">{asset.symbol}</p>
+                            <p className="text-xs text-light-muted dark:text-dark-muted">{asset.name}</p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 lg:px-3">
+                          <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                            asset.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'
+                          }`}>
+                            {asset.assetType}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 lg:px-3 text-right font-bold">₹{asset.price.toLocaleString()}</td>
+                        <td className={`px-4 py-3 lg:px-3 text-right font-bold ${asset.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
+                          <div className="flex items-center justify-end gap-1">
+                            {asset.change >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                            <span>{asset.change >= 0 ? '+' : ''}{asset.change}%</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 lg:px-3 text-right text-xs text-light-muted dark:text-dark-muted">₹{asset.high.toLocaleString()}</td>
+                        <td className="px-4 py-3 lg:px-3 text-right text-xs text-light-muted dark:text-dark-muted">₹{asset.low.toLocaleString()}</td>
+                        <td className="px-4 py-3 lg:px-3 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => handleToggleWatchlist(asset.symbol, asset.assetType)}
+                              className={`p-1.5 rounded-xl transition-colors ${
+                                watchlistSymbols.includes(asset.symbol)
+                                  ? 'text-amber-500 bg-amber-500/10'
+                                  : 'text-light-muted dark:text-dark-muted hover:text-amber-500 hover:bg-amber-500/10'
+                              }`}
+                            >
+                              {watchlistSymbols.includes(asset.symbol) ? <Star size={14} fill="currentColor" /> : <Star size={14} />}
+                            </button>
+                            <button
+                              onClick={() => openBuyModal(asset)}
+                              className="flex items-center gap-1 px-2.5 py-1.5 bg-brand-500/10 hover:bg-brand-500 hover:text-white text-brand-500 rounded-xl text-xs font-bold transition-all duration-200 border border-brand-500/20 hover:border-brand-500 hover:shadow-lg hover:shadow-brand-500/20"
+                            >
+                              <ShoppingCart size={11} />
+                              <span>Buy</span>
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Right column (23%): Top Gainers, Trending, Top Losers stacked vertically */}
+        <div className="w-full lg:w-[23%] flex flex-col gap-3 flex-shrink-0 lg:overflow-hidden min-h-0">
+          {overview &&
+            [
+              { label: 'Top Gainers', data: overview.gainers?.slice(0, 3), color: 'text-brand-500', icon: TrendingUp },
+              { label: 'Trending', data: overview.trending?.slice(0, 3), color: 'text-amber-500', icon: Flame },
+              { label: 'Top Losers', data: overview.losers?.slice(0, 3), color: 'text-danger-500', icon: TrendingDown },
+            ].map(({ label, data, color, icon: Icon }) => (
+              <div key={label} className="glass-panel p-3.5 rounded-2xl border border-slate-200/50 dark:border-dark-border flex-1 flex flex-col justify-center min-h-0">
+                <div className={`flex items-center gap-1.5 text-xs font-extrabold uppercase mb-2 ${color} flex-shrink-0`}>
+                  <Icon size={13} />
+                  <span>{label}</span>
+                </div>
+                <div className="space-y-2.5 flex-1 flex flex-col justify-center">
+                  {data?.map((a) => (
+                    <div key={a.symbol} className="flex items-center justify-between text-xs leading-none">
+                      <span className="font-semibold text-light-text dark:text-dark-text">{a.symbol}</span>
+                      <span className={`font-bold ${a.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
+                        {a.change >= 0 ? '+' : ''}
+                        {a.change}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -25,6 +26,29 @@ const Dashboard = () => {
   const { data, isLoading, error } = useDashboard();
   const { data: alertsData, refetch: refetchAlerts } = useAlerts();
   const [triggeredAlerts, setTriggeredAlerts] = useState([]);
+
+  const { mode } = useSelector((state) => state.theme);
+  const isDark = mode === 'dark';
+
+  const tooltipContentStyle = {
+    backgroundColor: isDark ? '#111827' : '#ffffff',
+    borderColor: isDark ? '#374151' : '#e5e7eb',
+    borderRadius: '12px',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    padding: '8px 12px',
+  };
+
+  const tooltipLabelStyle = {
+    color: isDark ? '#9ca3af' : '#4b5563',
+    fontWeight: '600',
+    fontSize: '11px',
+    marginBottom: '4px',
+  };
+
+  const tooltipItemStyle = {
+    color: isDark ? '#ffffff' : '#111827',
+    fontSize: '11px',
+  };
 
   // Check if there are any newly triggered alerts to show notifications
   useEffect(() => {
@@ -139,7 +163,7 @@ const Dashboard = () => {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-6 pb-12"
+      className="space-y-4 pb-12"
     >
       {/* Price Alert Notifications Banner */}
       <AnimatePresence>
@@ -182,67 +206,66 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Financial Dashboard</h1>
-          <p className="text-sm text-light-muted dark:text-dark-muted">
-            Track investments, wallet balances, and profits. Live market refreshes every 5s.
+          <h1 className="text-xl font-extrabold tracking-tight">Financial Dashboard</h1>
+          <p className="text-xs text-light-muted dark:text-dark-muted">
+            Track investments, wallet balances, and profits.
           </p>
         </div>
-        
+
         {/* Real-time-like profit indicator */}
         <div className="flex flex-col items-end">
-          <span className="text-xs text-light-muted dark:text-dark-muted font-medium mb-1">Total Profits/Losses</span>
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold ${
-            metrics.totalProfitLoss >= 0 
-              ? 'bg-brand-500/10 text-brand-500' 
-              : 'bg-danger-500/10 text-danger-500'
-          }`}>
-            {metrics.totalProfitLoss >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+          <span className="text-[10px] text-light-muted dark:text-dark-muted font-medium mb-0.5">Total Profits/Losses</span>
+          <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold ${metrics.totalProfitLoss >= 0
+            ? 'bg-brand-500/10 text-brand-500'
+            : 'bg-danger-500/10 text-danger-500'
+            }`}>
+            {metrics.totalProfitLoss >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             <span>₹{metrics.totalProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            <span className="text-xs">({metrics.totalReturnPercent >= 0 ? '+' : ''}{metrics.totalReturnPercent.toFixed(2)}%)</span>
+            <span className="text-[10px]">({metrics.totalReturnPercent >= 0 ? '+' : ''}{metrics.totalReturnPercent.toFixed(2)}%)</span>
           </div>
         </div>
       </div>
 
       {/* Summary Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metricCards.map((card, idx) => {
           const Icon = card.icon;
           return (
             <motion.div key={idx} variants={cardVariants}>
               <Link
                 to={card.link}
-                className="group relative block p-6 bg-white dark:bg-dark-card border border-slate-200/50 dark:border-dark-border rounded-3xl shadow-sm hover:shadow-xl dark:shadow-glass-dark hover:border-brand-500/30 transition-all duration-300 overflow-hidden"
+                className="group relative block p-5 bg-white dark:bg-dark-card border border-slate-200/50 dark:border-dark-border rounded-3xl shadow-sm hover:shadow-xl dark:shadow-glass-dark hover:border-brand-500/30 transition-all duration-300 overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-tr opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-300 rounded-bl-full" />
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">
                     {card.title}
                   </span>
-                  <div className={`p-2.5 rounded-2xl bg-gradient-to-tr ${card.color} text-white shadow-lg`}>
-                    <Icon size={18} />
+                  <div className={`p-2 rounded-xl bg-gradient-to-tr ${card.color} text-white shadow-lg`}>
+                    <Icon size={16} />
                   </div>
                 </div>
-                <h3 className="text-xl font-extrabold tracking-tight mb-1 group-hover:translate-x-0.5 transition-transform duration-200">
+                <h3 className="text-lg font-extrabold tracking-tight mb-0.5 group-hover:translate-x-0.5 transition-transform duration-200">
                   {card.value}
                 </h3>
-                <p className="text-xs text-light-muted dark:text-dark-muted">{card.subtitle}</p>
+                <p className="text-[10px] text-light-muted dark:text-dark-muted">{card.subtitle}</p>
               </Link>
             </motion.div>
           );
         })}
       </div>
 
-      {/* Charts & Top Holdings */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Charts & Portfolio Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
         {/* Portfolio Distribution Pie Chart */}
         <motion.div
           variants={cardVariants}
-          className="lg:col-span-2 glass-panel p-6 rounded-3xl flex flex-col justify-between border border-slate-200/50 dark:border-dark-border"
+          className="lg:col-span-2 glass-panel p-5 rounded-3xl flex flex-col justify-between border border-slate-200/50 dark:border-dark-border"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold">Portfolio Asset Allocation</h2>
-              <p className="text-xs text-light-muted dark:text-dark-muted">Percent distribution of asset holdings</p>
+              <h2 className="text-base font-bold">Portfolio Asset Allocation</h2>
+              <p className="text-[11px] text-light-muted dark:text-dark-muted">Percent distribution of asset holdings</p>
             </div>
             <Link
               to="/analytics"
@@ -253,16 +276,16 @@ const Dashboard = () => {
             </Link>
           </div>
 
-          <div className="h-64 flex items-center justify-center">
+          <div className="h-44 flex items-center justify-center">
             {charts.distribution.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={charts.distribution}
-                    cx="50%"
+                    cx="58%"
                     cy="50%"
-                    innerRadius={65}
-                    outerRadius={90}
+                    innerRadius={45}
+                    outerRadius={65}
                     paddingAngle={3}
                     dataKey="value"
                   >
@@ -271,21 +294,23 @@ const Dashboard = () => {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{
-                      background: 'rgba(15, 23, 42, 0.9)',
-                      border: 'none',
-                      borderRadius: '12px',
-                      color: '#fff',
-                      fontSize: '12px',
-                    }}
+                    contentStyle={tooltipContentStyle}
+                    labelStyle={tooltipLabelStyle}
+                    itemStyle={tooltipItemStyle}
                     formatter={(value) => `${value}%`}
                   />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                  <Legend
+                    layout="vertical"
+                    align="left"
+                    verticalAlign="middle"
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: '11px', paddingLeft: '5px' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-sm text-light-muted dark:text-dark-muted mb-4">No assets currently owned</p>
+              <div className="text-center py-6">
+                <p className="text-xs text-light-muted dark:text-dark-muted mb-3">No assets currently owned</p>
                 <Link
                   to="/market"
                   className="px-4 py-2 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 text-xs font-bold rounded-xl"
@@ -300,73 +325,81 @@ const Dashboard = () => {
         {/* Portfolio Performance Insights */}
         <motion.div
           variants={cardVariants}
-          className="glass-panel p-6 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border justify-between"
+          className="glass-panel p-5 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border justify-between"
         >
-          <div>
-            <h2 className="text-lg font-bold mb-4">Portfolio Insights</h2>
-            
-            <div className="space-y-4">
+          <div className="flex flex-col h-full justify-between">
+            <h2 className="text-base font-bold mb-3">Portfolio Insights</h2>
+
+            <div className="grid grid-cols-2 gap-3 flex-1">
               {/* Daily Return indicator */}
-              <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-brand-500/15 p-2.5 rounded-xl text-brand-500">
-                    <Flame size={18} />
+              <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between h-full">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="bg-brand-500/15 p-1.5 rounded-lg text-brand-500">
+                    <Flame size={14} />
                   </div>
-                  <div>
-                    <p className="text-xs text-light-muted dark:text-dark-muted font-medium">Today's Profit/Loss</p>
-                    <p className="text-sm font-extrabold mt-0.5">
-                      {metrics.todayProfitLoss >= 0 ? '+' : ''}
-                      ₹{metrics.todayProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
+                  <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider">Today's P&L</span>
                 </div>
-                <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
-                  metrics.todayProfitLoss >= 0 
-                    ? 'bg-brand-500/10 text-brand-500' 
-                    : 'bg-danger-500/10 text-danger-500'
-                }`}>
-                  {metrics.todayProfitLoss >= 0 ? '+' : ''}{metrics.todayReturnPercent.toFixed(2)}%
-                </span>
+                <div>
+                  <p className="text-xs font-extrabold truncate">
+                    {metrics.todayProfitLoss >= 0 ? '+' : ''}₹{metrics.todayProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <span className={`text-[10px] font-bold ${metrics.todayProfitLoss >= 0
+                    ? 'text-brand-500'
+                    : 'text-danger-500'
+                    }`}>
+                    {metrics.todayProfitLoss >= 0 ? '+' : ''}{metrics.todayReturnPercent.toFixed(2)}%
+                  </span>
+                </div>
               </div>
 
               {/* Best performer */}
               {insights.bestPerforming ? (
-                <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl space-y-2">
-                  <p className="text-xs text-light-muted dark:text-dark-muted font-medium">Top Performing Holding</p>
-                  <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-sm">{insights.bestPerforming.symbol}</span>
-                    <span className="text-xs font-bold text-brand-500">
+                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between h-full">
+                  <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Top Performer</span>
+                  <div>
+                    <p className="text-xs font-extrabold truncate">{insights.bestPerforming.symbol}</p>
+                    <span className="text-[10px] font-bold text-brand-500 block truncate">
                       +{insights.bestPerforming.returnPercent.toFixed(2)}% (₹{insights.bestPerforming.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })})
                     </span>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-light-muted dark:text-dark-muted italic">Holdings details will show here</p>
+                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center h-full text-center">
+                  <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
+                </div>
               )}
 
               {/* Worst performer */}
-              {insights.worstPerforming && (
-                <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl space-y-2">
-                  <p className="text-xs text-light-muted dark:text-dark-muted font-medium">Worst Performing Holding</p>
-                  <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-sm">{insights.worstPerforming.symbol}</span>
-                    <span className={`text-xs font-bold ${insights.worstPerforming.profit >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
+              {insights.worstPerforming ? (
+                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between h-full">
+                  <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Worst Performer</span>
+                  <div>
+                    <p className="text-xs font-extrabold truncate">{insights.worstPerforming.symbol}</p>
+                    <span className={`text-[10px] font-bold block truncate ${insights.worstPerforming.profit >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
                       {insights.worstPerforming.returnPercent >= 0 ? '+' : ''}{insights.worstPerforming.returnPercent.toFixed(2)}% (₹{insights.worstPerforming.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })})
                     </span>
                   </div>
                 </div>
+              ) : (
+                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center h-full text-center">
+                  <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
+                </div>
               )}
 
               {/* Most invested */}
-              {insights.mostInvested && (
-                <div className="p-4 bg-slate-100/50 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl space-y-2">
-                  <p className="text-xs text-light-muted dark:text-dark-muted font-medium">Highest Value Allocation</p>
-                  <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-sm">{insights.mostInvested.symbol}</span>
-                    <span className="text-xs font-bold">
+              {insights.mostInvested ? (
+                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between h-full">
+                  <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Top Holding</span>
+                  <div>
+                    <p className="text-xs font-extrabold truncate">{insights.mostInvested.symbol}</p>
+                    <span className="text-[10px] text-light-muted dark:text-dark-muted block truncate font-medium">
                       Invested: ₹{insights.mostInvested.investedAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </span>
                   </div>
+                </div>
+              ) : (
+                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center h-full text-center">
+                  <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
                 </div>
               )}
             </div>
@@ -375,14 +408,14 @@ const Dashboard = () => {
       </div>
 
       {/* Top Holdings & Recent Transactions List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top Holdings */}
         <motion.div
           variants={cardVariants}
-          className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border"
+          className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Top Holdings</h2>
+            <h2 className="text-base font-bold">Top Holdings</h2>
             <Link to="/portfolio" className="text-xs text-brand-500 hover:underline font-semibold">View All Holdings</Link>
           </div>
           <div className="overflow-x-auto">
@@ -427,10 +460,10 @@ const Dashboard = () => {
         {/* Recent Transactions */}
         <motion.div
           variants={cardVariants}
-          className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border"
+          className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold">Recent Trade Orders</h2>
+            <h2 className="text-base font-bold">Recent Trade Orders</h2>
             <Link to="/transactions" className="text-xs text-brand-500 hover:underline font-semibold">View All Trades</Link>
           </div>
           <div className="overflow-x-auto">
@@ -449,11 +482,10 @@ const Dashboard = () => {
                   recentTransactions.map((tx) => (
                     <tr key={tx._id} className="border-b border-slate-100/50 dark:border-slate-800/20 last:border-none">
                       <td className="py-3">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${
-                          tx.type === 'BUY' 
-                            ? 'bg-brand-500/10 text-brand-500' 
-                            : 'bg-danger-500/10 text-danger-500'
-                        }`}>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${tx.type === 'BUY'
+                          ? 'bg-brand-500/10 text-brand-500'
+                          : 'bg-danger-500/10 text-danger-500'
+                          }`}>
                           {tx.type === 'BUY' ? 'BUY' : 'SELL'}
                         </span>
                       </td>
