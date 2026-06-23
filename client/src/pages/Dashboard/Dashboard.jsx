@@ -267,10 +267,10 @@ const Dashboard = () => {
             <h2 className="text-base font-bold">Top Holdings</h2>
             <Link to="/portfolio" className="text-xs text-brand-500 hover:underline font-semibold">View All Holdings</Link>
           </div>
-          <div className="overflow-x-auto overflow-y-auto flex-1 pr-1 custom-scrollbar overscroll-contain">
+          <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 pr-1 custom-scrollbar overscroll-contain">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-light-muted dark:text-dark-muted text-xs uppercase font-bold">
+                <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-light-muted dark:text-dark-muted text-xs uppercase font-bold sticky top-0 bg-white dark:bg-dark-card z-10">
                   <th className="pb-3">Asset</th>
                   <th className="pb-3">Qty</th>
                   <th className="pb-3 text-right">Avg Price</th>
@@ -462,10 +462,10 @@ const Dashboard = () => {
             <h2 className="text-base font-bold">Recent Trade Orders</h2>
             <Link to="/transactions" className="text-xs text-brand-500 hover:underline font-semibold">View All Trades</Link>
           </div>
-          <div className="overflow-x-auto overflow-y-auto flex-1 pr-1 custom-scrollbar overscroll-contain">
+          <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 pr-1 custom-scrollbar overscroll-contain">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-light-muted dark:text-dark-muted text-xs uppercase font-bold">
+                <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-light-muted dark:text-dark-muted text-xs uppercase font-bold sticky top-0 bg-white dark:bg-dark-card z-10">
                   <th className="pb-3">Action</th>
                   <th className="pb-3">Asset</th>
                   <th className="pb-3 text-right">Rate</th>
