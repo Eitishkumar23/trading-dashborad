@@ -145,6 +145,18 @@ const AdminPanel = () => {
     }
   }, [user, navigate]);
 
+  // Body scroll lock when user detail panel is open
+  useEffect(() => {
+    if (profileModalUser) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [profileModalUser]);
+
   // Toast status helper
   const showStatus = useCallback((text, type) => {
     setMessage({ text, type });
@@ -1825,20 +1837,27 @@ const AdminPanel = () => {
       {/* ── User Profile Detail Modal (User management) ── */}
       <AnimatePresence>
         {profileModalUser && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <>
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.6 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 backdrop-blur-xs"
+              className="fixed inset-0 top-16 bg-black/70 backdrop-blur-xs z-20"
               onClick={() => setProfileModalUser(null)}
             />
 
+            {/* Slide-over Panel Container */}
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-3xl max-h-[85vh] overflow-y-auto relative z-10 shadow-2xl p-6 space-y-6"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', ease: 'easeOut', duration: 0.3 }}
+              className="fixed right-0 bg-slate-900 border-l border-slate-800 w-full max-w-3xl overflow-y-auto z-30 shadow-2xl p-6 space-y-6"
+              style={{
+                top: '64px',
+                height: 'calc(100vh - 64px)'
+              }}
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between border-b border-slate-850 pb-4">
@@ -1893,12 +1912,12 @@ const AdminPanel = () => {
 
                   {/* Trade History */}
                   <div className="space-y-2">
-                    <div className="sticky top-[-24px] z-10 bg-slate-900 py-3">
+                    <div className="py-3">
                       <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Recent Trade Orders</h4>
                     </div>
                     <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden">
                       <table className="w-full text-left text-xs border-collapse">
-                        <thead className="sticky top-[20px] z-9 bg-slate-900">
+                        <thead className="bg-slate-900">
                           <tr className="border-b border-slate-850 bg-slate-900 text-slate-400 uppercase font-bold">
                             <th className="p-3">Asset</th>
                             <th className="p-3">Type</th>
@@ -1936,12 +1955,12 @@ const AdminPanel = () => {
 
                   {/* Wallet Ledger */}
                   <div className="space-y-2">
-                    <div className="sticky top-[-24px] z-10 bg-slate-900 py-3">
+                    <div className="py-3">
                       <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Wallet Ledger History</h4>
                     </div>
                     <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden">
                       <table className="w-full text-left text-xs border-collapse">
-                        <thead className="sticky top-[20px] z-9 bg-slate-900">
+                        <thead className="bg-slate-900">
                           <tr className="border-b border-slate-850 bg-slate-900 text-slate-400 uppercase font-bold">
                             <th className="p-3">Type</th>
                             <th className="p-3">Amount</th>
@@ -1989,7 +2008,7 @@ const AdminPanel = () => {
                 </div>
               )}
             </motion.div>
-          </div>
+          </>
         )}
       </AnimatePresence>
 
