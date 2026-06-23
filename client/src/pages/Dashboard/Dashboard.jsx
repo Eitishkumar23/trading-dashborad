@@ -273,9 +273,8 @@ const Dashboard = () => {
                 <tr
                   className="
       sticky top-0 z-20
-      bg-slate-50/90
-      dark:bg-[#101423]/90
-      backdrop-blur-md
+      bg-slate-50
+      dark:bg-[#101423]
       border-b border-slate-200/50 dark:border-slate-800/50
       text-light-muted dark:text-dark-muted
       text-xs uppercase font-bold
@@ -478,9 +477,8 @@ const Dashboard = () => {
                 <tr
                   className="
       sticky top-0 z-20
-      bg-slate-50/90
-      dark:bg-[#101423]/90
-      backdrop-blur-md
+      bg-slate-50
+      dark:bg-[#101423]
       border-b border-slate-200/50 dark:border-slate-800/50
       text-light-muted dark:text-dark-muted
       text-xs uppercase font-bold
