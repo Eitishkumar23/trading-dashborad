@@ -1892,98 +1892,98 @@ const AdminPanel = () => {
                   </div>
 
                   {/* Trade History */}
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3">Recent Trade Orders</h4>
+                  <div className="space-y-2">
+                    <div className="sticky top-[-24px] z-10 bg-slate-900 py-3">
+                      <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Recent Trade Orders</h4>
+                    </div>
                     <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden">
-                      <div className="max-h-48 overflow-y-auto">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="border-b border-slate-850 bg-slate-900/40 text-slate-400 uppercase font-bold sticky top-0">
-                              <th className="p-3">Asset</th>
-                              <th className="p-3">Type</th>
-                              <th className="p-3 text-right">Quantity</th>
-                              <th className="p-3 text-right">Price</th>
-                              <th className="p-3">Time</th>
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead className="sticky top-[20px] z-9 bg-slate-900">
+                          <tr className="border-b border-slate-850 bg-slate-900 text-slate-400 uppercase font-bold">
+                            <th className="p-3">Asset</th>
+                            <th className="p-3">Type</th>
+                            <th className="p-3 text-right">Quantity</th>
+                            <th className="p-3 text-right">Price</th>
+                            <th className="p-3">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {profileModalData.trades.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="p-6 text-center text-slate-600">No trades completed yet.</td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {profileModalData.trades.length === 0 ? (
-                              <tr>
-                                <td colSpan={5} className="p-6 text-center text-slate-600">No trades completed yet.</td>
+                          ) : (
+                            profileModalData.trades.map((t) => (
+                              <tr key={t._id} className="border-b border-slate-850/40 last:border-none hover:bg-slate-900/10">
+                                <td className="p-3 font-bold text-white">{t.symbol}</td>
+                                <td className="p-3">
+                                  <span className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold ${
+                                    t.type === 'BUY' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                                  }`}>
+                                    {t.type}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-right font-bold text-slate-300 font-mono">{t.quantity}</td>
+                                <td className="p-3 text-right font-medium text-slate-400 font-mono">₹{t.price.toLocaleString()}</td>
+                                <td className="p-3 text-slate-400 font-mono">{new Date(t.createdAt).toLocaleDateString()}</td>
                               </tr>
-                            ) : (
-                              profileModalData.trades.map((t) => (
-                                <tr key={t._id} className="border-b border-slate-850/40 last:border-none hover:bg-slate-900/10">
-                                  <td className="p-3 font-bold text-white">{t.symbol}</td>
-                                  <td className="p-3">
-                                    <span className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold ${
-                                      t.type === 'BUY' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                                    }`}>
-                                      {t.type}
-                                    </span>
-                                  </td>
-                                  <td className="p-3 text-right font-bold text-slate-300 font-mono">{t.quantity}</td>
-                                  <td className="p-3 text-right font-medium text-slate-400 font-mono">₹{t.price.toLocaleString()}</td>
-                                  <td className="p-3 text-slate-400 font-mono">{new Date(t.createdAt).toLocaleDateString()}</td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
 
                   {/* Wallet Ledger */}
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3">Wallet Ledger History</h4>
+                  <div className="space-y-2">
+                    <div className="sticky top-[-24px] z-10 bg-slate-900 py-3">
+                      <h4 className="text-sm font-bold text-slate-300 uppercase tracking-wider">Wallet Ledger History</h4>
+                    </div>
                     <div className="bg-slate-950 border border-slate-850 rounded-2xl overflow-hidden">
-                      <div className="max-h-48 overflow-y-auto">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="border-b border-slate-850 bg-slate-900/40 text-slate-400 uppercase font-bold sticky top-0">
-                              <th className="p-3">Type</th>
-                              <th className="p-3">Amount</th>
-                              <th className="p-3">Description</th>
-                              <th className="p-3">Status</th>
-                              <th className="p-3">Time</th>
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead className="sticky top-[20px] z-9 bg-slate-900">
+                          <tr className="border-b border-slate-850 bg-slate-900 text-slate-400 uppercase font-bold">
+                            <th className="p-3">Type</th>
+                            <th className="p-3">Amount</th>
+                            <th className="p-3">Description</th>
+                            <th className="p-3">Status</th>
+                            <th className="p-3">Time</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {profileModalData.walletTxs.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="p-6 text-center text-slate-600">No transactions recorded.</td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {profileModalData.walletTxs.length === 0 ? (
-                              <tr>
-                                <td colSpan={5} className="p-6 text-center text-slate-600">No transactions recorded.</td>
+                          ) : (
+                            profileModalData.walletTxs.map((tx) => (
+                              <tr key={tx._id} className="border-b border-slate-850/40 last:border-none hover:bg-slate-900/10">
+                                <td className="p-3 font-bold">
+                                  <span className={tx.transactionType === 'CREDIT' ? 'text-emerald-400' : 'text-amber-400'}>
+                                    {tx.transactionType}
+                                  </span>
+                                </td>
+                                <td className="p-3 font-extrabold text-white font-mono">₹{tx.amount.toLocaleString()}</td>
+                                <td className="p-3 text-slate-300">{tx.description}</td>
+                                <td className="p-3">
+                                  <span className={`inline-flex px-1.5 py-0.2 rounded font-extrabold capitalize text-[10px] ${
+                                    tx.status === 'approved' 
+                                      ? 'bg-emerald-500/15 text-emerald-400' 
+                                      : tx.status === 'pending'
+                                      ? 'bg-amber-500/15 text-amber-400 animate-pulse'
+                                      : tx.status === 'on_hold'
+                                      ? 'bg-blue-500/15 text-blue-400'
+                                      : 'bg-rose-500/15 text-rose-400'
+                                  }`}>
+                                    {tx.status}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-slate-400 font-mono">{new Date(tx.createdAt).toLocaleDateString()}</td>
                               </tr>
-                            ) : (
-                              profileModalData.walletTxs.map((tx) => (
-                                <tr key={tx._id} className="border-b border-slate-850/40 last:border-none hover:bg-slate-900/10">
-                                  <td className="p-3 font-bold">
-                                    <span className={tx.transactionType === 'CREDIT' ? 'text-emerald-400' : 'text-amber-400'}>
-                                      {tx.transactionType}
-                                    </span>
-                                  </td>
-                                  <td className="p-3 font-extrabold text-white font-mono">₹{tx.amount.toLocaleString()}</td>
-                                  <td className="p-3 text-slate-300">{tx.description}</td>
-                                  <td className="p-3">
-                                    <span className={`inline-flex px-1.5 py-0.2 rounded font-extrabold capitalize text-[10px] ${
-                                      tx.status === 'approved' 
-                                        ? 'bg-emerald-500/15 text-emerald-400' 
-                                        : tx.status === 'pending'
-                                        ? 'bg-amber-500/15 text-amber-400 animate-pulse'
-                                        : tx.status === 'on_hold'
-                                        ? 'bg-blue-500/15 text-blue-400'
-                                        : 'bg-rose-500/15 text-rose-400'
-                                    }`}>
-                                      {tx.status}
-                                    </span>
-                                  </td>
-                                  <td className="p-3 text-slate-400 font-mono">{new Date(tx.createdAt).toLocaleDateString()}</td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
