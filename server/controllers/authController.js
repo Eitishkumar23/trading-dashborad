@@ -62,24 +62,54 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Please provide email and password' });
     }
 
-    const user = await User.findOne({ email });
+    // Case-insensitive email lookup
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
 
-    if (user && (await user.comparePassword(password))) {
-      if (user.status === 'suspended' || user.status === 'banned') {
-        return res.status(403).json({ message: `Access denied: Your account is currently ${user.status}` });
-      }
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        token: generateToken(user._id),
-        isAdmin: user.email === ADMIN_EMAIL,
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+    console.log('Login attempt for:', email);
+    console.log('User found:', user ? 'YES' : 'NO');
+    console.log('User password field:', user?.password ? 'EXISTS' : 'MISSING');
+    console.log('User googleId:', user?.googleId ? 'HAS GOOGLE ID' : 'NO GOOGLE ID');
+
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
+
+    // Google-only account trying email login
+    if (user.googleId && !user.password) {
+      return res.status(401).json({
+        message: 'This account uses Google Sign-In. Please click "Continue with Google" instead.'
+      });
+    }
+
+    // No password set at all
+    if (!user.password) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    console.log('Password match:', isMatch);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    if (user.status === 'suspended' || user.status === 'banned') {
+      return res.status(403).json({
+        message: `Access denied: Your account is currently ${user.status}`
+      });
+    }
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      token: generateToken(user._id),
+      isAdmin: user.email === ADMIN_EMAIL,
+    });
+
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: error.message });
   }
 };
