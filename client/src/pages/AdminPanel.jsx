@@ -1630,13 +1630,13 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden pb-12">
+    <div className="h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden">
       {/* ── Background decoration ── */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-brand-500/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-danger-500/5 rounded-full blur-[120px] pointer-events-none" />
       
       {/* ── Top Header / Navbar ── */}
-      <header className="sticky top-0 bg-slate-950/80 backdrop-blur-md border-b border-slate-900 z-40">
+      <header className="fixed top-0 left-0 right-0 h-16 bg-slate-950 border-b border-slate-900 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-tr from-brand-600 to-brand-500 p-2.5 rounded-2xl text-white shadow-lg shadow-brand-500/25">
@@ -1669,65 +1669,92 @@ const AdminPanel = () => {
         </div>
       </header>
 
-      {/* ── Main Layout (Sidebar + Content) ── */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 flex flex-col lg:flex-row gap-6 relative z-10">
-        
-        {/* Toast Notifications */}
-        <AnimatePresence>
-          {message.text && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className={`fixed top-20 right-4 z-50 p-4 rounded-2xl shadow-xl flex items-center gap-3 max-w-md border ${
-                message.type === 'success' 
-                  ? 'bg-emerald-950/90 border-brand-500/30 text-brand-400' 
-                  : 'bg-rose-950/90 border-danger-500/30 text-rose-400'
+      {/* Toast Notifications — positioned above everything */}
+      <AnimatePresence>
+        {message.text && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed top-20 right-4 z-[60] p-4 rounded-2xl shadow-xl flex items-center gap-3 max-w-md border ${
+              message.type === 'success' 
+                ? 'bg-emerald-950/90 border-brand-500/30 text-brand-400' 
+                : 'bg-rose-950/90 border-danger-500/30 text-rose-400'
+            }`}
+          >
+            {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+            <span className="text-sm font-semibold">{message.text}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Fixed Sidebar Navigation ── */}
+      <aside className="hidden lg:block fixed top-16 left-0 w-60 h-[calc(100vh-4rem)] bg-slate-950 border-r border-slate-900 z-40 overflow-y-auto">
+        <div className="p-4 space-y-1">
+          <span className="block px-4 py-2 text-[10px] font-extrabold uppercase text-slate-500 tracking-widest">
+            Navigation
+          </span>
+
+          {[
+            { id: 'dashboard', label: 'Dashboard', icon: BarChart4 },
+            { id: 'users', label: 'User Management', icon: Users },
+            { id: 'orders', label: 'Orders Monitor', icon: ArrowLeftRight },
+            { id: 'withdrawals', label: 'Withdrawal Queue', icon: Clock },
+            { id: 'assets', label: 'Asset Limits', icon: Database },
+            { id: 'settings', label: 'Platform Settings', icon: Settings },
+            { id: 'audit', label: 'Audit Log', icon: FileText }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                activeTab === tab.id 
+                  ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25' 
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
               }`}
             >
-              {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
-              <span className="text-sm font-semibold">{message.text}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <div className="flex items-center gap-3">
+                <tab.icon size={17} />
+                <span>{tab.label}</span>
+              </div>
+              <ChevronRight size={14} className={activeTab === tab.id ? 'opacity-100 translate-x-0.5 transition-transform' : 'opacity-0'} />
+            </button>
+          ))}
+        </div>
+      </aside>
 
-        {/* Sidebar Navigation */}
-        <aside className="w-full lg:w-64 shrink-0">
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-4 shadow-xl space-y-1 lg:sticky lg:top-24">
-            <span className="block px-4 py-2 text-[10px] font-extrabold uppercase text-slate-500 tracking-widest">
-              Navigation
-            </span>
+      {/* ── Mobile Sidebar (scrolls horizontally at top) ── */}
+      <div className="lg:hidden fixed top-16 left-0 right-0 bg-slate-950 border-b border-slate-900 z-40 overflow-x-auto">
+        <div className="flex gap-1 p-2 min-w-max">
+          {[
+            { id: 'dashboard', label: 'Dashboard', icon: BarChart4 },
+            { id: 'users', label: 'Users', icon: Users },
+            { id: 'orders', label: 'Orders', icon: ArrowLeftRight },
+            { id: 'withdrawals', label: 'Withdrawals', icon: Clock },
+            { id: 'assets', label: 'Assets', icon: Database },
+            { id: 'settings', label: 'Settings', icon: Settings },
+            { id: 'audit', label: 'Audit', icon: FileText }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                activeTab === tab.id 
+                  ? 'bg-brand-500 text-white' 
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+              }`}
+            >
+              <tab.icon size={14} />
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
-            {[
-              { id: 'dashboard', label: 'Dashboard', icon: BarChart4 },
-              { id: 'users', label: 'User Management', icon: Users },
-              { id: 'orders', label: 'Orders Monitor', icon: ArrowLeftRight },
-              { id: 'withdrawals', label: 'Withdrawal Queue', icon: Clock },
-              { id: 'assets', label: 'Asset Limits', icon: Database },
-              { id: 'settings', label: 'Platform Settings', icon: Settings },
-              { id: 'audit', label: 'Audit Log', icon: FileText }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                  activeTab === tab.id 
-                    ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25' 
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <tab.icon size={17} />
-                  <span>{tab.label}</span>
-                </div>
-                <ChevronRight size={14} className={activeTab === tab.id ? 'opacity-100 translate-x-0.5 transition-transform' : 'opacity-0'} />
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        {/* Main Content Area */}
-        <div className="flex-1 min-w-0">
+      {/* ── Main Content Area (only this scrolls) ── */}
+      <main className="mt-16 lg:ml-60 h-[calc(100vh-4rem)] overflow-y-auto">
+        {/* On mobile, account for the horizontal tab bar */}
+        <div className="pt-12 lg:pt-0 p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
