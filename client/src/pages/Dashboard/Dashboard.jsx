@@ -269,7 +269,7 @@ const Dashboard = () => {
           </div>
           <div className="overflow-x-auto overflow-y-auto flex-1 pr-1 custom-scrollbar">
             <table className="w-full text-left text-sm border-collapse">
-              <thead className="sticky top-0 bg-white dark:bg-dark-card z-10">
+              <thead>
                 <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-light-muted dark:text-dark-muted text-xs uppercase font-bold">
                   <th className="pb-3">Asset</th>
                   <th className="pb-3">Qty</th>
