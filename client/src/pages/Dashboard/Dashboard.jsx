@@ -261,7 +261,7 @@ const Dashboard = () => {
         {/* ── Top Holdings ── 3/5 ≈ 60% */}
         <motion.div
           variants={cardVariants}
-          className="lg:col-span-3 glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[420px]"
+          className="lg:col-span-3 glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[420px] overflow-hidden min-h-0"
         >
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h2 className="text-base font-bold">Top Holdings</h2>
@@ -465,7 +465,7 @@ const Dashboard = () => {
         {/* ── Recent Trade Orders ── ≈ 55% */}
         <motion.div
           variants={cardVariants}
-          className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[300px]"
+          className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[300px] overflow-hidden min-h-0"
         >
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h2 className="text-base font-bold">Recent Trade Orders</h2>
