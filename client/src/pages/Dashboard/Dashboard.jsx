@@ -261,15 +261,15 @@ const Dashboard = () => {
         {/* ── Top Holdings ── 3/5 ≈ 60% */}
         <motion.div
           variants={cardVariants}
-          className="lg:col-span-3 glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border"
+          className="lg:col-span-3 glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[420px]"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h2 className="text-base font-bold">Top Holdings</h2>
             <Link to="/portfolio" className="text-xs text-brand-500 hover:underline font-semibold">View All Holdings</Link>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-auto flex-1 pr-1 custom-scrollbar">
             <table className="w-full text-left text-sm border-collapse">
-              <thead>
+              <thead className="sticky top-0 bg-white dark:bg-dark-card z-10">
                 <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-light-muted dark:text-dark-muted text-xs uppercase font-bold">
                   <th className="pb-3">Asset</th>
                   <th className="pb-3">Qty</th>
@@ -309,7 +309,7 @@ const Dashboard = () => {
         {/* ── Portfolio Asset Allocation ── 2/5 ≈ 40% */}
         <motion.div
           variants={cardVariants}
-          className="lg:col-span-2 glass-panel p-4 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border"
+          className="lg:col-span-2 glass-panel p-4 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border h-[420px]"
         >
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -373,15 +373,15 @@ const Dashboard = () => {
       </div>
 
       {/* ─── ROW 3 : Portfolio Insights (45%) │ Recent Trade Orders (55%) ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[9fr_11fr] gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[9fr_11fr] gap-4 items-stretch">
 
         {/* ── Portfolio Insights ── ≈ 45% */}
         <motion.div
           variants={cardVariants}
-          className="glass-panel p-5 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border"
+          className="glass-panel p-5 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border h-[300px]"
         >
-          <h2 className="text-base font-bold mb-3">Portfolio Insights</h2>
-          <div className="grid grid-cols-2 gap-2.5">
+          <h2 className="text-base font-bold mb-3 flex-shrink-0">Portfolio Insights</h2>
+          <div className="grid grid-cols-2 gap-2.5 flex-1">
             {/* Daily Return */}
             <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between">
               <div className="flex items-center gap-2 mb-1">
@@ -456,13 +456,13 @@ const Dashboard = () => {
         {/* ── Recent Trade Orders ── ≈ 55% */}
         <motion.div
           variants={cardVariants}
-          className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border"
+          className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[300px]"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h2 className="text-base font-bold">Recent Trade Orders</h2>
             <Link to="/transactions" className="text-xs text-brand-500 hover:underline font-semibold">View All Trades</Link>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto overflow-y-auto flex-1 pr-1 custom-scrollbar">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-light-muted dark:text-dark-muted text-xs uppercase font-bold">
