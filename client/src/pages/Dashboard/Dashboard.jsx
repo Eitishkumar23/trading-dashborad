@@ -261,7 +261,7 @@ const Dashboard = () => {
         {/* ── Top Holdings ── 3/5 ≈ 60% */}
         <motion.div
           variants={cardVariants}
-          className="lg:col-span-3 glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-full"
+          className="lg:col-span-3 glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[420px]"
         >
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h2 className="text-base font-bold">Top Holdings</h2>
@@ -309,7 +309,7 @@ const Dashboard = () => {
         {/* ── Portfolio Asset Allocation ── 2/5 ≈ 40% */}
         <motion.div
           variants={cardVariants}
-          className="lg:col-span-2 glass-panel p-4 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border h-full"
+          className="lg:col-span-2 glass-panel p-4 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border h-[420px]"
         >
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -378,7 +378,7 @@ const Dashboard = () => {
         {/* ── Portfolio Insights ── ≈ 45% */}
         <motion.div
           variants={cardVariants}
-          className="glass-panel p-5 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border h-full"
+          className="glass-panel p-5 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border h-[300px]"
         >
           <h2 className="text-base font-bold mb-3 flex-shrink-0">Portfolio Insights</h2>
           <div className="grid grid-cols-2 gap-2.5 flex-1">
@@ -456,7 +456,7 @@ const Dashboard = () => {
         {/* ── Recent Trade Orders ── ≈ 55% */}
         <motion.div
           variants={cardVariants}
-          className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-full"
+          className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[300px]"
         >
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h2 className="text-base font-bold">Recent Trade Orders</h2>
