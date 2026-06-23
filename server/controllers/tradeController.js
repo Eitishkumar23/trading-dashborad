@@ -2,6 +2,7 @@ import Holding from '../models/Holding.js';
 import Transaction from '../models/Transaction.js';
 import WalletTransaction from '../models/WalletTransaction.js';
 import AssetLimit from '../models/AssetLimit.js';
+import Settings from '../models/Settings.js';
 
 // Helper to get wallet balance
 const getBalanceHelper = async (userId) => {
@@ -9,8 +10,8 @@ const getBalanceHelper = async (userId) => {
   let totalCredits = 0;
   let totalDebits = 0;
   ledger.forEach((tx) => {
-    if (tx.transactionType === 'CREDIT') totalCredits += tx.amount;
-    else if (tx.transactionType === 'DEBIT') totalDebits += tx.amount;
+    if (tx.transactionType === 'CREDIT' && tx.status !== 'rejected') totalCredits += tx.amount;
+    else if (tx.transactionType === 'DEBIT' && tx.status !== 'rejected') totalDebits += tx.amount;
   });
   return totalCredits - totalDebits;
 };
@@ -20,6 +21,11 @@ const getBalanceHelper = async (userId) => {
 // @access  Private
 export const buyAsset = async (req, res) => {
   try {
+    const settings = await Settings.getSettings();
+    if (settings.maintenanceMode) {
+      return res.status(503).json({ message: 'Trading is temporarily suspended for system maintenance. Please try again later.' });
+    }
+
     const { symbol, assetType, quantity, price } = req.body;
 
     if (!symbol || !assetType || !quantity || !price || quantity <= 0 || price <= 0) {
@@ -102,6 +108,11 @@ export const buyAsset = async (req, res) => {
 // @access  Private
 export const sellAsset = async (req, res) => {
   try {
+    const settings = await Settings.getSettings();
+    if (settings.maintenanceMode) {
+      return res.status(503).json({ message: 'Trading is temporarily suspended for system maintenance. Please try again later.' });
+    }
+
     const { symbol, quantity, price } = req.body;
 
     if (!symbol || !quantity || !price || quantity <= 0 || price <= 0) {

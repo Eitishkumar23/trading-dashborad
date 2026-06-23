@@ -48,6 +48,7 @@ export const authAPI = {
 
 export const walletAPI = {
   addFunds: (amount, description) => API.post('/wallet/add', { amount, description }),
+  withdrawFunds: (amount, destination) => API.post('/wallet/withdraw', { amount, destination }),
   getDetails: () => API.get('/wallet/details'),
 };
 
@@ -83,6 +84,19 @@ export const adminAPI = {
   addAsset: (data) => API.post('/admin/assets', data),
   updateAsset: (symbol, data) => API.put(`/admin/assets/${symbol}`, data),
   deleteAsset: (symbol) => API.delete(`/admin/assets/${symbol}`),
+  
+  // New Admin Dashboard & Management APIs
+  getStats: () => API.get('/admin/stats'),
+  getUsers: () => API.get('/admin/users'),
+  updateUserStatus: (id, status) => API.put(`/admin/users/${id}/status`, { status }),
+  getUserProfile: (id) => API.get(`/admin/users/${id}/profile`),
+  resetUser2FA: (id) => API.post(`/admin/users/${id}/reset-2fa`),
+  getOrders: () => API.get('/admin/orders'),
+  cancelOrder: (id) => API.delete(`/admin/orders/${id}`),
+  getWithdrawals: () => API.get('/admin/withdrawals'),
+  updateWithdrawalStatus: (id, status, reason) => API.put(`/admin/withdrawals/${id}/status`, { status, reason }),
+  getSettings: () => API.get('/admin/settings'),
+  updateSettings: (data) => API.put('/admin/settings', data),
 };
 
 export default API;

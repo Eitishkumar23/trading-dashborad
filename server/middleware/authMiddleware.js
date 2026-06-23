@@ -19,6 +19,10 @@ export const protect = async (req, res, next) => {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
 
+      if (req.user.status === 'suspended' || req.user.status === 'banned') {
+        return res.status(403).json({ message: `Access denied: Your account is currently ${req.user.status}` });
+      }
+
       next();
     } catch (error) {
       console.error('Token validation failed:', error.message);

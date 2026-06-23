@@ -65,6 +65,9 @@ export const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.comparePassword(password))) {
+      if (user.status === 'suspended' || user.status === 'banned') {
+        return res.status(403).json({ message: `Access denied: Your account is currently ${user.status}` });
+      }
       res.json({
         _id: user._id,
         name: user.name,
@@ -136,6 +139,9 @@ export const googleAuth = async (req, res) => {
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
     if (user) {
+      if (user.status === 'suspended' || user.status === 'banned') {
+        return res.status(403).json({ message: `Access denied: Your account is currently ${user.status}` });
+      }
       if (!user.googleId) {
         user.googleId = googleId;
         user.avatar = user.avatar || picture;

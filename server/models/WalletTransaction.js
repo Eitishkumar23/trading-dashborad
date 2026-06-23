@@ -21,6 +21,11 @@ const WalletTransactionSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected', 'on_hold'],
+    default: 'approved',
+  },
   createdAt: {
     type: Date,
     default: Date.now,
