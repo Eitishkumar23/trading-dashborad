@@ -175,10 +175,20 @@ export const googleAuth = async (req, res) => {
       if (!user.googleId) {
         user.googleId = googleId;
         user.avatar = user.avatar || picture;
-        await user.save();
       }
+      if (!user.password) {
+        user.password = googleId + process.env.JWT_SECRET;
+      }
+      await user.save();
     } else {
-      user = await User.create({ name, email, googleId, avatar: picture });
+      const defaultPassword = googleId + process.env.JWT_SECRET;
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        avatar: picture,
+        password: defaultPassword
+      });
     }
 
     res.json({
