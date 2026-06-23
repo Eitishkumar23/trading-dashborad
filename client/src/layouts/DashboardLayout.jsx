@@ -36,6 +36,8 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  const isMarketPage = location.pathname === '/market';
+
   const { user } = useSelector((state) => state.auth);
   const { mode } = useSelector((state) => state.theme);
 
@@ -71,21 +73,33 @@ const DashboardLayout = () => {
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchQuery.trim().length > 0) {
-        try {
-          const { data } = await marketAPI.searchMarkets(searchQuery);
-          setSearchResults(data.slice(0, 5)); // Keep top 5 suggestions
-          setShowSearchDropdown(true);
-        } catch (error) {
-          console.error('Search failed', error);
+        if (isMarketPage) {
+          // On the market page: update URL param to drive the table filter directly.
+          // Do NOT show the autocomplete dropdown; the table shows all results.
+          navigate(`/market?search=${encodeURIComponent(searchQuery.trim())}`, { replace: true });
+          setSearchResults([]);
+          setShowSearchDropdown(false);
+        } else {
+          try {
+            const { data } = await marketAPI.searchMarkets(searchQuery);
+            setSearchResults(data.slice(0, 5)); // Keep top 5 suggestions
+            setShowSearchDropdown(true);
+          } catch (error) {
+            console.error('Search failed', error);
+          }
         }
       } else {
         setSearchResults([]);
         setShowSearchDropdown(false);
+        if (isMarketPage) {
+          // Clear the URL search param when input is cleared
+          navigate('/market', { replace: true });
+        }
       }
     }, 250);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+  }, [searchQuery, isMarketPage]);
 
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -106,6 +120,16 @@ const DashboardLayout = () => {
     setSearchQuery('');
     setShowSearchDropdown(false);
     navigate(`/market?search=${symbol}`);
+  };
+
+  // Sync global search bar value when navigating to/from the market page
+  // We clear the search in the nav link onClick (user event) instead of a useEffect
+  // to avoid calling setState synchronously inside an effect body.
+  const clearSearchOnNavigate = (targetPath) => {
+    if (isMarketPage && targetPath !== '/market') {
+      setSearchQuery('');
+      setShowSearchDropdown(false);
+    }
   };
 
   return (
@@ -131,6 +155,7 @@ const DashboardLayout = () => {
               <Link
                 key={link.path}
                 to={link.path}
+                onClick={() => clearSearchOnNavigate(link.path)}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-medium transition-all duration-200 ${
                   isActive
                     ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25 scale-[1.02]'
@@ -212,7 +237,10 @@ const DashboardLayout = () => {
                     <Link
                       key={link.path}
                       to={link.path}
-                      onClick={() => setSidebarOpen(false)}
+                      onClick={() => {
+                        setSidebarOpen(false);
+                        clearSearchOnNavigate(link.path);
+                      }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-colors ${
                         isActive
                           ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
@@ -253,7 +281,7 @@ const DashboardLayout = () => {
             </button>
 
             {/* Live Autocomplete Search */}
-            <div className="relative hidden md:block w-72 lg:w-96">
+            <div className="relative sm:block hidden w-40 sm:w-52 md:w-72 lg:w-96">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-light-muted dark:text-dark-muted">
                 <Search size={18} />
               </div>
@@ -261,15 +289,15 @@ const DashboardLayout = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setShowSearchDropdown(true)}
+                onFocus={() => !isMarketPage && searchResults.length > 0 && setShowSearchDropdown(true)}
                 onBlur={() => setTimeout(() => setShowSearchDropdown(false), 200)}
-                placeholder="Search stocks or crypto (e.g. AAPL, BTC)..."
+                placeholder={isMarketPage ? 'Search assets...' : 'Search stocks or crypto (e.g. AAPL, BTC)...'}
                 className="w-full pl-11 pr-4 py-2.5 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/30 dark:hover:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-950/80 rounded-2xl text-sm border border-slate-200/50 dark:border-slate-800/30 focus:border-brand-500 dark:focus:border-brand-500 outline-none transition-all duration-200"
               />
               
-              {/* Search results dropdown */}
+              {/* Search results dropdown — hidden on the market page since the table filters directly */}
               <AnimatePresence>
-                {showSearchDropdown && searchResults.length > 0 && (
+                {!isMarketPage && showSearchDropdown && searchResults.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}

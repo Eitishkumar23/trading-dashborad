@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, TrendingUp, TrendingDown, Flame, Plus, X, ShoppingCart, Star, StarOff, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Flame, X, ShoppingCart, Star, Loader2 } from 'lucide-react';
 import { useMarkets, useMarketOverview, useWatchlist } from '../../hooks/useMarketData.js';
 import { marketAPI, tradeAPI, walletAPI } from '../../services/api.js';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 const Market = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,6 +22,7 @@ const Market = () => {
   const { data: overview } = useMarketOverview();
   const { data: watchlist = [], refetch: refetchWatchlist } = useWatchlist();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Handle URL search param from global search
   useEffect(() => {
@@ -117,28 +118,20 @@ const Market = () => {
       <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:overflow-hidden min-h-0">
         {/* Left column (77%): Search/Tabs + Asset Table */}
         <div className="w-full lg:w-[77%] flex flex-col gap-4 lg:overflow-hidden min-h-0">
-          {/* Search + Tabs */}
-          <div className="flex-shrink-0 glass-panel p-3 rounded-2xl border border-slate-200/50 dark:border-dark-border flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by symbol or name..."
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-900/40 rounded-2xl text-sm border border-slate-200/50 dark:border-slate-800/40 focus:border-brand-500 outline-none transition-colors"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-light-muted dark:text-dark-muted">
-                  <X size={14} />
-                </button>
-              )}
-            </div>
+          {/* Filter Tabs — search is driven by the global header search bar */}
+          <div className="flex-shrink-0 glass-panel p-3 rounded-2xl border border-slate-200/50 dark:border-dark-border flex items-center justify-between gap-3">
             <div className="flex gap-2">
               {['all', 'stocks', 'crypto'].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    // Clear any active search when switching tabs
+                    if (searchQuery) {
+                      setSearchQuery('');
+                      navigate('/market', { replace: true });
+                    }
+                  }}
                   className={`px-4 py-2 rounded-2xl text-xs font-bold capitalize transition-all ${
                     activeTab === tab
                       ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
@@ -149,6 +142,18 @@ const Market = () => {
                 </button>
               ))}
             </div>
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  navigate('/market', { replace: true });
+                }}
+                className="flex items-center gap-1.5 text-xs text-light-muted dark:text-dark-muted hover:text-danger-500 dark:hover:text-danger-400 transition-colors font-medium flex-shrink-0"
+              >
+                <X size={13} />
+                <span className="hidden sm:inline">Clear search</span>
+              </button>
+            )}
           </div>
 
           {/* Market Table */}

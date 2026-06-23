@@ -255,164 +255,13 @@ const Dashboard = () => {
         })}
       </div>
 
-      {/* Charts & Portfolio Insights */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
-        {/* Portfolio Distribution Pie Chart */}
+      {/* ─── ROW 2 : Top Holdings (60%) │ Asset Allocation (40%) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-stretch">
+
+        {/* ── Top Holdings ── 3/5 ≈ 60% */}
         <motion.div
           variants={cardVariants}
-          className="lg:col-span-2 glass-panel p-5 rounded-3xl flex flex-col justify-between border border-slate-200/50 dark:border-dark-border"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-base font-bold">Portfolio Asset Allocation</h2>
-              <p className="text-[11px] text-light-muted dark:text-dark-muted">Percent distribution of asset holdings</p>
-            </div>
-            <Link
-              to="/analytics"
-              className="text-xs font-bold text-brand-500 flex items-center gap-1 hover:underline"
-            >
-              <span>Detailed Charts</span>
-              <ArrowRight size={14} />
-            </Link>
-          </div>
-
-          <div className="h-44 flex items-center justify-center">
-            {charts.distribution.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={charts.distribution}
-                    cx="58%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={65}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {charts.distribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={tooltipContentStyle}
-                    labelStyle={tooltipLabelStyle}
-                    itemStyle={tooltipItemStyle}
-                    formatter={(value) => `${value}%`}
-                  />
-                  <Legend
-                    layout="vertical"
-                    align="left"
-                    verticalAlign="middle"
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: '11px', paddingLeft: '5px' }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-xs text-light-muted dark:text-dark-muted mb-3">No assets currently owned</p>
-                <Link
-                  to="/market"
-                  className="px-4 py-2 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 text-xs font-bold rounded-xl"
-                >
-                  Buy Tickers
-                </Link>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Portfolio Performance Insights */}
-        <motion.div
-          variants={cardVariants}
-          className="glass-panel p-5 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border justify-between"
-        >
-          <div className="flex flex-col h-full justify-between">
-            <h2 className="text-base font-bold mb-3">Portfolio Insights</h2>
-
-            <div className="grid grid-cols-2 gap-3 flex-1">
-              {/* Daily Return indicator */}
-              <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between h-full">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="bg-brand-500/15 p-1.5 rounded-lg text-brand-500">
-                    <Flame size={14} />
-                  </div>
-                  <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider">Today's P&L</span>
-                </div>
-                <div>
-                  <p className="text-xs font-extrabold truncate">
-                    {metrics.todayProfitLoss >= 0 ? '+' : ''}₹{metrics.todayProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                  <span className={`text-[10px] font-bold ${metrics.todayProfitLoss >= 0
-                    ? 'text-brand-500'
-                    : 'text-danger-500'
-                    }`}>
-                    {metrics.todayProfitLoss >= 0 ? '+' : ''}{metrics.todayReturnPercent.toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Best performer */}
-              {insights.bestPerforming ? (
-                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between h-full">
-                  <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Top Performer</span>
-                  <div>
-                    <p className="text-xs font-extrabold truncate">{insights.bestPerforming.symbol}</p>
-                    <span className="text-[10px] font-bold text-brand-500 block truncate">
-                      +{insights.bestPerforming.returnPercent.toFixed(2)}% (₹{insights.bestPerforming.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })})
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center h-full text-center">
-                  <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
-                </div>
-              )}
-
-              {/* Worst performer */}
-              {insights.worstPerforming ? (
-                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between h-full">
-                  <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Worst Performer</span>
-                  <div>
-                    <p className="text-xs font-extrabold truncate">{insights.worstPerforming.symbol}</p>
-                    <span className={`text-[10px] font-bold block truncate ${insights.worstPerforming.profit >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
-                      {insights.worstPerforming.returnPercent >= 0 ? '+' : ''}{insights.worstPerforming.returnPercent.toFixed(2)}% (₹{insights.worstPerforming.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })})
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center h-full text-center">
-                  <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
-                </div>
-              )}
-
-              {/* Most invested */}
-              {insights.mostInvested ? (
-                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between h-full">
-                  <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Top Holding</span>
-                  <div>
-                    <p className="text-xs font-extrabold truncate">{insights.mostInvested.symbol}</p>
-                    <span className="text-[10px] text-light-muted dark:text-dark-muted block truncate font-medium">
-                      Invested: ₹{insights.mostInvested.investedAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-3 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center h-full text-center">
-                  <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Top Holdings & Recent Transactions List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Top Holdings */}
-        <motion.div
-          variants={cardVariants}
-          className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border"
+          className="lg:col-span-3 glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border"
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold">Top Holdings</h2>
@@ -433,14 +282,14 @@ const Dashboard = () => {
                 {topHoldings.length > 0 ? (
                   topHoldings.map((h) => (
                     <tr key={h.symbol} className="border-b border-slate-100/50 dark:border-slate-800/20 last:border-none">
-                      <td className="py-3 font-semibold flex flex-col">
+                      <td className="py-3.5 font-semibold flex flex-col">
                         <span>{h.symbol}</span>
                         <span className="text-[10px] text-light-muted dark:text-dark-muted font-normal">{h.name}</span>
                       </td>
-                      <td className="py-3">{h.quantity}</td>
-                      <td className="py-3 text-right">₹{h.averageBuyPrice.toLocaleString()}</td>
-                      <td className="py-3 text-right font-semibold">₹{h.currentValue.toLocaleString()}</td>
-                      <td className={`py-3 text-right font-bold ${h.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
+                      <td className="py-3.5">{h.quantity}</td>
+                      <td className="py-3.5 text-right">₹{h.averageBuyPrice.toLocaleString()}</td>
+                      <td className="py-3.5 text-right font-semibold">₹{h.currentValue.toLocaleString()}</td>
+                      <td className={`py-3.5 text-right font-bold ${h.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
                         {h.returnPercent >= 0 ? '+' : ''}{h.returnPercent.toFixed(1)}%
                       </td>
                     </tr>
@@ -457,7 +306,154 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* Recent Transactions */}
+        {/* ── Portfolio Asset Allocation ── 2/5 ≈ 40% */}
+        <motion.div
+          variants={cardVariants}
+          className="lg:col-span-2 glass-panel p-4 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-sm font-bold">Portfolio Asset Allocation</h2>
+              <p className="text-[10px] text-light-muted dark:text-dark-muted">Distribution of holdings</p>
+            </div>
+            <Link
+              to="/analytics"
+              className="text-xs font-bold text-brand-500 flex items-center gap-1 hover:underline flex-shrink-0"
+            >
+              <span>Detailed Charts</span>
+              <ArrowRight size={12} />
+            </Link>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center min-h-[160px]">
+            {charts.distribution.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={charts.distribution}
+                    cx="55%"
+                    cy="50%"
+                    innerRadius={34}
+                    outerRadius={52}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {charts.distribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={tooltipContentStyle}
+                    labelStyle={tooltipLabelStyle}
+                    itemStyle={tooltipItemStyle}
+                    formatter={(value) => `${value}%`}
+                  />
+                  <Legend
+                    layout="vertical"
+                    align="left"
+                    verticalAlign="middle"
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: '10px', paddingLeft: '4px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-xs text-light-muted dark:text-dark-muted mb-3">No assets currently owned</p>
+                <Link
+                  to="/market"
+                  className="px-4 py-2 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 text-xs font-bold rounded-xl"
+                >
+                  Buy Tickers
+                </Link>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ─── ROW 3 : Portfolio Insights (45%) │ Recent Trade Orders (55%) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[9fr_11fr] gap-4 items-start">
+
+        {/* ── Portfolio Insights ── ≈ 45% */}
+        <motion.div
+          variants={cardVariants}
+          className="glass-panel p-5 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border"
+        >
+          <h2 className="text-base font-bold mb-3">Portfolio Insights</h2>
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* Daily Return */}
+            <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="bg-brand-500/15 p-1.5 rounded-lg text-brand-500">
+                  <Flame size={14} />
+                </div>
+                <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider">Today's P&L</span>
+              </div>
+              <div>
+                <p className="text-xs font-extrabold truncate">
+                  {metrics.todayProfitLoss >= 0 ? '+' : ''}₹{metrics.todayProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <span className={`text-[10px] font-bold ${metrics.todayProfitLoss >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
+                  {metrics.todayProfitLoss >= 0 ? '+' : ''}{metrics.todayReturnPercent.toFixed(2)}%
+                </span>
+              </div>
+            </div>
+
+            {/* Best performer */}
+            {insights.bestPerforming ? (
+              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between">
+                <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Top Performer</span>
+                <div>
+                  <p className="text-xs font-extrabold truncate">{insights.bestPerforming.symbol}</p>
+                  <span className="text-[10px] font-bold text-brand-500 block truncate">
+                    +{insights.bestPerforming.returnPercent.toFixed(2)}% (₹{insights.bestPerforming.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })})
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center text-center">
+                <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
+              </div>
+            )}
+
+            {/* Worst performer */}
+            {insights.worstPerforming ? (
+              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between">
+                <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Worst Performer</span>
+                <div>
+                  <p className="text-xs font-extrabold truncate">{insights.worstPerforming.symbol}</p>
+                  <span className={`text-[10px] font-bold block truncate ${insights.worstPerforming.profit >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
+                    {insights.worstPerforming.returnPercent >= 0 ? '+' : ''}{insights.worstPerforming.returnPercent.toFixed(2)}% (₹{insights.worstPerforming.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })})
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center text-center">
+                <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
+              </div>
+            )}
+
+            {/* Most invested */}
+            {insights.mostInvested ? (
+              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between">
+                <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Top Holding</span>
+                <div>
+                  <p className="text-xs font-extrabold truncate">{insights.mostInvested.symbol}</p>
+                  <span className="text-[10px] text-light-muted dark:text-dark-muted block truncate font-medium">
+                    Invested: ₹{insights.mostInvested.investedAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center text-center">
+                <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* ── Recent Trade Orders ── ≈ 55% */}
         <motion.div
           variants={cardVariants}
           className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border"
@@ -481,7 +477,7 @@ const Dashboard = () => {
                 {recentTransactions.length > 0 ? (
                   recentTransactions.map((tx) => (
                     <tr key={tx._id} className="border-b border-slate-100/50 dark:border-slate-800/20 last:border-none">
-                      <td className="py-3">
+                      <td className="py-3.5">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${tx.type === 'BUY'
                           ? 'bg-brand-500/10 text-brand-500'
                           : 'bg-danger-500/10 text-danger-500'
@@ -489,10 +485,10 @@ const Dashboard = () => {
                           {tx.type === 'BUY' ? 'BUY' : 'SELL'}
                         </span>
                       </td>
-                      <td className="py-3 font-semibold">{tx.symbol}</td>
-                      <td className="py-3 text-right">₹{tx.price.toLocaleString()}</td>
-                      <td className="py-3 text-right font-semibold">₹{tx.totalAmount.toLocaleString()}</td>
-                      <td className="py-3 text-right text-xs text-light-muted dark:text-dark-muted">
+                      <td className="py-3.5 font-semibold">{tx.symbol}</td>
+                      <td className="py-3.5 text-right">₹{tx.price.toLocaleString()}</td>
+                      <td className="py-3.5 text-right font-semibold">₹{tx.totalAmount.toLocaleString()}</td>
+                      <td className="py-3.5 text-right text-xs text-light-muted dark:text-dark-muted">
                         {new Date(tx.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                       </td>
                     </tr>
