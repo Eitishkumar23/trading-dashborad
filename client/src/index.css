@@ -83,7 +83,9 @@
 
 /* Hover-only scrollbars for dense dashboard tables */
 .scrollbar-on-hover {
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
 }
 
 .scrollbar-on-hover::-webkit-scrollbar {
@@ -93,9 +95,32 @@
 
 .scrollbar-on-hover:hover {
   scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.48) rgba(15, 23, 42, 0.42);
+  padding-right: 4px;
 }
 
 .scrollbar-on-hover:hover::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-on-hover:hover::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.42);
+  border-radius: 999px;
+  margin: 6px 0 6px 6px;
+}
+
+.scrollbar-on-hover:hover::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.42);
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.35);
+}
+
+.dark .scrollbar-on-hover:hover::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.dark .scrollbar-on-hover:hover::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.32);
+  border-color: rgba(15, 23, 42, 0.55);
 }

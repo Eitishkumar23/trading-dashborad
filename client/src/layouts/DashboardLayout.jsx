@@ -135,7 +135,7 @@ const DashboardLayout = () => {
   return (
     <div className="min-h-screen flex transition-colors duration-300">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex flex-col w-64 glass-panel border-r border-dark-border dark:border-dark-border m-4 rounded-3xl sticky top-4 h-[calc(100vh-2rem)] z-30">
+      <aside className="hidden lg:flex flex-col w-64 glass-panel border-r border-dark-border dark:border-dark-border m-4 rounded-3xl sticky top-4 h-[calc(100vh-2rem)] z-30 overflow-hidden">
         <div className="p-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="bg-gradient-to-tr from-brand-600 to-brand-500 p-2.5 rounded-2xl text-white shadow-lg shadow-brand-500/20">
@@ -171,23 +171,23 @@ const DashboardLayout = () => {
 
         {/* User profile section in Sidebar */}
         <div className="w-full min-w-0 p-4 border-t border-slate-200/50 dark:border-slate-800/50 shrink-0">
-          <div className="flex w-full max-w-full items-center justify-between gap-3 p-2 rounded-2xl bg-slate-100/55 dark:bg-slate-900/40 border border-slate-200/30 dark:border-slate-800/30 overflow-hidden">
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="flex w-full max-w-full min-w-0 items-center justify-between gap-3 p-2 rounded-2xl bg-slate-100/55 dark:bg-slate-900/40 border border-slate-200/30 dark:border-slate-800/30 overflow-hidden box-border">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center font-bold">
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
               </div>
-              <div className="min-w-0 overflow-hidden">
-                <p className="text-sm font-semibold truncate leading-none mb-1">
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <p className="block text-sm font-semibold truncate leading-none mb-1">
                   {user?.name || 'User'}
                 </p>
-                <p className="text-xs text-light-muted dark:text-dark-muted truncate leading-none">
+                <p className="block text-xs text-light-muted dark:text-dark-muted truncate leading-none">
                   {user?.email || ''}
                 </p>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="p-2 text-danger-500 hover:bg-danger-500/10 rounded-xl transition-colors"
+              className="shrink-0 p-2 text-danger-500 hover:bg-danger-500/10 rounded-xl transition-colors"
               title="Logout"
             >
               <LogOut size={18} />
