@@ -138,11 +138,56 @@ const Profile = () => {
           </div>
         </section>
 
-        <div className="h-full min-h-[420px] flex [&>div]:h-full [&>div]:w-full">
-          <AccountPasswordForm
-            hasPassword={hasPassword}
-            onSaved={() => queryClient.invalidateQueries({ queryKey: ['profile'] })}
-          />
+        <div className="flex h-full min-h-[420px] flex-col gap-6">
+          <div className="[&>div]:h-full [&>div]:w-full">
+            <AccountPasswordForm
+              hasPassword={hasPassword}
+              onSaved={() => queryClient.invalidateQueries({ queryKey: ['profile'] })}
+            />
+          </div>
+
+          <section className="glass-panel flex min-h-[248px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
+            <div className="flex items-center justify-between gap-3 shrink-0">
+              <div>
+                <h2 className="font-bold text-base">Update Email</h2>
+                <p className="text-xs text-light-muted dark:text-dark-muted">Keep your sign-in address current</p>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">
+                Account Settings
+              </span>
+            </div>
+
+            <form className="mt-5 grid flex-1 grid-cols-1 gap-3 md:grid-cols-2" onSubmit={(e) => e.preventDefault()}>
+              <div className="md:col-span-2">
+                <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">
+                  New Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">
+                  Confirm New Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="repeat new email"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
+                />
+              </div>
+              <div className="md:col-span-2 flex items-end">
+                <button
+                  type="submit"
+                  className="w-full rounded-xl bg-brand-500 py-2.5 text-xs font-bold text-white transition-colors hover:bg-brand-600"
+                >
+                  Update Email
+                </button>
+              </div>
+            </form>
+          </section>
         </div>
       </div>
 
