@@ -27,6 +27,7 @@ const themeClasses = {
 const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
   const dispatch = useDispatch();
   const classes = themeClasses[theme] || themeClasses.app;
+  const hasExistingPassword = hasPassword === true;
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -52,7 +53,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
         confirmPassword: data.confirmPassword,
       };
 
-      if (hasPassword) {
+      if (hasExistingPassword) {
         payload.currentPassword = data.currentPassword;
       }
 
@@ -77,7 +78,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
         </div>
         <div className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-xl ${classes.badge}`}>
           <ShieldCheck size={13} />
-          <span>{hasPassword ? 'Email login enabled' : 'Google login only'}</span>
+          <span>{hasExistingPassword ? 'Email login enabled' : 'Google login only'}</span>
         </div>
       </div>
 
@@ -94,7 +95,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        {hasPassword && (
+        {hasExistingPassword && (
           <div>
             <label className={`text-[10px] font-bold uppercase ${classes.label}`}>Current Password</label>
             <input
@@ -125,7 +126,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
         </div>
 
         <div>
-          <label className={`text-[10px] font-bold uppercase ${classes.label}`}>Confirm Password</label>
+          <label className={`text-[10px] font-bold uppercase ${classes.label}`}>Confirm New Password</label>
           <input
             type="password"
             placeholder="Repeat password"
@@ -143,14 +144,14 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
         <button
           type="submit"
           disabled={loading}
-          className={`md:self-end py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-60 ${hasPassword ? 'md:col-start-3' : ''}`}
+          className={`md:self-end py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-60 ${hasExistingPassword ? 'md:col-start-3' : ''}`}
         >
           {loading ? (
             <Loader2 size={14} className="animate-spin" />
           ) : (
             <>
               <KeyRound size={13} />
-              <span>{hasPassword ? 'Update Password' : 'Set Password'}</span>
+              <span>{hasExistingPassword ? 'Update Password' : 'Set Password'}</span>
             </>
           )}
         </button>
