@@ -80,3 +80,22 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(100, 116, 139, 0.4);
 }
+
+/* Hover-only scrollbars for dense dashboard tables */
+.scrollbar-on-hover {
+  scrollbar-width: none;
+}
+
+.scrollbar-on-hover::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.scrollbar-on-hover:hover {
+  scrollbar-width: thin;
+}
+
+.scrollbar-on-hover:hover::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}

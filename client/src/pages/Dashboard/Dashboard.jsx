@@ -318,7 +318,7 @@ const Dashboard = () => {
             <Link to="/portfolio" className="text-xs text-brand-500 hover:underline font-bold">View All Holdings</Link>
           </div>
 
-          <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="flex-1 overflow-y-auto scrollbar-on-hover min-h-0">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-xs uppercase font-bold text-light-muted dark:text-dark-muted sticky top-0 bg-slate-50/90 dark:bg-[#101423]/90 backdrop-blur-md z-10">
@@ -464,7 +464,7 @@ const Dashboard = () => {
           <Link to="/transactions" className="text-xs text-brand-500 hover:underline font-bold">View All Trades</Link>
         </div>
 
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto scrollbar-on-hover min-h-0">
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-xs uppercase font-bold text-light-muted dark:text-dark-muted sticky top-0 bg-slate-50/90 dark:bg-[#101423]/90 backdrop-blur-md z-10">
