@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Wallet,
   ArrowUpRight,
@@ -34,6 +34,7 @@ const WalletPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [showSuccessMsg, setShowSuccessMsg] = useState(false);
   const [activeQuickAmount, setActiveQuickAmount] = useState(null);
 
   const {
@@ -71,6 +72,28 @@ const WalletPage = () => {
   useEffect(() => {
     fetchWalletDetails();
   }, []);
+
+  useEffect(() => {
+    if (!successMsg) {
+      setShowSuccessMsg(false);
+      return undefined;
+    }
+
+    setShowSuccessMsg(true);
+
+    const hideTimer = window.setTimeout(() => {
+      setShowSuccessMsg(false);
+    }, 4000);
+
+    const resetTimer = window.setTimeout(() => {
+      setSuccessMsg('');
+    }, 4300);
+
+    return () => {
+      window.clearTimeout(hideTimer);
+      window.clearTimeout(resetTimer);
+    };
+  }, [successMsg]);
 
   const flashQuickAmount = (amount) => {
     setActiveQuickAmount(amount);
@@ -189,12 +212,23 @@ const WalletPage = () => {
               <span>Deposit Funds</span>
             </h3>
 
-            {successMsg && (
-              <div className="mb-4 p-3 bg-brand-500/15 border border-brand-500/30 rounded-xl text-brand-500 text-xs flex items-center gap-2 font-semibold">
-                <CheckCircle2 size={16} />
-                <span>{successMsg}</span>
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {successMsg && showSuccessMsg && (
+                <motion.div
+                  key={successMsg}
+                  initial={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -8, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.28, ease: 'easeOut' }}
+                  className="mb-4 overflow-hidden rounded-2xl border border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-[0_10px_30px_-18px_rgba(16,185,129,0.7)]"
+                >
+                  <div className="flex items-center gap-2 px-3.5 py-3 text-xs font-semibold">
+                    <CheckCircle2 size={16} />
+                    <span>{successMsg}</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
@@ -229,7 +263,7 @@ const WalletPage = () => {
                     },
                     max: { value: 10000000, message: 'Maximum deposit is Rs.1,00,00,000' },
                   })}
-                  className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-sm font-semibold focus:border-brand-500 outline-none transition-colors"
+                  className="no-spinner w-full rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 text-sm font-semibold text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:shadow-[0_0_0_1px_rgba(14,165,233,0.25),0_0_0_6px_rgba(14,165,233,0.08)] dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-700 dark:hover:bg-slate-950 dark:focus:border-brand-500 dark:focus:bg-slate-950"
                 />
                 {errors.amount && (
                   <p className="text-xs text-rose-500 mt-1">{errors.amount.message}</p>
