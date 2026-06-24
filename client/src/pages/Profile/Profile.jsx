@@ -209,7 +209,7 @@ const Profile = () => {
             />
           </div>
 
-          <section className="glass-panel flex min-h-[248px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
+          <section className="glass-panel flex min-h-[220px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
             <div className="flex items-center justify-between gap-3 shrink-0">
               <div>
                 <h2 className="font-bold text-base">Update Email</h2>
@@ -246,8 +246,8 @@ const Profile = () => {
               )}
             </AnimatePresence>
 
-            <form className="mt-5 grid flex-1 grid-cols-1 gap-3 md:grid-cols-2" onSubmit={handleEmailSubmit(onUpdateEmail, onInvalidEmailSubmit)}>
-              <div className="md:col-span-2">
+            <form className="mt-5 grid flex-1 grid-cols-1 gap-3 lg:grid-cols-3" onSubmit={handleEmailSubmit(onUpdateEmail, onInvalidEmailSubmit)}>
+              <div className="min-w-0">
                 <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">
                   New Email
                 </label>
@@ -267,7 +267,7 @@ const Profile = () => {
                   <p className="mt-1 text-xs text-danger-500">{emailErrors.newEmail.message}</p>
                 )}
               </div>
-              <div className="md:col-span-2">
+              <div className="min-w-0">
                 <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">
                   Confirm New Email
                 </label>
@@ -284,7 +284,7 @@ const Profile = () => {
                   <p className="mt-1 text-xs text-danger-500">{emailErrors.confirmEmail.message}</p>
                 )}
               </div>
-              <div className="md:col-span-2">
+              <div className="min-w-0">
                 <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">
                   Password
                 </label>
@@ -308,11 +308,11 @@ const Profile = () => {
                   <p className="mt-1 text-xs text-danger-500">{emailErrors.password.message}</p>
                 )}
               </div>
-              <div className="md:col-span-2 flex items-end">
+              <div className="lg:col-span-3 flex justify-center pt-2">
                 <button
                   type="submit"
                   disabled={emailLoading}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-500 py-2.5 text-xs font-bold text-white transition-colors hover:bg-brand-600 disabled:opacity-60"
+                  className="inline-flex w-fit items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-brand-600 disabled:opacity-60"
                 >
                   {emailLoading ? <Loader2 size={14} className="animate-spin" /> : <span>Update Email</span>}
                 </button>
