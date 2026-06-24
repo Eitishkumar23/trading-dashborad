@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import {
@@ -6,31 +6,55 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   PlusCircle,
-  TrendingUp,
   History,
   CheckCircle2,
-  DollarSign
 } from 'lucide-react';
 import { walletAPI } from '../../services/api.js';
+
+const QUICK_AMOUNTS = [10000, 50000, 100000, 500000];
+
+const currencyWithDecimals = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const currencyWhole = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+const formatCurrency = (amount, formatter = currencyWhole) => formatter.format(Number(amount || 0));
 
 const WalletPage = () => {
   const [walletDetails, setWalletDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [activeQuickAmount, setActiveQuickAmount] = useState(null);
 
   const {
     register,
     handleSubmit,
     setValue,
+    getValues,
+    watch,
     reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
-      amount: '',
+      amount: 0,
       description: '',
     },
   });
+
+  const amountValue = watch('amount');
+  const depositAmount = Number(amountValue || 0);
+  const isDepositDisabled =
+    submitLoading || !Number.isFinite(depositAmount) || depositAmount <= 0;
 
   const fetchWalletDetails = async () => {
     try {
@@ -48,15 +72,48 @@ const WalletPage = () => {
     fetchWalletDetails();
   }, []);
 
+  const flashQuickAmount = (amount) => {
+    setActiveQuickAmount(amount);
+    window.setTimeout(() => {
+      setActiveQuickAmount((current) => (current === amount ? null : current));
+    }, 180);
+  };
+
+  const handleQuickAmount = (amount) => {
+    const currentAmount = Number(getValues('amount') || 0);
+    const safeAmount = Number.isFinite(currentAmount) && currentAmount > 0 ? currentAmount : 0;
+    const nextAmount = safeAmount + amount;
+
+    setValue('amount', nextAmount, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    flashQuickAmount(amount);
+  };
+
+  const handleClearAmount = () => {
+    setValue('amount', 0, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    });
+    setActiveQuickAmount(null);
+  };
+
   const onSubmit = async (formData) => {
+    const amount = Number(formData.amount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return;
+    }
+
     try {
       setSubmitLoading(true);
       setSuccessMsg('');
-      const { data } = await walletAPI.addFunds(Number(formData.amount), formData.description);
-      setSuccessMsg(`Successfully credited ₹${Number(formData.amount).toLocaleString()} to your wallet!`);
-      reset();
-      
-      // Refresh details
+      await walletAPI.addFunds(amount, formData.description);
+      setSuccessMsg(`Successfully credited ${formatCurrency(amount)} to your wallet!`);
+      reset({ amount: 0, description: '' });
+
       const detailsRes = await walletAPI.getDetails();
       setWalletDetails(detailsRes.data);
     } catch (error) {
@@ -64,10 +121,6 @@ const WalletPage = () => {
     } finally {
       setSubmitLoading(false);
     }
-  };
-
-  const handleQuickAmount = (amount) => {
-    setValue('amount', amount, { shouldValidate: true });
   };
 
   if (loading && !walletDetails) {
@@ -95,44 +148,41 @@ const WalletPage = () => {
       animate={{ opacity: 1 }}
       className="space-y-6 pb-12"
     >
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Virtual Wallet</h1>
         <p className="text-sm text-light-muted dark:text-dark-muted">
-          Add paper funds to buy and sell stocks and cryptos. Balance is calculated from ledger transactions.
+          Add paper funds to buy and sell stocks and cryptos. Balance is calculated from ledger
+          transactions.
         </p>
       </div>
 
-      {/* Grid: Form & Balances */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Side: Add Funds & Stats */}
         <div className="space-y-6">
-          {/* Visual Balance Card */}
           <div className="relative p-6 bg-gradient-to-br from-brand-600 to-emerald-500 rounded-3xl text-white shadow-xl shadow-brand-500/10 overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full pointer-events-none" />
             <div className="flex items-center justify-between mb-8">
-              <span className="text-xs uppercase tracking-widest font-extrabold text-emerald-100">Virtual Wallet Balance</span>
+              <span className="text-xs uppercase tracking-widest font-extrabold text-emerald-100">
+                Virtual Wallet Balance
+              </span>
               <Wallet size={20} className="text-emerald-100" />
             </div>
             <h2 className="text-3xl font-extrabold mb-1 tracking-tight">
-              ₹{balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatCurrency(balance, currencyWithDecimals)}
             </h2>
             <p className="text-xs text-emerald-100">100% simulated paper trade account</p>
 
-            {/* Total Credits & Debits quick bar */}
             <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-white/10 text-xs">
               <div>
                 <p className="text-emerald-100/70 font-medium">Total Credits</p>
-                <p className="text-sm font-bold mt-0.5">₹{totalCredits.toLocaleString()}</p>
+                <p className="text-sm font-bold mt-0.5">{formatCurrency(totalCredits)}</p>
               </div>
               <div>
                 <p className="text-emerald-100/70 font-medium">Total Debits</p>
-                <p className="text-sm font-bold mt-0.5">₹{totalDebits.toLocaleString()}</p>
+                <p className="text-sm font-bold mt-0.5">{formatCurrency(totalDebits)}</p>
               </div>
             </div>
           </div>
 
-          {/* Add Funds Form Panel */}
           <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
               <PlusCircle size={18} className="text-brand-500" />
@@ -148,36 +198,72 @@ const WalletPage = () => {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-light-muted dark:text-dark-muted mb-1.5 uppercase">Amount (₹)</label>
+                <div className="flex items-center justify-between gap-3 mb-1.5">
+                  <label className="block text-xs font-bold text-light-muted dark:text-dark-muted uppercase">
+                    Amount
+                  </label>
+                  <span className="text-xs font-semibold text-brand-500">
+                    {formatCurrency(depositAmount)}
+                  </span>
+                </div>
                 <input
                   type="number"
+                  min="0"
+                  step="1"
+                  inputMode="numeric"
                   placeholder="Enter amount (e.g. 50000)"
+                  onKeyDown={(event) => {
+                    if (['-', '+', 'e', 'E'].includes(event.key)) {
+                      event.preventDefault();
+                    }
+                  }}
                   {...register('amount', {
+                    valueAsNumber: true,
                     required: 'Amount is required',
-                    min: { value: 100, message: 'Minimum deposit is ₹100' },
-                    max: { value: 10000000, message: 'Maximum deposit is ₹1,00,00,000' },
+                    validate: (value) => {
+                      const numericValue = Number(value || 0);
+                      return (
+                        (Number.isFinite(numericValue) && numericValue > 0) ||
+                        'Enter a positive amount'
+                      );
+                    },
+                    max: { value: 10000000, message: 'Maximum deposit is Rs.1,00,00,000' },
                   })}
                   className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-sm font-semibold focus:border-brand-500 outline-none transition-colors"
                 />
-                {errors.amount && <p className="text-xs text-rose-500 mt-1">{errors.amount.message}</p>}
+                {errors.amount && (
+                  <p className="text-xs text-rose-500 mt-1">{errors.amount.message}</p>
+                )}
               </div>
 
-              {/* Quick Amount Pills */}
               <div className="flex flex-wrap gap-2">
-                {[10000, 50000, 100000, 500000].map((amt) => (
+                {QUICK_AMOUNTS.map((amt) => (
                   <button
                     key={amt}
                     type="button"
                     onClick={() => handleQuickAmount(amt)}
-                    className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/40 hover:bg-brand-500/10 hover:text-brand-500 rounded-xl text-xs font-semibold border border-transparent hover:border-brand-500/20 transition-all"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 active:scale-95 ${
+                      activeQuickAmount === amt
+                        ? 'bg-brand-500/15 text-brand-500 border-brand-500/30 shadow-sm shadow-brand-500/10'
+                        : 'bg-slate-200/50 dark:bg-slate-800/40 border-transparent hover:bg-brand-500/10 hover:text-brand-500 hover:border-brand-500/20'
+                    }`}
                   >
-                    +₹{amt.toLocaleString()}
+                    +{formatCurrency(amt)}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={handleClearAmount}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-300/70 dark:border-slate-700 text-light-muted dark:text-dark-muted hover:text-rose-500 hover:border-rose-500/30 hover:bg-rose-500/10 transition-all duration-150 active:scale-95"
+                >
+                  Clear
+                </button>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-light-muted dark:text-dark-muted mb-1.5 uppercase">Description</label>
+                <label className="block text-xs font-bold text-light-muted dark:text-dark-muted mb-1.5 uppercase">
+                  Description
+                </label>
                 <input
                   type="text"
                   placeholder="Bank transfer reference / comment"
@@ -188,8 +274,8 @@ const WalletPage = () => {
 
               <button
                 type="submit"
-                disabled={submitLoading}
-                className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-brand-500/10 flex items-center justify-center gap-2"
+                disabled={isDepositDisabled}
+                className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:bg-slate-400 disabled:dark:bg-slate-700 disabled:cursor-not-allowed disabled:shadow-none text-white rounded-xl font-bold transition-all shadow-lg shadow-brand-500/10 flex items-center justify-center gap-2"
               >
                 {submitLoading ? 'Depositing...' : 'Add Funds to Wallet'}
               </button>
@@ -197,7 +283,6 @@ const WalletPage = () => {
           </div>
         </div>
 
-        {/* Right Side: Ledger history log */}
         <div className="lg:col-span-2">
           <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border h-full flex flex-col">
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
@@ -218,13 +303,18 @@ const WalletPage = () => {
                 <tbody>
                   {history.length > 0 ? (
                     history.map((tx) => (
-                      <tr key={tx._id} className="border-b border-slate-100/55 dark:border-slate-800/20 last:border-none">
+                      <tr
+                        key={tx._id}
+                        className="border-b border-slate-100/55 dark:border-slate-800/20 last:border-none"
+                      >
                         <td className="py-3.5">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold ${
-                            tx.transactionType === 'CREDIT'
-                              ? 'bg-brand-500/10 text-brand-500'
-                              : 'bg-danger-500/10 text-danger-500'
-                          }`}>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold ${
+                              tx.transactionType === 'CREDIT'
+                                ? 'bg-brand-500/10 text-brand-500'
+                                : 'bg-danger-500/10 text-danger-500'
+                            }`}
+                          >
                             {tx.transactionType === 'CREDIT' ? (
                               <>
                                 <ArrowUpRight size={12} />
@@ -239,10 +329,15 @@ const WalletPage = () => {
                           </span>
                         </td>
                         <td className="py-3.5 text-xs lg:text-sm font-medium">{tx.description}</td>
-                        <td className={`py-3.5 text-right font-bold ${
-                          tx.transactionType === 'CREDIT' ? 'text-brand-500' : 'text-danger-500'
-                        }`}>
-                          {tx.transactionType === 'CREDIT' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                        <td
+                          className={`py-3.5 text-right font-bold ${
+                            tx.transactionType === 'CREDIT'
+                              ? 'text-brand-500'
+                              : 'text-danger-500'
+                          }`}
+                        >
+                          {tx.transactionType === 'CREDIT' ? '+' : '-'}
+                          {formatCurrency(tx.amount)}
                         </td>
                         <td className="py-3.5 text-right text-xs text-light-muted dark:text-dark-muted">
                           {new Date(tx.createdAt).toLocaleDateString('en-IN', {
@@ -257,7 +352,10 @@ const WalletPage = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="py-12 text-center text-light-muted dark:text-dark-muted text-xs italic">
+                      <td
+                        colSpan={4}
+                        className="py-12 text-center text-light-muted dark:text-dark-muted text-xs italic"
+                      >
                         No transactions registered in the ledger.
                       </td>
                     </tr>
