@@ -75,15 +75,15 @@ const Portfolio = () => {
           <table className="w-full table-fixed text-sm border-collapse">
             <thead>
               <tr className="text-xs uppercase font-bold text-light-muted dark:text-dark-muted bg-slate-50/50 dark:bg-slate-900/20">
-                <th className="px-4 py-4 text-left w-[18%]">Asset</th>
-                <th className="px-3 py-4 text-right w-[8%]">Qty</th>
-                <th className="px-3 py-4 text-right w-[13%]">Avg Buy Price</th>
-                <th className="px-3 py-4 text-right w-[13%]">Current Price</th>
-                <th className="px-3 py-4 text-right w-[13%]">Invested</th>
-                <th className="px-3 py-4 text-right w-[13%]">Current Value</th>
+                <th className="px-4 py-4 text-left w-[17%]">Asset</th>
+                <th className="px-3 py-4 text-right w-[7%]">Qty</th>
+                <th className="px-3 py-4 text-right w-[12%]">Avg Buy Price</th>
+                <th className="px-3 py-4 text-right w-[12%]">Current Price</th>
+                <th className="px-3 py-4 text-right w-[11%]">Invested</th>
+                <th className="px-3 py-4 text-right w-[12%]">Current Value</th>
                 <th className="px-3 py-4 text-right w-[10%]">P&L</th>
-                <th className="px-3 py-4 text-right w-[7%]">Return %</th>
-                <th className="px-3 py-4 text-center w-[5%]">Action</th>
+                <th className="px-3 py-4 text-right w-[9%]">Return %</th>
+                <th className="px-3 py-4 text-center w-[10%]">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -124,7 +124,7 @@ const Portfolio = () => {
                     <td className="px-3 py-4 text-center">
                       <button
                         onClick={() => { setSellModal(h); setSellQty('1'); setSellError(''); setSellSuccess(''); }}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-500 rounded-xl text-xs font-bold border border-danger-500/20 hover:border-danger-500 transition-all duration-200 mx-auto"
+                        className="flex items-center gap-1 px-3 py-1.5 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-500 rounded-xl text-xs font-bold border border-danger-500/20 hover:border-danger-500 transition-all duration-200 mx-auto whitespace-nowrap"
                       >
                         <ArrowDownCircle size={12} /><span>Sell</span>
                       </button>
