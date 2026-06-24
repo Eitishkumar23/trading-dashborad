@@ -26,12 +26,12 @@ const themeClasses = {
 };
 
 const PasswordInput = ({ name, registration, className, placeholder, visible, onToggle }) => (
-  <div className="relative mt-1">
+  <div className="relative mt-1 min-w-0">
     <input
       type={visible ? 'text' : 'password'}
       placeholder={placeholder}
       {...registration}
-      className={`${className} mt-0 pr-10`}
+      className={`${className} mt-0 min-w-0 overflow-x-auto whitespace-nowrap pr-10`}
     />
     <button
       type="button"
@@ -154,7 +154,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {hasExistingPassword && (
-          <div>
+          <div className="min-w-0">
             <label className={`text-[10px] font-bold uppercase ${classes.label}`}>Current Password</label>
             <PasswordInput
               name="current password"
@@ -169,7 +169,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
           </div>
         )}
 
-        <div>
+        <div className="min-w-0">
           <label className={`text-[10px] font-bold uppercase ${classes.label}`}>New Password</label>
           <PasswordInput
             name="new password"
@@ -187,7 +187,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
           )}
         </div>
 
-        <div>
+        <div className="min-w-0">
           <label className={`text-[10px] font-bold uppercase ${classes.label}`}>Confirm New Password</label>
           <PasswordInput
             name="confirm new password"

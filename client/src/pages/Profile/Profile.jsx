@@ -293,7 +293,7 @@ const Profile = () => {
                     {...registerEmail('password', { required: 'Password is required' })}
                     type={showEmailPassword ? 'text' : 'password'}
                     placeholder="Enter password"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 pr-10 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
+                    className="w-full min-w-0 overflow-x-auto whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2.5 pr-10 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
                   />
                   <button
                     type="button"
@@ -308,7 +308,7 @@ const Profile = () => {
                   <p className="mt-1 text-xs text-danger-500">{emailErrors.password.message}</p>
                 )}
               </div>
-              <div className="lg:col-span-3 flex justify-center pt-2">
+              <div className="lg:col-span-3 flex justify-end pt-2">
                 <button
                   type="submit"
                   disabled={emailLoading}
