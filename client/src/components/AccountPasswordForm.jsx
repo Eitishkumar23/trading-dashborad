@@ -31,7 +31,7 @@ const PasswordInput = ({ name, registration, className, placeholder, visible, on
       type={visible ? 'text' : 'password'}
       placeholder={placeholder}
       {...registration}
-      className={`${className} mt-0 min-w-0 overflow-x-auto whitespace-nowrap pr-10`}
+      className={`${className} mt-0 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap pr-10`}
     />
     <button
       type="button"

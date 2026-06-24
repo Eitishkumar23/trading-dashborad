@@ -293,7 +293,7 @@ const Profile = () => {
                     {...registerEmail('password', { required: 'Password is required' })}
                     type={showEmailPassword ? 'text' : 'password'}
                     placeholder="Enter password"
-                    className="w-full min-w-0 overflow-x-auto whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2.5 pr-10 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
+                    className="w-full min-w-0 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2.5 pr-10 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
                   />
                   <button
                     type="button"
