@@ -210,7 +210,7 @@ const Profile = () => {
           </div>
 
           <section className="glass-panel flex min-h-[220px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
-            <div className="flex items-right justify-between gap-3 shrink-0">
+            <div className="flex items-center justify-between gap-3 shrink-0">
               <div>
                 <h2 className="font-bold text-base">Update Email</h2>
                 <p className="text-xs text-light-muted dark:text-dark-muted">Keep your sign-in address current</p>
