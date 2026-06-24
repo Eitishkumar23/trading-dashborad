@@ -22,12 +22,15 @@ import { marketAPI } from '../../services/api.js';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
-const formatCurrency = (value, options = {}) =>
-  `₹${Number(value || 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    ...options,
+const formatCurrency = (value, options = {}) => {
+  const min = options.minimumFractionDigits ?? 0;
+  const max = options.maximumFractionDigits ?? 2;
+
+  return `₹${Number(value || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: Math.min(min, max),
+    maximumFractionDigits: Math.max(min, max),
   })}`;
+};
 
 const Dashboard = () => {
   const { data, isLoading, error } = useDashboard();
@@ -256,11 +259,10 @@ const Dashboard = () => {
             Total Profits/Losses
           </span>
           <div
-            className={`flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-extrabold border ${
-              returnsPositive
-                ? 'bg-brand-500/10 text-brand-500 border-brand-500/20'
-                : 'bg-danger-500/10 text-danger-500 border-danger-500/20'
-            }`}
+            className={`flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-extrabold border ${returnsPositive
+              ? 'bg-brand-500/10 text-brand-500 border-brand-500/20'
+              : 'bg-danger-500/10 text-danger-500 border-danger-500/20'
+              }`}
           >
             {returnsPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
             <span>{formatCurrency(metrics.totalProfitLoss)}</span>
@@ -287,9 +289,8 @@ const Dashboard = () => {
                       {card.title}
                     </span>
                     <h3
-                      className={`text-lg xl:text-xl font-extrabold tracking-tight mt-2 break-words ${
-                        card.isReturn ? (returnsPositive ? 'text-brand-500' : 'text-danger-500') : ''
-                      }`}
+                      className={`text-lg xl:text-xl font-extrabold tracking-tight mt-2 break-words ${card.isReturn ? (returnsPositive ? 'text-brand-500' : 'text-danger-500') : ''
+                        }`}
                     >
                       {card.value}
                     </h3>
@@ -480,11 +481,10 @@ const Dashboard = () => {
                   <tr key={tx._id} className="border-b border-slate-100/60 dark:border-slate-800/30 last:border-none hover:bg-slate-100/40 dark:hover:bg-slate-900/30 transition-colors">
                     <td className="py-3.5 pr-3">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${
-                          tx.type === 'BUY'
-                            ? 'bg-brand-500/10 text-brand-500'
-                            : 'bg-danger-500/10 text-danger-500'
-                        }`}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${tx.type === 'BUY'
+                          ? 'bg-brand-500/10 text-brand-500'
+                          : 'bg-danger-500/10 text-danger-500'
+                          }`}
                       >
                         {tx.type}
                       </span>
