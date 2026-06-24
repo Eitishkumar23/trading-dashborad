@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Star, Trash2, Plus, Loader2, BellOff, BellRing } from 'lucide-react';
+import { Bell, Star, Trash2, Plus, Loader2, BellOff, BellRing, Eye, EyeOff } from 'lucide-react';
 import { useWatchlist, useAlerts } from '../../hooks/useMarketData.js';
 import { authAPI, marketAPI } from '../../services/api.js';
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,8 +19,19 @@ const Profile = () => {
   const [alertLoading, setAlertLoading] = useState(false);
   const [alertSuccess, setAlertSuccess] = useState('');
   const [showAlertForm, setShowAlertForm] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [showEmailPassword, setShowEmailPassword] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset } = useForm();
+  const {
+    register: registerEmail,
+    handleSubmit: handleEmailSubmit,
+    reset: resetEmail,
+    getValues: getEmailValues,
+    formState: { errors: emailErrors },
+  } = useForm();
   const hasPassword = Boolean(user?.hasPassword);
 
   const accountProvider = user?.authProvider
@@ -48,6 +59,18 @@ const Profile = () => {
 
     refreshProfile();
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!emailSuccess) return undefined;
+    const timer = setTimeout(() => setEmailSuccess(''), 4000);
+    return () => clearTimeout(timer);
+  }, [emailSuccess]);
+
+  useEffect(() => {
+    if (!emailError) return undefined;
+    const timer = setTimeout(() => setEmailError(''), 5000);
+    return () => clearTimeout(timer);
+  }, [emailError]);
 
   const handleRemoveWatchlist = async (symbol) => {
     await marketAPI.removeFromWatchlist(symbol);
@@ -77,6 +100,46 @@ const Profile = () => {
     } finally {
       setAlertLoading(false);
     }
+  };
+
+  const onUpdateEmail = async (data) => {
+    setEmailLoading(true);
+    setEmailSuccess('');
+    setEmailError('');
+
+    try {
+      const { data: response } = await authAPI.updateEmail({
+        newEmail: data.newEmail,
+        confirmEmail: data.confirmEmail,
+        password: data.password,
+      });
+      const updatedUser = response.user;
+
+      if (updatedUser?.token) {
+        localStorage.setItem('token', updatedUser.token);
+      }
+
+      dispatch(updateUserProfileLocal(updatedUser));
+      queryClient.setQueryData(['profile'], updatedUser);
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+
+      const { data: refreshedProfile } = await authAPI.getProfile();
+      dispatch(updateUserProfileLocal(refreshedProfile));
+      queryClient.setQueryData(['profile'], refreshedProfile);
+
+      setEmailSuccess(response.message || 'Email updated successfully');
+      resetEmail();
+    } catch (requestError) {
+      setEmailError(requestError.response?.data?.message || 'Could not update email. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const onInvalidEmailSubmit = (formErrors) => {
+    const firstError = formErrors.newEmail || formErrors.confirmEmail || formErrors.password;
+    setEmailSuccess('');
+    setEmailError(firstError?.message || 'Please check the email update form');
   };
 
   return (
@@ -157,33 +220,101 @@ const Profile = () => {
               </span>
             </div>
 
-            <form className="mt-5 grid flex-1 grid-cols-1 gap-3 md:grid-cols-2" onSubmit={(e) => e.preventDefault()}>
+            <AnimatePresence>
+              {emailSuccess && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="mt-4 rounded-xl border border-brand-500/20 bg-brand-500/10 p-3 text-xs font-semibold text-brand-500"
+                >
+                  {emailSuccess}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {emailError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="mt-4 rounded-xl border border-danger-500/20 bg-danger-500/10 p-3 text-xs font-semibold text-danger-500"
+                >
+                  {emailError}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <form className="mt-5 grid flex-1 grid-cols-1 gap-3 md:grid-cols-2" onSubmit={handleEmailSubmit(onUpdateEmail, onInvalidEmailSubmit)}>
               <div className="md:col-span-2">
                 <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">
                   New Email
                 </label>
                 <input
+                  {...registerEmail('newEmail', {
+                    required: 'New email is required',
+                    pattern: {
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      message: 'Invalid email format',
+                    },
+                  })}
                   type="email"
                   placeholder="name@example.com"
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
                 />
+                {emailErrors.newEmail && (
+                  <p className="mt-1 text-xs text-danger-500">{emailErrors.newEmail.message}</p>
+                )}
               </div>
               <div className="md:col-span-2">
                 <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">
                   Confirm New Email
                 </label>
                 <input
+                  {...registerEmail('confirmEmail', {
+                    required: 'Confirm new email is required',
+                    validate: (value) => value === getEmailValues('newEmail') || 'Emails do not match',
+                  })}
                   type="email"
                   placeholder="repeat new email"
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
                 />
+                {emailErrors.confirmEmail && (
+                  <p className="mt-1 text-xs text-danger-500">{emailErrors.confirmEmail.message}</p>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">
+                  Password
+                </label>
+                <div className="relative mt-1">
+                  <input
+                    {...registerEmail('password', { required: 'Password is required' })}
+                    type={showEmailPassword ? 'text' : 'password'}
+                    placeholder="Enter password"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 pr-10 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
+                  />
+                  <button
+                    type="button"
+                    aria-label={showEmailPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowEmailPassword((current) => !current)}
+                    className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-light-muted transition-colors hover:text-brand-500 dark:text-dark-muted"
+                  >
+                    {showEmailPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+                {emailErrors.password && (
+                  <p className="mt-1 text-xs text-danger-500">{emailErrors.password.message}</p>
+                )}
               </div>
               <div className="md:col-span-2 flex items-end">
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-brand-500 py-2.5 text-xs font-bold text-white transition-colors hover:bg-brand-600"
+                  disabled={emailLoading}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-500 py-2.5 text-xs font-bold text-white transition-colors hover:bg-brand-600 disabled:opacity-60"
                 >
-                  Update Email
+                  {emailLoading ? <Loader2 size={14} className="animate-spin" /> : <span>Update Email</span>}
                 </button>
               </div>
             </form>

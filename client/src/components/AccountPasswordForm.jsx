@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
-import { KeyRound, Loader2, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, KeyRound, Loader2, ShieldCheck } from 'lucide-react';
 import { authAPI } from '../services/api.js';
 import { updateUserProfileLocal } from '../redux/authSlice.js';
 
@@ -24,6 +25,25 @@ const themeClasses = {
   },
 };
 
+const PasswordInput = ({ name, registration, className, placeholder, visible, onToggle }) => (
+  <div className="relative mt-1">
+    <input
+      type={visible ? 'text' : 'password'}
+      placeholder={placeholder}
+      {...registration}
+      className={`${className} mt-0 pr-10`}
+    />
+    <button
+      type="button"
+      aria-label={visible ? `Hide ${name}` : `Show ${name}`}
+      onClick={onToggle}
+      className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-light-muted transition-colors hover:text-brand-500 dark:text-dark-muted"
+    >
+      {visible ? <EyeOff size={15} /> : <Eye size={15} />}
+    </button>
+  </div>
+);
+
 const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
   const dispatch = useDispatch();
   const classes = themeClasses[theme] || themeClasses.app;
@@ -31,16 +51,40 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [visibleFields, setVisibleFields] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false,
+  });
 
   const {
     register,
     handleSubmit,
+    getValues,
     reset,
-    watch,
     formState: { errors },
   } = useForm();
 
-  const newPassword = watch('newPassword', '');
+  const inputClassName = `w-full border rounded-xl py-2.5 px-3 text-xs font-semibold outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 ${classes.input}`;
+
+  useEffect(() => {
+    if (!success) return undefined;
+    const timer = setTimeout(() => setSuccess(''), 4000);
+    return () => clearTimeout(timer);
+  }, [success]);
+
+  useEffect(() => {
+    if (!error) return undefined;
+    const timer = setTimeout(() => setError(''), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
+
+  const toggleVisibility = (field) => {
+    setVisibleFields((current) => ({
+      ...current,
+      [field]: !current[field],
+    }));
+  };
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -82,26 +126,42 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
         </div>
       </div>
 
-      {success && (
-        <div className={`mb-4 p-3 border rounded-xl text-xs font-semibold ${classes.success}`}>
-          {success}
-        </div>
-      )}
+      <AnimatePresence>
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className={`mb-4 p-3 border rounded-xl text-xs font-semibold ${classes.success}`}
+          >
+            {success}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {error && (
-        <div className={`mb-4 p-3 border rounded-xl text-xs font-semibold ${classes.error}`}>
-          {error}
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            className={`mb-4 p-3 border rounded-xl text-xs font-semibold ${classes.error}`}
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {hasExistingPassword && (
           <div>
             <label className={`text-[10px] font-bold uppercase ${classes.label}`}>Current Password</label>
-            <input
-              type="password"
-              {...register('currentPassword', { required: 'Current password is required' })}
-              className={`w-full mt-1 border rounded-xl py-2.5 px-3 text-xs font-semibold outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 ${classes.input}`}
+            <PasswordInput
+              name="current password"
+              visible={visibleFields.currentPassword}
+              onToggle={() => toggleVisibility('currentPassword')}
+              registration={register('currentPassword', { required: 'Current password is required' })}
+              className={inputClassName}
             />
             {errors.currentPassword && (
               <p className="text-xs text-danger-500 mt-1">{errors.currentPassword.message}</p>
@@ -111,14 +171,16 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
 
         <div>
           <label className={`text-[10px] font-bold uppercase ${classes.label}`}>New Password</label>
-          <input
-            type="password"
+          <PasswordInput
+            name="new password"
             placeholder="At least 6 characters"
-            {...register('newPassword', {
+            visible={visibleFields.newPassword}
+            onToggle={() => toggleVisibility('newPassword')}
+            registration={register('newPassword', {
               required: 'New password is required',
               minLength: { value: 6, message: 'Password must be at least 6 characters' },
             })}
-            className={`w-full mt-1 border rounded-xl py-2.5 px-3 text-xs font-semibold outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 ${classes.input}`}
+            className={inputClassName}
           />
           {errors.newPassword && (
             <p className="text-xs text-danger-500 mt-1">{errors.newPassword.message}</p>
@@ -127,14 +189,16 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
 
         <div>
           <label className={`text-[10px] font-bold uppercase ${classes.label}`}>Confirm New Password</label>
-          <input
-            type="password"
+          <PasswordInput
+            name="confirm new password"
             placeholder="Repeat password"
-            {...register('confirmPassword', {
+            visible={visibleFields.confirmPassword}
+            onToggle={() => toggleVisibility('confirmPassword')}
+            registration={register('confirmPassword', {
               required: 'Confirm your password',
-              validate: (value) => value === newPassword || 'Passwords do not match',
+              validate: (value) => value === getValues('newPassword') || 'Passwords do not match',
             })}
-            className={`w-full mt-1 border rounded-xl py-2.5 px-3 text-xs font-semibold outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 ${classes.input}`}
+            className={inputClassName}
           />
           {errors.confirmPassword && (
             <p className="text-xs text-danger-500 mt-1">{errors.confirmPassword.message}</p>

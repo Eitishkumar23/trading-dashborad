@@ -188,6 +188,67 @@ export const setApplicationPassword = async (req, res) => {
   }
 };
 
+// @desc    Update account email
+// @route   PUT /api/auth/email
+// @access  Private
+export const updateEmail = async (req, res) => {
+  try {
+    const { newEmail, confirmEmail, password } = req.body;
+    const normalizedEmail = newEmail?.toLowerCase().trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!newEmail || !confirmEmail || !password) {
+      return res.status(400).json({ message: 'Please provide new email, confirmation, and password' });
+    }
+
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    if (normalizedEmail !== confirmEmail.toLowerCase().trim()) {
+      return res.status(400).json({ message: 'Emails do not match' });
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({ message: 'Set an application password before updating your email' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid password' });
+    }
+
+    const emailExists = await User.findOne({
+      email: normalizedEmail,
+      _id: { $ne: user._id },
+    });
+
+    if (emailExists) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    user.email = normalizedEmail;
+    await user.save();
+
+    res.json({
+      message: 'Email updated successfully',
+      user: buildAuthResponse(user),
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Google OAuth: verify Google token, find or create user, return JWT
 // @route   POST /api/auth/google
 // @access  Public

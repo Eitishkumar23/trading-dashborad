@@ -44,6 +44,7 @@ export const authAPI = {
   googleAuth: (credential) => API.post('/auth/google', { credential }),
   getProfile: () => API.get('/auth/profile'),
   setPassword: (data) => API.put('/auth/password', data),
+  updateEmail: (data) => API.put('/auth/email', data),
   seedData: () => API.post('/seed'),// Seed bypass
 };
 
