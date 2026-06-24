@@ -5,6 +5,7 @@ import { useMarkets, useMarketOverview, useWatchlist } from '../../hooks/useMark
 import { marketAPI, tradeAPI, walletAPI } from '../../services/api.js';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
 
 const Market = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -317,14 +318,13 @@ const Market = () => {
                 ) : (
                   <>
                     <label className="block text-xs font-bold uppercase text-light-muted dark:text-dark-muted mb-1.5">Quantity</label>
-                    <input
-                      type="number"
-                      min="0.000001"
-                      step="any"
+                    <ThemedNumberInput
                       value={buyQuantity}
-                      onChange={(e) => setBuyQuantity(e.target.value)}
+                      min={0}
+                      step={buyModal.assetType === 'CRYPTO' ? 0.01 : 1}
+                      onChange={setBuyQuantity}
                       placeholder="e.g. 0.5, 1, 10"
-                      className="w-full bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-sm font-semibold focus:border-brand-500 outline-none transition-colors mb-4"
+                      className="mb-4"
                     />
 
                     {buyQuantity && !isNaN(parseFloat(buyQuantity)) && (

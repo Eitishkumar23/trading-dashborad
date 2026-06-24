@@ -17,7 +17,6 @@ import {
   Users,
   Activity,
   ArrowLeftRight,
-  Percent,
   Clock,
   Search,
   Filter,
@@ -54,6 +53,7 @@ import {
 import { logout, updateUserProfileLocal } from '../redux/authSlice.js';
 import { adminAPI, authAPI } from '../services/api.js';
 import AccountPasswordForm from '../components/AccountPasswordForm.jsx';
+import ThemedNumberInput from '../components/ThemedNumberInput.jsx';
 
 const ADMIN_EMAIL = 'eitishkoundal34@gmail.com';
 const adminTabs = [
@@ -1222,15 +1222,14 @@ const AdminPanel = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Total Allowed Quantity</label>
-                <input
-                  type="number"
-                  step="any"
-                  placeholder="e.g. 1000, 250"
+                <ThemedNumberInput
                   value={totalQuantity}
-                  onChange={(e) => setTotalQuantity(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 rounded-xl py-2.5 px-4 text-sm text-white outline-none transition-all"
-                  required
-                  min="0"
+                  min={0}
+                  step={0.01}
+                  onChange={setTotalQuantity}
+                  placeholder="e.g. 1000, 250"
+                  theme="dark"
+                  inputClassName="rounded-xl py-2.5 pr-16 text-sm"
                 />
               </div>
 
@@ -1314,13 +1313,15 @@ const AdminPanel = () => {
                           </td>
                           <td className="py-4 text-right">
                             {isEditing ? (
-                              <input
-                                type="number"
-                                step="any"
+                              <ThemedNumberInput
                                 value={editingValue}
-                                onChange={(e) => setEditingValue(e.target.value)}
-                                className="w-20 bg-slate-950 border border-brand-500 text-right text-sm text-white px-2 py-1 rounded outline-none"
+                                min={0}
+                                step={0.01}
+                                onChange={setEditingValue}
+                                theme="dark"
                                 autoFocus
+                                className="ml-auto w-28"
+                                inputClassName="rounded-lg py-1.5 pr-14 pl-3 text-right text-sm border-brand-500 focus:border-brand-500"
                               />
                             ) : (
                               <span className="font-bold text-white font-mono">{asset.totalQuantity}</span>
@@ -1419,18 +1420,16 @@ const AdminPanel = () => {
               <div className="flex flex-col">
                 <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Global Trading Fee (%)</label>
                 <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="10"
-                      value={settingsFee}
-                      onChange={(e) => setSettingsFee(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 rounded-xl py-2.5 px-4 text-sm text-white outline-none"
-                    />
-                    <Percent className="absolute right-3.5 top-3 text-slate-500" size={16} />
-                  </div>
+                  <ThemedNumberInput
+                    value={settingsFee}
+                    min={0}
+                    max={10}
+                    step={0.01}
+                    onChange={setSettingsFee}
+                    theme="dark"
+                    className="flex-1"
+                    inputClassName="rounded-xl py-2.5 pr-16 text-sm"
+                  />
                   <button
                     onClick={() => handleSaveSettings('tradingFeePercent', parseFloat(settingsFee))}
                     disabled={settingsLoading}
@@ -1524,11 +1523,14 @@ const AdminPanel = () => {
                       <td className="py-4 font-bold text-white">{tier.tier}</td>
                       <td className="py-4 text-right">
                         {isEditing ? (
-                          <input
-                            type="number"
+                          <ThemedNumberInput
                             value={editingTierValue.withdrawalLimit}
-                            onChange={(e) => setEditingTierValue({ ...editingTierValue, withdrawalLimit: e.target.value })}
-                            className="w-24 bg-slate-950 border border-brand-500 text-right px-2 py-1 rounded text-sm text-white"
+                            min={0}
+                            step={1000}
+                            onChange={(nextValue) => setEditingTierValue({ ...editingTierValue, withdrawalLimit: nextValue })}
+                            theme="dark"
+                            className="ml-auto w-32"
+                            inputClassName="rounded-lg py-1.5 pr-14 pl-3 text-right text-sm border-brand-500 focus:border-brand-500"
                           />
                         ) : (
                           <span className="font-bold text-slate-200 font-mono">₹{tier.withdrawalLimit.toLocaleString()}</span>
@@ -1536,11 +1538,15 @@ const AdminPanel = () => {
                       </td>
                       <td className="py-4 text-right">
                         {isEditing ? (
-                          <input
-                            type="number"
+                          <ThemedNumberInput
                             value={editingTierValue.feeDiscount}
-                            onChange={(e) => setEditingTierValue({ ...editingTierValue, feeDiscount: e.target.value })}
-                            className="w-16 bg-slate-950 border border-brand-500 text-right px-2 py-1 rounded text-sm text-white"
+                            min={0}
+                            max={100}
+                            step={0.1}
+                            onChange={(nextValue) => setEditingTierValue({ ...editingTierValue, feeDiscount: nextValue })}
+                            theme="dark"
+                            className="ml-auto w-28"
+                            inputClassName="rounded-lg py-1.5 pr-14 pl-3 text-right text-sm border-brand-500 focus:border-brand-500"
                           />
                         ) : (
                           <span className="font-bold text-slate-200 font-mono">{tier.feeDiscount}%</span>

@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 import { updateUserProfileLocal } from '../../redux/authSlice.js';
 import AccountPasswordForm from '../../components/AccountPasswordForm.jsx';
+import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
 
 const Profile = () => {
   const { user } = useSelector((s) => s.auth);
@@ -24,7 +25,7 @@ const Profile = () => {
   const [emailError, setEmailError] = useState('');
   const [showEmailPassword, setShowEmailPassword] = useState(false);
 
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset, setValue, watch } = useForm();
   const {
     register: registerEmail,
     handleSubmit: handleEmailSubmit,
@@ -33,6 +34,7 @@ const Profile = () => {
     formState: { errors: emailErrors },
   } = useForm();
   const hasPassword = Boolean(user?.hasPassword);
+  const alertTargetValue = watch('value');
 
   const accountProvider = user?.authProvider
     ? user.authProvider.charAt(0).toUpperCase() + user.authProvider.slice(1)
@@ -422,9 +424,16 @@ const Profile = () => {
                       <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">Target Price (â‚¹)</label>
                       <input
                         {...register('value', { required: true, min: 0.01 })}
-                        type="number"
+                        type="hidden"
+                      />
+                      <ThemedNumberInput
+                        value={alertTargetValue ?? ''}
+                        min={0}
+                        step={1000}
+                        onChange={(nextValue) => setValue('value', nextValue, { shouldDirty: true })}
                         placeholder="e.g. 6500000"
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
+                        className="mt-1"
+                        inputClassName="rounded-xl py-2 pr-16 text-xs"
                       />
                     </div>
                     <button type="submit" disabled={alertLoading} className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-500 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-600">
