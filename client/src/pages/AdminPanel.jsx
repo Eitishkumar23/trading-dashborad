@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -51,13 +51,33 @@ import {
   LineChart, 
   Line 
 } from 'recharts';
-import { logout } from '../redux/authSlice.js';
-import { adminAPI } from '../services/api.js';
+import { logout, updateUserProfileLocal } from '../redux/authSlice.js';
+import { adminAPI, authAPI } from '../services/api.js';
+import AccountPasswordForm from '../components/AccountPasswordForm.jsx';
 
 const ADMIN_EMAIL = 'eitishkoundal34@gmail.com';
+const adminTabs = [
+  { id: 'dashboard', route: '', label: 'Dashboard', mobileLabel: 'Dashboard', icon: BarChart4 },
+  { id: 'users', route: 'users', label: 'User Management', mobileLabel: 'Users', icon: Users },
+  { id: 'orders', route: 'orders', label: 'Orders Monitor', mobileLabel: 'Orders', icon: ArrowLeftRight },
+  { id: 'withdrawals', route: 'withdrawals', label: 'Withdrawal Queue', mobileLabel: 'Withdrawals', icon: Clock },
+  { id: 'assets', route: 'assets', label: 'Asset Limits', mobileLabel: 'Assets', icon: Database },
+  { id: 'settings', route: 'settings', label: 'Platform Settings', mobileLabel: 'Settings', icon: Settings },
+  { id: 'account-settings', route: 'account-settings', label: 'Account Settings', mobileLabel: 'Account', icon: KeyRound },
+  { id: 'audit', route: 'audit', label: 'Audit Log', mobileLabel: 'Audit', icon: FileText },
+];
+
+const getTabFromSection = (section) => {
+  return adminTabs.find((tab) => tab.route === (section || ''))?.id || 'dashboard';
+};
+
+const getRouteFromTab = (tabId) => {
+  return adminTabs.find((tab) => tab.id === tabId)?.route || '';
+};
 
 const AdminPanel = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const { section } = useParams();
+  const [activeTab, setActiveTab] = useState(() => getTabFromSection(section));
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [actionLoadingSymbol, setActionLoadingSymbol] = useState('');
@@ -138,12 +158,31 @@ const AdminPanel = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
+  useEffect(() => {
+    setActiveTab(getTabFromSection(section));
+  }, [section]);
+
   // Authenticate Admin
   useEffect(() => {
     if (!user || user.email !== ADMIN_EMAIL) {
       navigate('/login');
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    const refreshAdminProfile = async () => {
+      if (!user || user.email !== ADMIN_EMAIL) return;
+
+      try {
+        const { data } = await authAPI.getProfile();
+        dispatch(updateUserProfileLocal(data));
+      } catch (error) {
+        console.error('Failed to refresh admin profile', error);
+      }
+    };
+
+    refreshAdminProfile();
+  }, [dispatch, user?.email]);
 
   // Body scroll lock when user detail panel is open
   useEffect(() => {
@@ -254,6 +293,12 @@ const AdminPanel = () => {
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
+  };
+
+  const handleTabChange = (tabId) => {
+    const route = getRouteFromTab(tabId);
+    setActiveTab(tabId);
+    navigate(route ? `/admin/${route}` : '/admin');
   };
 
   // Add Asset Limit
@@ -1544,6 +1589,50 @@ const AdminPanel = () => {
   };
 
   // SECTION 7: AUDIT LOG
+  const renderAccountSettings = () => {
+    const authProvider = user?.authProvider || 'local';
+    const hasPassword = Boolean(user?.hasPassword);
+    const statusCards = [
+      { label: 'Email', value: user?.email || ADMIN_EMAIL, accent: 'text-slate-200' },
+      { label: 'Auth Provider', value: authProvider === 'google' ? 'Google' : 'Local', accent: 'text-brand-400' },
+      { label: 'Has Password', value: hasPassword ? 'Enabled' : 'Not set', accent: hasPassword ? 'text-brand-400' : 'text-amber-400' },
+    ];
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">Account Settings</h2>
+          <p className="text-sm text-slate-400 mt-1">Manage admin sign-in methods and application password access.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {statusCards.map((card) => (
+            <div key={card.label} className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-5 shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{card.label}</span>
+                <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">
+                  {card.label === 'Email' && <Users size={15} />}
+                  {card.label === 'Auth Provider' && <ShieldCheck size={15} />}
+                  {card.label === 'Has Password' && <KeyRound size={15} />}
+                </div>
+              </div>
+              <p className={`text-base font-extrabold break-words ${card.accent}`}>{card.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <AccountPasswordForm
+          hasPassword={hasPassword}
+          theme="admin"
+          onSaved={(updatedUser) => {
+            showStatus(updatedUser?.hasPassword ? 'Admin password saved successfully.' : 'Account updated.', 'success');
+          }}
+        />
+      </div>
+    );
+  };
+
+  // SECTION 8: AUDIT LOG
   const renderAuditLog = () => {
     const filteredLogs = auditLog.filter(log => {
       const matchesSearch = log.target.toLowerCase().includes(auditSearch.toLowerCase()) || 
@@ -1707,18 +1796,10 @@ const AdminPanel = () => {
             Navigation
           </span>
 
-          {[
-            { id: 'dashboard', label: 'Dashboard', icon: BarChart4 },
-            { id: 'users', label: 'User Management', icon: Users },
-            { id: 'orders', label: 'Orders Monitor', icon: ArrowLeftRight },
-            { id: 'withdrawals', label: 'Withdrawal Queue', icon: Clock },
-            { id: 'assets', label: 'Asset Limits', icon: Database },
-            { id: 'settings', label: 'Platform Settings', icon: Settings },
-            { id: 'audit', label: 'Audit Log', icon: FileText }
-          ].map(tab => (
+          {adminTabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
                 activeTab === tab.id 
                   ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25' 
@@ -1738,18 +1819,10 @@ const AdminPanel = () => {
       {/* ── Mobile Sidebar (scrolls horizontally at top) ── */}
       <div className="lg:hidden fixed top-16 left-0 right-0 bg-slate-950 border-b border-slate-900 z-40 overflow-x-auto">
         <div className="flex gap-1 p-2 min-w-max">
-          {[
-            { id: 'dashboard', label: 'Dashboard', icon: BarChart4 },
-            { id: 'users', label: 'Users', icon: Users },
-            { id: 'orders', label: 'Orders', icon: ArrowLeftRight },
-            { id: 'withdrawals', label: 'Withdrawals', icon: Clock },
-            { id: 'assets', label: 'Assets', icon: Database },
-            { id: 'settings', label: 'Settings', icon: Settings },
-            { id: 'audit', label: 'Audit', icon: FileText }
-          ].map(tab => (
+          {adminTabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                 activeTab === tab.id 
                   ? 'bg-brand-500 text-white' 
@@ -1757,7 +1830,7 @@ const AdminPanel = () => {
               }`}
             >
               <tab.icon size={14} />
-              <span>{tab.label}</span>
+              <span>{tab.mobileLabel}</span>
             </button>
           ))}
         </div>
@@ -1781,6 +1854,7 @@ const AdminPanel = () => {
               {activeTab === 'withdrawals' && renderWithdrawalQueue()}
               {activeTab === 'assets' && renderAssetLimits()}
               {activeTab === 'settings' && renderPlatformSettings()}
+              {activeTab === 'account-settings' && renderAccountSettings()}
               {activeTab === 'audit' && renderAuditLog()}
             </motion.div>
           </AnimatePresence>

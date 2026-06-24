@@ -50,6 +50,14 @@ function App() {
             </AdminRoute>
           }
         />
+        <Route
+          path="/admin/:section"
+          element={
+            <AdminRoute>
+              <AdminPanel />
+            </AdminRoute>
+          }
+        />
 
         {/* Protected Dashboard Layout and Sub-pages */}
         <Route
