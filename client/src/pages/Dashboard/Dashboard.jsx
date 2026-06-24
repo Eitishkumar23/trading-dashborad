@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,19 +8,26 @@ import {
   TrendingDown,
   Percent,
   Layers,
-  ArrowUpRight,
-  ArrowDownLeft,
   BellRing,
   Award,
   AlertTriangle,
   Flame,
-  ArrowRight
+  ArrowRight,
+  BriefcaseBusiness,
+  Landmark,
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { useDashboard, useAlerts } from '../../hooks/useMarketData.js';
 import { marketAPI } from '../../services/api.js';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+
+const formatCurrency = (value, options = {}) =>
+  `₹${Number(value || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    ...options,
+  })}`;
 
 const Dashboard = () => {
   const { data, isLoading, error } = useDashboard();
@@ -34,7 +41,7 @@ const Dashboard = () => {
     backgroundColor: isDark ? '#111827' : '#ffffff',
     borderColor: isDark ? '#374151' : '#e5e7eb',
     borderRadius: '12px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    boxShadow: '0 12px 30px rgba(15, 23, 42, 0.14)',
     padding: '8px 12px',
   };
 
@@ -50,11 +57,9 @@ const Dashboard = () => {
     fontSize: '11px',
   };
 
-  // Check if there are any newly triggered alerts to show notifications
   useEffect(() => {
     if (alertsData) {
-      const activeTriggered = alertsData.filter((a) => a.isTriggered);
-      setTriggeredAlerts(activeTriggered);
+      setTriggeredAlerts(alertsData.filter((a) => a.isTriggered));
     }
   }, [alertsData]);
 
@@ -71,33 +76,27 @@ const Dashboard = () => {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.08,
-      },
+      transition: { staggerChildren: 0.06 },
     },
   };
 
   const cardVariants = {
-    hidden: { opacity: 0, y: 15 },
-    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100 } },
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120 } },
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        {/* Skeleton Header */}
-        <div className="h-10 w-48 bg-slate-200 dark:bg-slate-800/50 rounded-xl skeleton" />
-
-        {/* Skeleton Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="space-y-5">
+        <div className="h-14 w-80 bg-slate-200 dark:bg-slate-800/50 rounded-2xl skeleton" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((n) => (
             <div key={n} className="h-32 bg-slate-200 dark:bg-slate-800/50 rounded-3xl skeleton" />
           ))}
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-96 bg-slate-200 dark:bg-slate-800/50 rounded-3xl skeleton" />
-          <div className="h-96 bg-slate-200 dark:bg-slate-800/50 rounded-3xl skeleton" />
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+          <div className="xl:col-span-3 h-96 bg-slate-200 dark:bg-slate-800/50 rounded-3xl skeleton" />
+          <div className="xl:col-span-2 h-96 bg-slate-200 dark:bg-slate-800/50 rounded-3xl skeleton" />
         </div>
       </div>
     );
@@ -122,40 +121,82 @@ const Dashboard = () => {
   }
 
   const { metrics, topHoldings, recentTransactions, insights, charts } = data;
+  const displayHoldings = topHoldings.slice(0, 5);
+  const returnsPositive = metrics.totalProfitLoss >= 0;
 
   const metricCards = [
     {
       title: 'Wallet Balance',
-      value: `₹${metrics.walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: formatCurrency(metrics.walletBalance),
       subtitle: 'Virtual cash funds',
       icon: Wallet,
       color: 'from-blue-500 to-indigo-600 shadow-blue-500/20',
-      link: '/wallet'
+      link: '/wallet',
     },
     {
       title: 'Total Investment',
-      value: `₹${metrics.totalInvestment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: formatCurrency(metrics.totalInvestment),
       subtitle: 'Original cost basis',
-      icon: Layers,
-      color: 'from-purple-500 to-pink-600 shadow-purple-500/20',
-      link: '/portfolio'
+      icon: Landmark,
+      color: 'from-violet-500 to-fuchsia-600 shadow-violet-500/20',
+      link: '/portfolio',
     },
     {
       title: 'Portfolio Value',
-      value: `₹${metrics.currentPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      value: formatCurrency(metrics.currentPortfolioValue),
       subtitle: 'Valued at live prices',
-      icon: TrendingUp,
+      icon: BriefcaseBusiness,
       color: 'from-emerald-500 to-teal-600 shadow-emerald-500/20',
-      link: '/portfolio'
+      link: '/portfolio',
     },
     {
-      title: 'Net Worth',
-      value: `₹${metrics.netWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      subtitle: 'Wallet + Active Holdings',
+      title: 'Total Returns',
+      value: formatCurrency(metrics.totalProfitLoss),
+      subtitle: `${metrics.totalReturnPercent >= 0 ? '+' : ''}${metrics.totalReturnPercent.toFixed(2)}%`,
+      icon: Percent,
+      color: returnsPositive
+        ? 'from-emerald-500 to-green-600 shadow-emerald-500/20'
+        : 'from-rose-500 to-red-600 shadow-rose-500/20',
+      link: '/analytics',
+      isReturn: true,
+    },
+  ];
+
+  const insightCards = [
+    {
+      title: "Today's P&L",
+      icon: Flame,
+      body: formatCurrency(metrics.todayProfitLoss),
+      meta: `${metrics.todayProfitLoss >= 0 ? '+' : ''}${metrics.todayReturnPercent.toFixed(2)}%`,
+      positive: metrics.todayProfitLoss >= 0,
+    },
+    {
+      title: 'Top Performer',
       icon: Award,
-      color: 'from-amber-500 to-orange-600 shadow-amber-500/20',
-      link: '/analytics'
-    }
+      body: insights.bestPerforming?.symbol || 'No holdings',
+      meta: insights.bestPerforming
+        ? `+${insights.bestPerforming.returnPercent.toFixed(2)}% (${formatCurrency(insights.bestPerforming.profit, { maximumFractionDigits: 0 })})`
+        : 'Start building positions',
+      positive: true,
+    },
+    {
+      title: 'Worst Performer',
+      icon: TrendingDown,
+      body: insights.worstPerforming?.symbol || 'No holdings',
+      meta: insights.worstPerforming
+        ? `${insights.worstPerforming.returnPercent >= 0 ? '+' : ''}${insights.worstPerforming.returnPercent.toFixed(2)}% (${formatCurrency(insights.worstPerforming.profit, { maximumFractionDigits: 0 })})`
+        : 'No downside yet',
+      positive: !insights.worstPerforming || insights.worstPerforming.profit >= 0,
+    },
+    {
+      title: 'Top Holding',
+      icon: Layers,
+      body: insights.mostInvested?.symbol || 'No holdings',
+      meta: insights.mostInvested
+        ? `Invested: ${formatCurrency(insights.mostInvested.investedAmount, { maximumFractionDigits: 0 })}`
+        : 'No capital deployed',
+      positive: true,
+    },
   ];
 
   return (
@@ -163,21 +204,20 @@ const Dashboard = () => {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="space-y-4 pb-12"
+      className="space-y-4 pb-6"
     >
-      {/* Price Alert Notifications Banner */}
       <AnimatePresence>
         {triggeredAlerts.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            exit={{ opacity: 0, y: -16 }}
             className="space-y-2"
           >
             {triggeredAlerts.map((alert) => (
               <div
                 key={alert._id}
-                className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500 rounded-2xl shadow-sm text-sm"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-500 rounded-2xl shadow-sm text-sm"
               >
                 <div className="flex items-center gap-3">
                   <div className="bg-amber-500/25 p-2 rounded-xl">
@@ -186,9 +226,9 @@ const Dashboard = () => {
                   <div>
                     <span className="font-bold">{alert.symbol}</span> Price Alert Triggered! Asset price is{' '}
                     <span className="font-bold">
-                      {alert.condition === 'ABOVE' ? 'above' : 'below'} ₹{alert.value.toLocaleString()}
+                      {alert.condition === 'ABOVE' ? 'above' : 'below'} {formatCurrency(alert.value, { maximumFractionDigits: 0 })}
                     </span>{' '}
-                    (Current: ₹{alert.currentPrice?.toLocaleString()})
+                    (Current: {formatCurrency(alert.currentPrice, { maximumFractionDigits: 0 })})
                   </div>
                 </div>
                 <button
@@ -203,101 +243,102 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-extrabold tracking-tight">Financial Dashboard</h1>
-          <p className="text-xs text-light-muted dark:text-dark-muted">
+          <h1 className="text-2xl font-extrabold tracking-tight">Financial Dashboard</h1>
+          <p className="text-sm text-light-muted dark:text-dark-muted">
             Track investments, wallet balances, and profits.
           </p>
         </div>
 
-        {/* Real-time-like profit indicator */}
-        <div className="flex flex-col items-end">
-          <span className="text-[10px] text-light-muted dark:text-dark-muted font-medium mb-0.5">Total Profits/Losses</span>
-          <div className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold ${metrics.totalProfitLoss >= 0
-            ? 'bg-brand-500/10 text-brand-500'
-            : 'bg-danger-500/10 text-danger-500'
-            }`}>
-            {metrics.totalProfitLoss >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-            <span>₹{metrics.totalProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            <span className="text-[10px]">({metrics.totalReturnPercent >= 0 ? '+' : ''}{metrics.totalReturnPercent.toFixed(2)}%)</span>
+        <div className="flex flex-col sm:items-end">
+          <span className="text-[11px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1">
+            Total Profits/Losses
+          </span>
+          <div
+            className={`flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-extrabold border ${
+              returnsPositive
+                ? 'bg-brand-500/10 text-brand-500 border-brand-500/20'
+                : 'bg-danger-500/10 text-danger-500 border-danger-500/20'
+            }`}
+          >
+            {returnsPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+            <span>{formatCurrency(metrics.totalProfitLoss)}</span>
+            <span className="text-xs">
+              ({metrics.totalReturnPercent >= 0 ? '+' : ''}{metrics.totalReturnPercent.toFixed(2)}%)
+            </span>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Summary Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metricCards.map((card, idx) => {
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {metricCards.map((card) => {
           const Icon = card.icon;
           return (
-            <motion.div key={idx} variants={cardVariants}>
+            <motion.div key={card.title} variants={cardVariants}>
               <Link
                 to={card.link}
-                className="group relative block p-5 bg-white dark:bg-dark-card border border-slate-200/50 dark:border-dark-border rounded-3xl shadow-sm hover:shadow-xl dark:shadow-glass-dark hover:border-brand-500/30 transition-all duration-300 overflow-hidden"
+                className="group relative block h-full min-h-[136px] p-5 bg-white/80 dark:bg-dark-card/80 border border-slate-200/60 dark:border-dark-border rounded-3xl shadow-sm hover:shadow-xl dark:shadow-glass-dark hover:border-brand-500/30 transition-all duration-300 overflow-hidden"
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-tr opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-300 rounded-bl-full" />
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">
-                    {card.title}
-                  </span>
-                  <div className={`p-2 rounded-xl bg-gradient-to-tr ${card.color} text-white shadow-lg`}>
-                    <Icon size={16} />
+                <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-tr from-brand-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-bl-full" />
+                <div className="relative flex items-start justify-between gap-3 mb-4">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">
+                      {card.title}
+                    </span>
+                    <h3
+                      className={`text-lg xl:text-xl font-extrabold tracking-tight mt-2 break-words ${
+                        card.isReturn ? (returnsPositive ? 'text-brand-500' : 'text-danger-500') : ''
+                      }`}
+                    >
+                      {card.value}
+                    </h3>
+                  </div>
+                  <div className={`p-2.5 rounded-2xl bg-gradient-to-tr ${card.color} text-white shadow-lg shrink-0`}>
+                    <Icon size={18} />
                   </div>
                 </div>
-                <h3 className="text-lg font-extrabold tracking-tight mb-0.5 group-hover:translate-x-0.5 transition-transform duration-200">
-                  {card.value}
-                </h3>
-                <p className="text-[10px] text-light-muted dark:text-dark-muted">{card.subtitle}</p>
+                <p className={`relative text-xs font-semibold ${card.isReturn ? (returnsPositive ? 'text-brand-500' : 'text-danger-500') : 'text-light-muted dark:text-dark-muted'}`}>
+                  {card.subtitle}
+                </p>
               </Link>
             </motion.div>
           );
         })}
-      </div>
+      </section>
 
-      {/* ─── ROW 2 : Top Holdings (60%) │ Asset Allocation (40%) ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-stretch">
-
-        {/* ── Top Holdings ── 3/5 ≈ 60% */}
+      <section className="grid grid-cols-1 xl:grid-cols-5 gap-4 items-stretch">
         <motion.div
           variants={cardVariants}
-          className="lg:col-span-3 glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[420px] overflow-hidden min-h-0"
+          className="xl:col-span-3 glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[386px] overflow-hidden min-h-0 hover:shadow-xl transition-shadow"
         >
-          <div className="flex items-center justify-between mb-4 flex-shrink-0">
-            <h2 className="text-base font-bold">Top Holdings</h2>
-            <Link to="/portfolio" className="text-xs text-brand-500 hover:underline font-semibold">View All Holdings</Link>
+          <div className="flex items-center justify-between mb-3 shrink-0">
+            <h2 className="text-base font-extrabold">Top Holdings</h2>
+            <Link to="/portfolio" className="text-xs text-brand-500 hover:underline font-bold">View All Holdings</Link>
           </div>
-          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
-            <table className="w-full text-left text-sm border-collapse">
+
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <table className="w-full text-sm border-collapse">
               <thead>
-                <tr
-                  className="
-      sticky top-0 z-20
-      bg-slate-50
-      dark:bg-[#101423]
-      border-b border-slate-200/50 dark:border-slate-800/50
-      text-light-muted dark:text-dark-muted
-      text-xs uppercase font-bold
-    "
-                >
-                  <th className="pb-3">Asset</th>
-                  <th className="pb-3">Qty</th>
-                  <th className="pb-3 text-right">Avg Price</th>
-                  <th className="pb-3 text-right">Current Value</th>
-                  <th className="pb-3 text-right">Returns</th>
+                <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-xs uppercase font-bold text-light-muted dark:text-dark-muted sticky top-0 bg-slate-50/90 dark:bg-[#101423]/90 backdrop-blur-md z-10">
+                  <th className="py-3 text-left">Asset</th>
+                  <th className="py-3 text-left">Qty</th>
+                  <th className="py-3 text-right">Avg Price</th>
+                  <th className="py-3 text-right">Current Value</th>
+                  <th className="py-3 text-right">Returns</th>
                 </tr>
               </thead>
               <tbody>
-                {topHoldings.length > 0 ? (
-                  topHoldings.map((h) => (
-                    <tr key={h.symbol} className="border-b border-slate-100/50 dark:border-slate-800/20 last:border-none">
-                      <td className="py-3.5 font-semibold flex flex-col">
-                        <span>{h.symbol}</span>
-                        <span className="text-[10px] text-light-muted dark:text-dark-muted font-normal">{h.name}</span>
+                {displayHoldings.length > 0 ? (
+                  displayHoldings.map((h) => (
+                    <tr key={h.symbol} className="border-b border-slate-100/60 dark:border-slate-800/30 last:border-none hover:bg-slate-100/40 dark:hover:bg-slate-900/30 transition-colors">
+                      <td className="py-3.5 pr-3 font-semibold">
+                        <span className="block">{h.symbol}</span>
+                        <span className="text-[10px] text-light-muted dark:text-dark-muted font-normal line-clamp-1">{h.name}</span>
                       </td>
-                      <td className="py-3.5">{h.quantity}</td>
-                      <td className="py-3.5 text-right">₹{h.averageBuyPrice.toLocaleString()}</td>
-                      <td className="py-3.5 text-right font-semibold">₹{h.currentValue.toLocaleString()}</td>
+                      <td className="py-3.5 pr-3 font-medium">{h.quantity}</td>
+                      <td className="py-3.5 pr-3 text-right">{formatCurrency(h.averageBuyPrice, { maximumFractionDigits: 0 })}</td>
+                      <td className="py-3.5 pr-3 text-right font-semibold">{formatCurrency(h.currentValue, { maximumFractionDigits: 0 })}</td>
                       <td className={`py-3.5 text-right font-bold ${h.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
                         {h.returnPercent >= 0 ? '+' : ''}{h.returnPercent.toFixed(1)}%
                       </td>
@@ -305,7 +346,7 @@ const Dashboard = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-light-muted dark:text-dark-muted text-xs italic">
+                    <td colSpan={5} className="py-12 text-center text-light-muted dark:text-dark-muted text-xs italic">
                       No holdings available
                     </td>
                   </tr>
@@ -315,35 +356,34 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* ── Portfolio Asset Allocation ── 2/5 ≈ 40% */}
         <motion.div
           variants={cardVariants}
-          className="lg:col-span-2 glass-panel p-4 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border h-[420px]"
+          className="xl:col-span-2 glass-panel p-5 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border h-[386px] hover:shadow-xl transition-shadow"
         >
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-start justify-between gap-3 mb-3 shrink-0">
             <div>
-              <h2 className="text-sm font-bold">Portfolio Asset Allocation</h2>
-              <p className="text-[10px] text-light-muted dark:text-dark-muted">Distribution of holdings</p>
+              <h2 className="text-base font-extrabold">Portfolio Asset Allocation</h2>
+              <p className="text-xs text-light-muted dark:text-dark-muted">Distribution of holdings</p>
             </div>
             <Link
               to="/analytics"
-              className="text-xs font-bold text-brand-500 flex items-center gap-1 hover:underline flex-shrink-0"
+              className="text-xs font-bold text-brand-500 flex items-center gap-1 hover:underline shrink-0"
             >
               <span>Detailed Charts</span>
               <ArrowRight size={12} />
             </Link>
           </div>
 
-          <div className="flex-1 flex items-center justify-center min-h-[160px]">
+          <div className="flex-1 flex items-center justify-center min-h-0">
             {charts.distribution.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                   <Pie
                     data={charts.distribution}
-                    cx="55%"
-                    cy="50%"
-                    innerRadius={34}
-                    outerRadius={52}
+                    cx="52%"
+                    cy="48%"
+                    innerRadius="42%"
+                    outerRadius="64%"
                     paddingAngle={3}
                     dataKey="value"
                   >
@@ -358,11 +398,11 @@ const Dashboard = () => {
                     formatter={(value) => `${value}%`}
                   />
                   <Legend
-                    layout="vertical"
-                    align="left"
-                    verticalAlign="middle"
+                    layout="horizontal"
+                    align="center"
+                    verticalAlign="bottom"
                     iconType="circle"
-                    wrapperStyle={{ fontSize: '10px', paddingLeft: '4px' }}
+                    wrapperStyle={{ fontSize: '10px', paddingTop: '8px' }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -379,150 +419,95 @@ const Dashboard = () => {
             )}
           </div>
         </motion.div>
-      </div>
+      </section>
 
-      {/* ─── ROW 3 : Portfolio Insights (45%) │ Recent Trade Orders (55%) ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[9fr_11fr] gap-4 items-stretch">
-
-        {/* ── Portfolio Insights ── ≈ 45% */}
-        <motion.div
-          variants={cardVariants}
-          className="glass-panel p-5 rounded-3xl flex flex-col border border-slate-200/50 dark:border-dark-border h-[300px]"
-        >
-          <h2 className="text-base font-bold mb-3 flex-shrink-0">Portfolio Insights</h2>
-          <div className="grid grid-cols-2 gap-2.5 flex-1">
-            {/* Daily Return */}
-            <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="bg-brand-500/15 p-1.5 rounded-lg text-brand-500">
-                  <Flame size={14} />
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-extrabold">Portfolio Insights</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {insightCards.map((item) => {
+            const Icon = item.icon;
+            return (
+              <motion.div
+                key={item.title}
+                variants={cardVariants}
+                className="min-h-[118px] p-4 bg-white/80 dark:bg-slate-900/35 border border-slate-200/50 dark:border-slate-800/40 rounded-3xl shadow-sm hover:shadow-xl transition-all flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider">
+                    {item.title}
+                  </span>
+                  <div className={`p-2 rounded-xl ${item.positive ? 'bg-brand-500/15 text-brand-500' : 'bg-danger-500/15 text-danger-500'}`}>
+                    <Icon size={14} />
+                  </div>
                 </div>
-                <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider">Today's P&L</span>
-              </div>
-              <div>
-                <p className="text-xs font-extrabold truncate">
-                  {metrics.todayProfitLoss >= 0 ? '+' : ''}₹{metrics.todayProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-                <span className={`text-[10px] font-bold ${metrics.todayProfitLoss >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
-                  {metrics.todayProfitLoss >= 0 ? '+' : ''}{metrics.todayReturnPercent.toFixed(2)}%
-                </span>
-              </div>
-            </div>
-
-            {/* Best performer */}
-            {insights.bestPerforming ? (
-              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between">
-                <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Top Performer</span>
                 <div>
-                  <p className="text-xs font-extrabold truncate">{insights.bestPerforming.symbol}</p>
-                  <span className="text-[10px] font-bold text-brand-500 block truncate">
-                    +{insights.bestPerforming.returnPercent.toFixed(2)}% (₹{insights.bestPerforming.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })})
+                  <p className="text-sm font-extrabold truncate">{item.body}</p>
+                  <span className={`text-[11px] font-bold block truncate ${item.positive ? 'text-brand-500' : 'text-danger-500'}`}>
+                    {item.meta}
                   </span>
                 </div>
-              </div>
-            ) : (
-              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center text-center">
-                <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
-              </div>
-            )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </section>
 
-            {/* Worst performer */}
-            {insights.worstPerforming ? (
-              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between">
-                <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Worst Performer</span>
-                <div>
-                  <p className="text-xs font-extrabold truncate">{insights.worstPerforming.symbol}</p>
-                  <span className={`text-[10px] font-bold block truncate ${insights.worstPerforming.profit >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
-                    {insights.worstPerforming.returnPercent >= 0 ? '+' : ''}{insights.worstPerforming.returnPercent.toFixed(2)}% (₹{insights.worstPerforming.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })})
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center text-center">
-                <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
-              </div>
-            )}
+      <motion.section
+        variants={cardVariants}
+        className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[320px] overflow-hidden min-h-0 hover:shadow-xl transition-shadow"
+      >
+        <div className="flex items-center justify-between mb-3 shrink-0">
+          <h2 className="text-base font-extrabold">Recent Trade Orders</h2>
+          <Link to="/transactions" className="text-xs text-brand-500 hover:underline font-bold">View All Trades</Link>
+        </div>
 
-            {/* Most invested */}
-            {insights.mostInvested ? (
-              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-between">
-                <span className="text-[10px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1 block truncate">Top Holding</span>
-                <div>
-                  <p className="text-xs font-extrabold truncate">{insights.mostInvested.symbol}</p>
-                  <span className="text-[10px] text-light-muted dark:text-dark-muted block truncate font-medium">
-                    Invested: ₹{insights.mostInvested.investedAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="p-2.5 bg-slate-100/55 dark:bg-slate-900/30 border border-slate-200/20 rounded-2xl flex flex-col justify-center text-center">
-                <p className="text-[10px] text-light-muted dark:text-dark-muted italic">No holdings</p>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* ── Recent Trade Orders ── ≈ 55% */}
-        <motion.div
-          variants={cardVariants}
-          className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[300px] overflow-hidden min-h-0"
-        >
-          <div className="flex items-center justify-between mb-4 flex-shrink-0">
-            <h2 className="text-base font-bold">Recent Trade Orders</h2>
-            <Link to="/transactions" className="text-xs text-brand-500 hover:underline font-semibold">View All Trades</Link>
-          </div>
-          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
-            <table className="w-full text-left text-sm border-collapse">
-              <thead>
-                <tr
-                  className="
-      sticky top-0 z-20
-      bg-slate-50
-      dark:bg-[#101423]
-      border-b border-slate-200/50 dark:border-slate-800/50
-      text-light-muted dark:text-dark-muted
-      text-xs uppercase font-bold
-    "
-                >
-                  <th className="pb-3">Action</th>
-                  <th className="pb-3">Asset</th>
-                  <th className="pb-3 text-right">Rate</th>
-                  <th className="pb-3 text-right">Total Amount</th>
-                  <th className="pb-3 text-right">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentTransactions.length > 0 ? (
-                  recentTransactions.map((tx) => (
-                    <tr key={tx._id} className="border-b border-slate-100/50 dark:border-slate-800/20 last:border-none">
-                      <td className="py-3.5">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${tx.type === 'BUY'
-                          ? 'bg-brand-500/10 text-brand-500'
-                          : 'bg-danger-500/10 text-danger-500'
-                          }`}>
-                          {tx.type === 'BUY' ? 'BUY' : 'SELL'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 font-semibold">{tx.symbol}</td>
-                      <td className="py-3.5 text-right">₹{tx.price.toLocaleString()}</td>
-                      <td className="py-3.5 text-right font-semibold">₹{tx.totalAmount.toLocaleString()}</td>
-                      <td className="py-3.5 text-right text-xs text-light-muted dark:text-dark-muted">
-                        {new Date(tx.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-light-muted dark:text-dark-muted text-xs italic">
-                      No recent trades
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-xs uppercase font-bold text-light-muted dark:text-dark-muted sticky top-0 bg-slate-50/90 dark:bg-[#101423]/90 backdrop-blur-md z-10">
+                <th className="py-3 text-left">Action</th>
+                <th className="py-3 text-left">Asset</th>
+                <th className="py-3 text-right">Rate</th>
+                <th className="py-3 text-right">Total Amount</th>
+                <th className="py-3 text-right">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentTransactions.length > 0 ? (
+                recentTransactions.map((tx) => (
+                  <tr key={tx._id} className="border-b border-slate-100/60 dark:border-slate-800/30 last:border-none hover:bg-slate-100/40 dark:hover:bg-slate-900/30 transition-colors">
+                    <td className="py-3.5 pr-3">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${
+                          tx.type === 'BUY'
+                            ? 'bg-brand-500/10 text-brand-500'
+                            : 'bg-danger-500/10 text-danger-500'
+                        }`}
+                      >
+                        {tx.type}
+                      </span>
+                    </td>
+                    <td className="py-3.5 pr-3 font-semibold">{tx.symbol}</td>
+                    <td className="py-3.5 pr-3 text-right">{formatCurrency(tx.price, { maximumFractionDigits: 0 })}</td>
+                    <td className="py-3.5 pr-3 text-right font-semibold">{formatCurrency(tx.totalAmount, { maximumFractionDigits: 0 })}</td>
+                    <td className="py-3.5 text-right text-xs text-light-muted dark:text-dark-muted">
+                      {new Date(tx.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
-      </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-light-muted dark:text-dark-muted text-xs italic">
+                    No recent trades
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </motion.section>
     </motion.div>
   );
 };
