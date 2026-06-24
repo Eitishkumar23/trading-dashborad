@@ -95,8 +95,7 @@
 
 .scrollbar-on-hover:hover {
   scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.48) rgba(15, 23, 42, 0.42);
-  padding-right: 4px;
+  scrollbar-gutter: stable;
 }
 
 .scrollbar-on-hover:hover::-webkit-scrollbar {
@@ -105,15 +104,19 @@
 }
 
 .scrollbar-on-hover:hover::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.42);
+  background: rgba(226, 232, 240, 0.85);
   border-radius: 999px;
-  margin: 6px 0 6px 6px;
 }
 
 .scrollbar-on-hover:hover::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.42);
+  background: rgba(148, 163, 184, 0.72);
   border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(248, 250, 252, 0.9);
+  background-clip: content-box;
+}
+
+.scrollbar-on-hover:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.86);
 }
 
 .dark .scrollbar-on-hover:hover::-webkit-scrollbar-track {
@@ -123,4 +126,8 @@
 .dark .scrollbar-on-hover:hover::-webkit-scrollbar-thumb {
   background: rgba(148, 163, 184, 0.32);
   border-color: rgba(15, 23, 42, 0.55);
+}
+
+.dark .scrollbar-on-hover:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.48);
 }

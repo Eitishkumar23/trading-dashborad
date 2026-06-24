@@ -170,8 +170,8 @@ const DashboardLayout = () => {
         </nav>
 
         {/* User profile section in Sidebar */}
-        <div className="w-full min-w-0 px-4 pt-2 pb-3 border-t border-slate-200/50 dark:border-slate-800/50 shrink-0">
-          <div className="flex w-full max-w-full min-w-0 items-center justify-between gap-3 px-2 py-1.5 rounded-2xl bg-slate-100/55 dark:bg-slate-900/40 border border-slate-200/30 dark:border-slate-800/30 overflow-hidden box-border">
+        <div className="w-full min-w-0 px-4 pt-1 pb-2 border-t border-slate-200/50 dark:border-slate-800/50 shrink-0">
+          <div className="flex w-full max-w-full min-w-0 items-center justify-between gap-3 px-2 py-1 rounded-2xl bg-slate-100/55 dark:bg-slate-900/40 border border-slate-200/30 dark:border-slate-800/30 overflow-hidden box-border">
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center font-bold">
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
