@@ -23,6 +23,19 @@ const Profile = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
   const hasPassword = Boolean(user?.hasPassword);
 
+  const accountProvider = user?.authProvider
+    ? user.authProvider.charAt(0).toUpperCase() + user.authProvider.slice(1)
+    : 'Local';
+  const accountType = user?.isAdmin ? 'Admin Account' : 'Paper Trader';
+  const activeAlertsCount = alerts.filter((a) => !a.isTriggered).length;
+  const profileStats = [
+    { label: 'Account Type', value: accountType },
+    { label: 'Sign-in Provider', value: accountProvider },
+    { label: 'Email Password Status', value: hasPassword ? 'Enabled' : 'Not Set' },
+    { label: 'Watchlist Count', value: String(watchlist.length) },
+    { label: 'Active Alerts Count', value: String(activeAlertsCount) },
+  ];
+
   useEffect(() => {
     const refreshProfile = async () => {
       try {
@@ -50,8 +63,12 @@ const Profile = () => {
     setAlertLoading(true);
     setAlertSuccess('');
     try {
-      await marketAPI.createAlert({ symbol: data.symbol.toUpperCase(), condition: data.condition, value: parseFloat(data.value) });
-      setAlertSuccess(`Alert created: ${data.symbol.toUpperCase()} ${data.condition} ₹${data.value}`);
+      await marketAPI.createAlert({
+        symbol: data.symbol.toUpperCase(),
+        condition: data.condition,
+        value: parseFloat(data.value),
+      });
+      setAlertSuccess(`Alert created: ${data.symbol.toUpperCase()} ${data.condition} â‚¹${data.value}`);
       reset();
       setShowAlertForm(false);
       refetchAlerts();
@@ -69,179 +86,221 @@ const Profile = () => {
         <p className="text-sm text-light-muted dark:text-dark-muted">Manage watchlist, price alerts, and account</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
-          <div className="flex flex-col items-center text-center py-4">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-brand-500 to-emerald-600 text-white flex items-center justify-center text-3xl font-extrabold mb-4 shadow-xl shadow-brand-500/20">
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
+        <section className="glass-panel relative flex h-full min-h-[420px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-brand-500/8 via-transparent to-emerald-500/8" />
+
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="w-24 h-24 shrink-0 rounded-[1.5rem] bg-gradient-to-br from-brand-500 to-emerald-600 text-white flex items-center justify-center text-4xl font-extrabold shadow-xl shadow-brand-500/20">
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-light-muted dark:text-dark-muted">
+                  Profile Hero
+                </p>
+                <h2 className="mt-2 truncate text-2xl font-extrabold tracking-tight">{user?.name || 'User'}</h2>
+                <p className="mt-1 truncate text-sm text-light-muted dark:text-dark-muted">{user?.email || ''}</p>
+              </div>
             </div>
-            <h2 className="text-xl font-extrabold">{user?.name}</h2>
-            <p className="text-sm text-light-muted dark:text-dark-muted mt-1">{user?.email}</p>
-            <div className="mt-4 w-full p-4 bg-slate-100/50 dark:bg-slate-900/30 rounded-2xl text-left text-xs space-y-3">
-              <div className="flex justify-between">
-                <span className="text-light-muted dark:text-dark-muted font-medium">Account Type</span>
-                <span className="font-bold text-brand-500">Paper Trader</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-light-muted dark:text-dark-muted font-medium">Sign-in Provider</span>
-                <span className="font-bold capitalize">{user?.authProvider || 'local'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-light-muted dark:text-dark-muted font-medium">Email Password</span>
-                <span className={`font-bold ${hasPassword ? 'text-brand-500' : 'text-amber-500'}`}>
-                  {hasPassword ? 'Enabled' : 'Not set'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-light-muted dark:text-dark-muted font-medium">Watchlist Items</span>
-                <span className="font-bold">{watchlist.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-light-muted dark:text-dark-muted font-medium">Active Alerts</span>
-                <span className="font-bold">{alerts.filter(a => !a.isTriggered).length}</span>
-              </div>
+
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <span className="inline-flex items-center rounded-full bg-brand-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-500">
+                Active Account
+              </span>
+              <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${hasPassword ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                {hasPassword ? 'Password Ready' : 'Google Setup'}
+              </span>
             </div>
           </div>
-        </div>
 
-        <div className="lg:col-span-2">
+          <div className="relative mt-5 flex flex-wrap gap-2">
+            <span className="inline-flex items-center rounded-full bg-slate-100/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-light-muted dark:bg-slate-900/50 dark:text-dark-muted">
+              {accountType}
+            </span>
+            <span className="inline-flex items-center rounded-full bg-slate-100/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-light-muted dark:bg-slate-900/50 dark:text-dark-muted">
+              {accountProvider}
+            </span>
+            <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${hasPassword ? 'bg-brand-500/10 text-brand-500' : 'bg-amber-500/10 text-amber-500'}`}>
+              {hasPassword ? 'Email Password Enabled' : 'Email Password Not Set'}
+            </span>
+          </div>
+
+          <div className="relative mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {profileStats.map((item) => (
+              <div key={item.label} className="rounded-2xl border border-slate-200/50 bg-slate-50/80 p-4 dark:border-slate-800/40 dark:bg-slate-900/35">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">
+                  {item.label}
+                </p>
+                <p className="mt-2 truncate text-sm font-extrabold">{item.value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <div className="h-full min-h-[420px] flex [&>div]:h-full [&>div]:w-full">
           <AccountPasswordForm
             hasPassword={hasPassword}
             onSaved={() => queryClient.invalidateQueries({ queryKey: ['profile'] })}
           />
         </div>
+      </div>
 
-        {/* Watchlist */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
-          <div className="flex items-center gap-2 mb-5">
-            <Star size={18} className="text-amber-500" />
-            <h2 className="font-bold text-base">Watchlist ({watchlist.length})</h2>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
+        <section className="glass-panel flex h-[430px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
+          <div className="flex items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2">
+              <Star size={18} className="text-amber-500" />
+              <div>
+                <h2 className="font-bold text-base">Watchlist</h2>
+                <p className="text-xs text-light-muted dark:text-dark-muted">{watchlist.length} tracked symbols</p>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">Live Tickers</span>
           </div>
-          <div className="space-y-3">
-            {watchlist.length === 0 ? (
-              <p className="text-xs text-light-muted dark:text-dark-muted italic py-8 text-center">No symbols in watchlist. Star assets from the Market page.</p>
-            ) : (
-              watchlist.map((item) => (
-                <div key={item.symbol} className="flex items-center justify-between p-3.5 bg-slate-100/50 dark:bg-slate-900/30 rounded-2xl border border-slate-200/30 dark:border-slate-800/30">
-                  <div>
-                    <p className="font-bold text-sm">{item.symbol}</p>
-                    {item.live && (
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs font-semibold">₹{item.live.price.toLocaleString()}</span>
-                        <span className={`text-[10px] font-bold ${item.live.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
-                          {item.live.change >= 0 ? '+' : ''}{item.live.change}%
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-lg font-bold ${item.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'}`}>{item.assetType}</span>
-                    <button onClick={() => handleRemoveWatchlist(item.symbol)} className="p-1.5 text-danger-500 hover:bg-danger-500/10 rounded-lg transition-colors">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
 
-        {/* Price Alerts */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col">
-          <div className="flex items-center justify-between mb-5">
+          <div className="mt-5 flex-1 overflow-y-auto pr-1">
+            <div className="space-y-3">
+              {watchlist.length === 0 ? (
+                <p className="py-8 text-center text-xs italic text-light-muted dark:text-dark-muted">
+                  No symbols in watchlist. Star assets from the Market page.
+                </p>
+              ) : (
+                watchlist.map((item) => (
+                  <div key={item.symbol} className="flex items-center justify-between rounded-2xl border border-slate-200/30 bg-slate-100/50 p-3.5 dark:border-slate-800/30 dark:bg-slate-900/30">
+                    <div>
+                      <p className="text-sm font-bold">{item.symbol}</p>
+                      {item.live && (
+                        <div className="mt-0.5 flex items-center gap-2">
+                          <span className="text-xs font-semibold">â‚¹{item.live.price.toLocaleString()}</span>
+                          <span className={`text-[10px] font-bold ${item.live.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
+                            {item.live.change >= 0 ? '+' : ''}{item.live.change}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-lg px-2 py-0.5 text-[10px] font-bold ${item.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                        {item.assetType}
+                      </span>
+                      <button onClick={() => handleRemoveWatchlist(item.symbol)} className="rounded-lg p-1.5 text-danger-500 transition-colors hover:bg-danger-500/10">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="glass-panel flex h-[430px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
+          <div className="flex items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2">
               <Bell size={18} className="text-brand-500" />
-              <h2 className="font-bold text-base">Price Alerts ({alerts.length})</h2>
+              <div>
+                <h2 className="font-bold text-base">Price Alerts</h2>
+                <p className="text-xs text-light-muted dark:text-dark-muted">{alerts.length} configured alerts</p>
+              </div>
             </div>
             <button
               onClick={() => setShowAlertForm(!showAlertForm)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-xl text-xs font-bold transition-all"
+              className="flex items-center gap-1.5 rounded-xl bg-brand-500/10 px-3 py-1.5 text-xs font-bold text-brand-500 transition-all hover:bg-brand-500/20"
             >
               <Plus size={14} />
               <span>Add Alert</span>
             </button>
           </div>
 
-          {/* Alert creation form */}
-          <AnimatePresence>
-            {showAlertForm && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
-              >
-                <form onSubmit={handleSubmit(onCreateAlert)} className="p-4 bg-slate-100/50 dark:bg-slate-900/30 rounded-2xl border border-slate-200/30 dark:border-slate-800/30 mb-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
+          <div className="mt-5 flex-1 overflow-y-auto pr-1">
+            <AnimatePresence>
+              {showAlertForm && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <form onSubmit={handleSubmit(onCreateAlert)} className="mb-4 space-y-3 rounded-2xl border border-slate-200/30 bg-slate-100/50 p-4 dark:border-slate-800/30 dark:bg-slate-900/30">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">Symbol</label>
+                        <input
+                          {...register('symbol', { required: true })}
+                          placeholder="BTC, AAPL..."
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">Condition</label>
+                        <select
+                          {...register('condition', { required: true })}
+                          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
+                        >
+                          <option value="ABOVE">Price Goes Above</option>
+                          <option value="BELOW">Price Goes Below</option>
+                        </select>
+                      </div>
+                    </div>
                     <div>
-                      <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">Symbol</label>
+                      <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">Target Price (â‚¹)</label>
                       <input
-                        {...register('symbol', { required: true })}
-                        placeholder="BTC, AAPL..."
-                        className="w-full mt-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-semibold outline-none focus:border-brand-500"
+                        {...register('value', { required: true, min: 0.01 })}
+                        type="number"
+                        placeholder="e.g. 6500000"
+                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-950"
                       />
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">Condition</label>
-                      <select
-                        {...register('condition', { required: true })}
-                        className="w-full mt-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-semibold outline-none focus:border-brand-500"
-                      >
-                        <option value="ABOVE">Price Goes Above</option>
-                        <option value="BELOW">Price Goes Below</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">Target Price (₹)</label>
-                    <input
-                      {...register('value', { required: true, min: 0.01 })}
-                      type="number"
-                      placeholder="e.g. 6500000"
-                      className="w-full mt-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-3 text-xs font-semibold outline-none focus:border-brand-500"
-                    />
-                  </div>
-                  <button type="submit" disabled={alertLoading} className="w-full py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors">
-                    {alertLoading ? <Loader2 size={14} className="animate-spin" /> : <><Bell size={13} /><span>Set Alert</span></>}
-                  </button>
-                </form>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                    <button type="submit" disabled={alertLoading} className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand-500 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-600">
+                      {alertLoading ? <Loader2 size={14} className="animate-spin" /> : <><Bell size={13} /><span>Set Alert</span></>}
+                    </button>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          {alertSuccess && (
-            <div className="mb-3 p-3 bg-brand-500/10 border border-brand-500/20 rounded-xl text-brand-500 text-xs font-semibold">{alertSuccess}</div>
-          )}
-
-          <div className="space-y-3 flex-1 overflow-y-auto">
-            {alerts.length === 0 ? (
-              <p className="text-xs text-light-muted dark:text-dark-muted italic py-8 text-center">No alerts configured. Click "Add Alert" to set a price target.</p>
-            ) : (
-              alerts.map((alert) => (
-                <div key={alert._id} className={`flex items-center justify-between p-3.5 rounded-2xl border ${alert.isTriggered ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-100/50 dark:bg-slate-900/30 border-slate-200/30 dark:border-slate-800/30'}`}>
-                  <div className="flex items-center gap-3">
-                    {alert.isTriggered ? (
-                      <BellRing size={16} className="text-amber-500 animate-bounce" />
-                    ) : (
-                      <BellOff size={16} className="text-light-muted dark:text-dark-muted" />
-                    )}
-                    <div>
-                      <p className="font-bold text-sm">{alert.symbol} <span className={`text-[10px] font-bold ml-1 ${alert.condition === 'ABOVE' ? 'text-brand-500' : 'text-danger-500'}`}>{alert.condition}</span></p>
-                      <p className="text-xs text-light-muted dark:text-dark-muted">
-                        Target: ₹{alert.value.toLocaleString()} | Now: ₹{alert.currentPrice?.toLocaleString() || '—'}
-                      </p>
-                      {alert.isTriggered && <p className="text-[10px] font-bold text-amber-500 mt-0.5">⚡ Alert Triggered!</p>}
-                    </div>
-                  </div>
-                  <button onClick={() => handleDeleteAlert(alert._id)} className="p-1.5 text-danger-500 hover:bg-danger-500/10 rounded-lg transition-colors">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))
+            {alertSuccess && (
+              <div className="mb-3 rounded-xl border border-brand-500/20 bg-brand-500/10 p-3 text-xs font-semibold text-brand-500">
+                {alertSuccess}
+              </div>
             )}
+
+            <div className="space-y-3">
+              {alerts.length === 0 ? (
+                <p className="py-8 text-center text-xs italic text-light-muted dark:text-dark-muted">
+                  No alerts configured. Click "Add Alert" to set a price target.
+                </p>
+              ) : (
+                alerts.map((alert) => (
+                  <div key={alert._id} className={`flex items-center justify-between rounded-2xl border p-3.5 ${alert.isTriggered ? 'border-amber-500/30 bg-amber-500/10' : 'border-slate-200/30 bg-slate-100/50 dark:border-slate-800/30 dark:bg-slate-900/30'}`}>
+                    <div className="flex items-center gap-3">
+                      {alert.isTriggered ? (
+                        <BellRing size={16} className="animate-bounce text-amber-500" />
+                      ) : (
+                        <BellOff size={16} className="text-light-muted dark:text-dark-muted" />
+                      )}
+                      <div>
+                        <p className="text-sm font-bold">
+                          {alert.symbol}{' '}
+                          <span className={`ml-1 text-[10px] font-bold ${alert.condition === 'ABOVE' ? 'text-brand-500' : 'text-danger-500'}`}>
+                            {alert.condition}
+                          </span>
+                        </p>
+                        <p className="text-xs text-light-muted dark:text-dark-muted">
+                          Target: â‚¹{alert.value.toLocaleString()} | Now: â‚¹{alert.currentPrice?.toLocaleString() || 'â€”'}
+                        </p>
+                        {alert.isTriggered && <p className="mt-0.5 text-[10px] font-bold text-amber-500">âš¡ Alert Triggered!</p>}
+                      </div>
+                    </div>
+                    <button onClick={() => handleDeleteAlert(alert._id)} className="rounded-lg p-1.5 text-danger-500 transition-colors hover:bg-danger-500/10">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        </section>
       </div>
     </motion.div>
   );
