@@ -10,7 +10,6 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { walletAPI } from '../../services/api.js';
-import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
 
 const QUICK_AMOUNTS = [10000, 50000, 100000, 500000];
 
@@ -242,7 +241,16 @@ const WalletPage = () => {
                   </span>
                 </div>
                 <input
-                  type="hidden"
+                  type="number"
+                  min="0"
+                  step="1"
+                  inputMode="numeric"
+                  placeholder="Enter amount (e.g. 50000)"
+                  onKeyDown={(event) => {
+                    if (['-', '+', 'e', 'E', '.', ','].includes(event.key)) {
+                      event.preventDefault();
+                    }
+                  }}
                   {...register('amount', {
                     valueAsNumber: true,
                     required: 'Amount is required',
@@ -255,21 +263,7 @@ const WalletPage = () => {
                     },
                     max: { value: 10000000, message: 'Maximum deposit is Rs.1,00,00,000' },
                   })}
-                />
-                <ThemedNumberInput
-                  value={amountValue ?? ''}
-                  min={0}
-                  max={10000000}
-                  step={1000}
-                  inputMode="numeric"
-                  placeholder="Enter amount (e.g. 50000)"
-                  onChange={(nextValue) =>
-                    setValue('amount', nextValue, {
-                      shouldDirty: true,
-                      shouldTouch: true,
-                      shouldValidate: true,
-                    })
-                  }
+                  className="no-spinner w-full rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 text-sm font-semibold text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] transition-all duration-200 placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:shadow-[0_0_0_1px_rgba(14,165,233,0.25),0_0_0_6px_rgba(14,165,233,0.08)] dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-700 dark:hover:bg-slate-950 dark:focus:border-brand-500 dark:focus:bg-slate-950"
                 />
                 {errors.amount && (
                   <p className="text-xs text-rose-500 mt-1">{errors.amount.message}</p>

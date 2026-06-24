@@ -321,10 +321,11 @@ const Market = () => {
                     <ThemedNumberInput
                       value={buyQuantity}
                       min={0}
-                      step={buyModal.assetType === 'CRYPTO' ? 0.01 : 1}
+                      step={1}
                       onChange={setBuyQuantity}
-                      placeholder="e.g. 0.5, 1, 10"
+                      placeholder="e.g. 1, 2, 10"
                       className="mb-4"
+                      inputMode="numeric"
                     />
 
                     {buyQuantity && !isNaN(parseFloat(buyQuantity)) && (

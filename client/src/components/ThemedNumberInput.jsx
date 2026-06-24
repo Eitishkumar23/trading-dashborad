@@ -1,5 +1,5 @@
 import React from 'react';
-import { Minus, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const themeClasses = {
   default: {
@@ -56,9 +56,11 @@ const ThemedNumberInput = ({
   id,
   autoFocus = false,
   inputMode = 'decimal',
+  hideControls = false,
 }) => {
   const styles = themeClasses[theme] || themeClasses.default;
   const numericValue = Number(value);
+  const isIntegerStep = Number.isInteger(step);
   const canDecrement = !disabled && (value === '' || !Number.isFinite(numericValue) || typeof min !== 'number' || numericValue > min);
   const canIncrement = !disabled && (value === '' || !Number.isFinite(numericValue) || typeof max !== 'number' || numericValue < max);
 
@@ -67,7 +69,22 @@ const ThemedNumberInput = ({
   };
 
   const handleInputChange = (event) => {
-    emitValue(event.target.value);
+    const rawValue = event.target.value;
+
+    if (!isIntegerStep) {
+      emitValue(rawValue);
+      return;
+    }
+
+    if (rawValue === '') {
+      emitValue('');
+      return;
+    }
+
+    const integerPattern = typeof min === 'number' && min >= 0 ? /^\d+$/ : /^-?\d+$/;
+    if (integerPattern.test(rawValue)) {
+      emitValue(rawValue);
+    }
   };
 
   const handleStep = (direction) => {
@@ -91,7 +108,8 @@ const ThemedNumberInput = ({
 
     const parsedValue = Number(rawValue);
     if (Number.isFinite(parsedValue)) {
-      const clampedValue = clampValue(parsedValue, min, max);
+      const normalizedValue = isIntegerStep ? Math.round(parsedValue) : parsedValue;
+      const clampedValue = clampValue(normalizedValue, min, max);
       if (clampedValue !== parsedValue) {
         emitValue(formatSteppedValue(clampedValue, typeof step === 'number' ? step : 1));
       }
@@ -120,13 +138,17 @@ const ThemedNumberInput = ({
           if (['e', 'E'].includes(event.key)) {
             event.preventDefault();
           }
+          if (isIntegerStep && ['.', ','].includes(event.key)) {
+            event.preventDefault();
+          }
           if (typeof min === 'number' && min >= 0 && ['-', '+'].includes(event.key)) {
             event.preventDefault();
           }
         }}
-        className={`no-spinner w-full rounded-2xl border py-3 pl-4 pr-16 text-sm font-semibold outline-none transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${styles.input} ${inputClassName}`}
+        className={`no-spinner w-full rounded-2xl border py-3 pl-4 ${hideControls ? 'pr-4' : 'pr-16'} text-sm font-semibold outline-none transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${styles.input} ${inputClassName}`}
       />
 
+      {!hideControls && (
       <div className="absolute inset-y-1.5 right-1.5 flex w-11 flex-col gap-1">
         <button
           type="button"
@@ -135,7 +157,7 @@ const ThemedNumberInput = ({
           onClick={() => handleStep(1)}
           className={`flex flex-1 items-center justify-center rounded-xl border transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${styles.control}`}
         >
-          <Plus size={14} strokeWidth={2.2} />
+          <ChevronUp size={14} strokeWidth={2.2} />
         </button>
         <button
           type="button"
@@ -144,9 +166,10 @@ const ThemedNumberInput = ({
           onClick={() => handleStep(-1)}
           className={`flex flex-1 items-center justify-center rounded-xl border transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${styles.control}`}
         >
-          <Minus size={14} strokeWidth={2.2} />
+          <ChevronDown size={14} strokeWidth={2.2} />
         </button>
       </div>
+      )}
     </div>
   );
 };

@@ -28,11 +28,7 @@ const Portfolio = () => {
     setSellLoading(true);
     setSellError('');
     try {
-      await tradeAPI.sellAsset({
-        symbol: sellModal.symbol,
-        quantity: qty,
-        price: sellModal.currentPrice,
-      });
+      await tradeAPI.sellAsset({ symbol: sellModal.symbol, quantity: qty, price: sellModal.currentPrice });
       setSellSuccess(`Successfully sold ${qty} ${sellModal.symbol}!`);
       queryClient.invalidateQueries(['dashboard']);
       queryClient.invalidateQueries(['holdings']);
@@ -51,42 +47,22 @@ const Portfolio = () => {
   const totalReturn = totalInvested > 0 ? (totalPL / totalInvested) * 100 : 0;
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12 overflow-x-hidden">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">My Portfolio</h1>
-        <p className="text-sm text-light-muted dark:text-dark-muted">
-          Active holdings with live P&amp;L tracking
-        </p>
+        <p className="text-sm text-light-muted dark:text-dark-muted">Active holdings with live P&L tracking</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          {
-            label: 'Total Invested',
-            value: `Rs.${totalInvested.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-            color: 'bg-blue-500/10 text-blue-500',
-          },
-          {
-            label: 'Current Value',
-            value: `Rs.${totalCurrentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-            color: 'bg-brand-500/10 text-brand-500',
-          },
-          {
-            label: 'Total P&L',
-            value: `${totalPL >= 0 ? '+' : ''}Rs.${totalPL.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-            color: totalPL >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500',
-          },
-          {
-            label: 'Total Return',
-            value: `${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%`,
-            color: totalReturn >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500',
-          },
+          { label: 'Total Invested', value: `₹${totalInvested.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: 'bg-blue-500/10 text-blue-500' },
+          { label: 'Current Value', value: `₹${totalCurrentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: 'bg-brand-500/10 text-brand-500' },
+          { label: 'Total P&L', value: `${totalPL >= 0 ? '+' : ''}₹${totalPL.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: totalPL >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500' },
+          { label: 'Total Return', value: `${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500' },
         ].map((c) => (
           <div key={c.label} className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border">
             <p className="text-xs text-light-muted dark:text-dark-muted font-medium mb-2">{c.label}</p>
-            <p className={`text-base font-extrabold px-2.5 py-1 rounded-lg inline-block ${c.color}`}>
-              {c.value}
-            </p>
+            <p className={`text-base font-extrabold px-2.5 py-1 rounded-lg inline-block ${c.color}`}>{c.value}</p>
           </div>
         ))}
       </div>
@@ -95,87 +71,62 @@ const Portfolio = () => {
         <div className="p-5 border-b border-slate-200/50 dark:border-slate-800/50">
           <h2 className="text-lg font-bold">Holdings ({holdings.length})</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
+        <div className="overflow-x-hidden">
+          <table className="w-full table-fixed text-sm border-collapse">
             <thead>
               <tr className="text-xs uppercase font-bold text-light-muted dark:text-dark-muted bg-slate-50/50 dark:bg-slate-900/20">
-                <th className="px-6 py-4 text-left">Asset</th>
-                <th className="px-6 py-4 text-right">Qty</th>
-                <th className="px-6 py-4 text-right">Avg Buy Price</th>
-                <th className="px-6 py-4 text-right">Current Price</th>
-                <th className="px-6 py-4 text-right">Invested</th>
-                <th className="px-6 py-4 text-right">Current Value</th>
-                <th className="px-6 py-4 text-right">P&amp;L</th>
-                <th className="px-6 py-4 text-right">Return %</th>
-                <th className="px-6 py-4 text-center">Action</th>
+                <th className="px-4 py-4 text-left w-[18%]">Asset</th>
+                <th className="px-3 py-4 text-right w-[8%]">Qty</th>
+                <th className="px-3 py-4 text-right w-[13%]">Avg Buy Price</th>
+                <th className="px-3 py-4 text-right w-[13%]">Current Price</th>
+                <th className="px-3 py-4 text-right w-[13%]">Invested</th>
+                <th className="px-3 py-4 text-right w-[13%]">Current Value</th>
+                <th className="px-3 py-4 text-right w-[10%]">P&L</th>
+                <th className="px-3 py-4 text-right w-[7%]">Return %</th>
+                <th className="px-3 py-4 text-center w-[5%]">Action</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 [...Array(4)].map((_, i) => (
                   <tr key={i} className="border-b border-slate-100/50 dark:border-slate-800/20">
-                    {[...Array(9)].map((__, j) => (
-                      <td key={j} className="px-6 py-4">
-                        <div className="h-4 skeleton rounded" />
-                      </td>
-                    ))}
+                    {[...Array(9)].map((__, j) => <td key={j} className="px-4 py-4"><div className="h-4 skeleton rounded" /></td>)}
                   </tr>
                 ))
               ) : holdings.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-16 text-center text-sm text-light-muted dark:text-dark-muted italic">
-                    No holdings yet. Buy assets from the Market page.
-                  </td>
-                </tr>
+                <tr><td colSpan={9} className="py-16 text-center text-sm text-light-muted dark:text-dark-muted italic">No holdings yet. Buy assets from the Market page.</td></tr>
               ) : (
                 holdings.map((h) => (
                   <tr key={h._id} className="border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50 dark:hover:bg-slate-800/15 transition-colors">
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="font-bold">{h.symbol}</p>
-                        <p className="text-xs text-light-muted dark:text-dark-muted">{h.name}</p>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${h.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                          {h.assetType}
-                        </span>
+                    <td className="px-4 py-4">
+                      <div className="min-w-0">
+                        <p className="font-bold truncate">{h.symbol}</p>
+                        <p className="text-xs text-light-muted dark:text-dark-muted truncate">{h.name}</p>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${h.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'}`}>{h.assetType}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right font-semibold">{h.quantity}</td>
-                    <td className="px-6 py-4 text-right">Rs.{h.averageBuyPrice.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-right font-semibold">
+                    <td className="px-3 py-4 text-right font-semibold">{h.quantity}</td>
+                    <td className="px-3 py-4 text-right truncate">₹{h.averageBuyPrice.toLocaleString()}</td>
+                    <td className="px-3 py-4 text-right font-semibold">
                       <div className="flex flex-col items-end">
-                        <span>Rs.{h.currentPrice.toLocaleString()}</span>
-                        <span className={`text-[10px] font-bold ${h.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
-                          {h.change >= 0 ? '+' : ''}
-                          {h.change}%
-                        </span>
+                        <span className="truncate">₹{h.currentPrice.toLocaleString()}</span>
+                        <span className={`text-[10px] font-bold ${h.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>{h.change >= 0 ? '+' : ''}{h.change}%</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      Rs.{h.investmentAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    <td className="px-3 py-4 text-right truncate">₹{h.investmentAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                    <td className="px-3 py-4 text-right font-semibold truncate">₹{h.currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                    <td className={`px-3 py-4 text-right font-bold truncate ${h.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
+                      {h.profitLoss >= 0 ? '+' : ''}₹{h.profitLoss.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </td>
-                    <td className="px-6 py-4 text-right font-semibold">
-                      Rs.{h.currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    <td className={`px-3 py-4 text-right font-extrabold ${h.returnPercent >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
+                      {h.returnPercent >= 0 ? '+' : ''}{h.returnPercent.toFixed(2)}%
                     </td>
-                    <td className={`px-6 py-4 text-right font-bold ${h.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
-                      {h.profitLoss >= 0 ? '+' : ''}
-                      Rs.{h.profitLoss.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                    </td>
-                    <td className={`px-6 py-4 text-right font-extrabold ${h.returnPercent >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
-                      {h.returnPercent >= 0 ? '+' : ''}
-                      {h.returnPercent.toFixed(2)}%
-                    </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-3 py-4 text-center">
                       <button
-                        onClick={() => {
-                          setSellModal(h);
-                          setSellQty(h.quantity >= 1 ? '1' : String(h.quantity || ''));
-                          setSellError('');
-                          setSellSuccess('');
-                        }}
+                        onClick={() => { setSellModal(h); setSellQty('1'); setSellError(''); setSellSuccess(''); }}
                         className="flex items-center gap-1 px-3 py-1.5 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-500 rounded-xl text-xs font-bold border border-danger-500/20 hover:border-danger-500 transition-all duration-200 mx-auto"
                       >
-                        <ArrowDownCircle size={12} />
-                        <span>Sell</span>
+                        <ArrowDownCircle size={12} /><span>Sell</span>
                       </button>
                     </td>
                   </tr>
@@ -189,41 +140,22 @@ const Portfolio = () => {
       <AnimatePresence>
         {sellModal && (
           <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black z-40"
-              onClick={() => setSellModal(null)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black z-40" onClick={() => setSellModal(null)} />
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div>
                     <h3 className="text-lg font-extrabold text-danger-500">Sell {sellModal.symbol}</h3>
-                    <p className="text-xs text-light-muted dark:text-dark-muted">
-                      {sellModal.name} - You own {sellModal.quantity}
-                    </p>
+                    <p className="text-xs text-light-muted dark:text-dark-muted">{sellModal.name} - You own {sellModal.quantity}</p>
                   </div>
-                  <button onClick={() => setSellModal(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
-                    <X size={18} />
-                  </button>
+                  <button onClick={() => setSellModal(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"><X size={18} /></button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {[
-                    { label: 'Avg Buy Price', val: `Rs.${sellModal.averageBuyPrice.toLocaleString()}` },
-                    { label: 'Current Price', val: `Rs.${sellModal.currentPrice.toLocaleString()}` },
-                    {
-                      label: 'Unrealized P&L',
-                      val: `${sellModal.profitLoss >= 0 ? '+' : ''}Rs.${sellModal.profitLoss.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-                      color: sellModal.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500',
-                    },
+                    { label: 'Avg Buy Price', val: `₹${sellModal.averageBuyPrice.toLocaleString()}` },
+                    { label: 'Current Price', val: `₹${sellModal.currentPrice.toLocaleString()}` },
+                    { label: 'Unrealized P&L', val: `${sellModal.profitLoss >= 0 ? '+' : ''}₹${sellModal.profitLoss.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: sellModal.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500' },
                     { label: 'Total Holdings', val: sellModal.quantity },
                   ].map((item) => (
                     <div key={item.label} className="p-3 bg-slate-100/50 dark:bg-slate-950 rounded-xl">
@@ -234,19 +166,16 @@ const Portfolio = () => {
                 </div>
 
                 {sellSuccess ? (
-                  <div className="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl text-brand-500 font-bold text-sm text-center">
-                    {sellSuccess}
-                  </div>
+                  <div className="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl text-brand-500 font-bold text-sm text-center">{sellSuccess}</div>
                 ) : (
                   <>
-                    <label className="block text-xs font-bold uppercase text-light-muted dark:text-dark-muted mb-1.5">
-                      Quantity to Sell (Max: {sellModal.quantity})
-                    </label>
+                    <label className="block text-xs font-bold uppercase text-light-muted dark:text-dark-muted mb-1.5">Quantity to Sell (Max: {sellModal.quantity})</label>
                     <ThemedNumberInput
                       value={sellQty}
                       min={0}
                       max={sellModal.quantity}
-                      step={sellModal.assetType === 'CRYPTO' ? 0.01 : 1}
+                      step={1}
+                      inputMode="numeric"
                       onChange={setSellQty}
                       placeholder={`0 - ${sellModal.quantity}`}
                       className="mb-4"
@@ -255,29 +184,16 @@ const Portfolio = () => {
                     {sellQty && !Number.isNaN(parseFloat(sellQty)) && (
                       <div className="flex justify-between text-sm mb-4 p-3 bg-slate-100/50 dark:bg-slate-950/40 rounded-xl border border-slate-200/50 dark:border-slate-800/30">
                         <span className="text-light-muted dark:text-dark-muted">Expected Proceeds</span>
-                        <span className="font-extrabold text-brand-500">
-                          Rs.{(parseFloat(sellQty) * sellModal.currentPrice).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                        </span>
+                        <span className="font-extrabold text-brand-500">₹{(parseFloat(sellQty) * sellModal.currentPrice).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                       </div>
                     )}
-                    {sellError && (
-                      <div className="mb-4 p-3 bg-danger-500/10 border border-danger-500/20 rounded-xl text-danger-500 text-xs font-semibold">
-                        {sellError}
-                      </div>
-                    )}
+                    {sellError && <div className="mb-4 p-3 bg-danger-500/10 border border-danger-500/20 rounded-xl text-danger-500 text-xs font-semibold">{sellError}</div>}
                     <button
                       onClick={handleSell}
                       disabled={sellLoading || !sellQty}
                       className="w-full py-3 bg-danger-500 hover:bg-danger-600 disabled:opacity-60 text-white rounded-2xl font-extrabold transition-all flex items-center justify-center gap-2"
                     >
-                      {sellLoading ? (
-                        <Loader2 size={18} className="animate-spin" />
-                      ) : (
-                        <>
-                          <ArrowDownCircle size={16} />
-                          <span>Confirm Sell</span>
-                        </>
-                      )}
+                      {sellLoading ? <Loader2 size={18} className="animate-spin" /> : <><ArrowDownCircle size={16} /><span>Confirm Sell</span></>}
                     </button>
                   </>
                 )}
