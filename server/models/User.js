@@ -14,12 +14,17 @@ const UserSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
-  // Optional — Google OAuth users have no password
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local',
+  },
+  // Optional: Google OAuth users can add an app password later.
   password: {
     type: String,
     required: false,
+    select: false,
   },
-  // Google OAuth fields
   googleId: {
     type: String,
     default: null,
@@ -39,9 +44,9 @@ const UserSchema = new mongoose.Schema({
   },
 });
 
-// Pre-save hook — only hash password if it exists and was modified
 UserSchema.pre('save', async function (next) {
   if (!this.password || !this.isModified('password')) return next();
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -51,7 +56,6 @@ UserSchema.pre('save', async function (next) {
   }
 });
 
-// Method to compare passwords (email/password users only)
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);

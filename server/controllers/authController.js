@@ -3,13 +3,45 @@ import jwt from 'jsonwebtoken';
 import axios from 'axios';
 
 const ADMIN_EMAIL = 'eitishkoundal34@gmail.com';
+const JWT_SECRET = process.env.JWT_SECRET || 'ai_trading_secret_key_2026';
 
-// Helper to generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'ai_trading_secret_key_2026', {
-    expiresIn: '30d',
-  });
+const getAuthProvider = (user) => {
+  const providerWasDefaulted = typeof user.$isDefault === 'function' && user.$isDefault('authProvider');
+
+  if (user.authProvider && !providerWasDefaulted) {
+    return user.authProvider;
+  }
+
+  if (user.googleId && !user.password) {
+    return 'google';
+  }
+
+  return user.authProvider || 'local';
 };
+
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user._id,
+      authProvider: getAuthProvider(user),
+    },
+    JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+};
+
+const buildAuthResponse = (user) => ({
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  avatar: user.avatar,
+  authProvider: getAuthProvider(user),
+  hasPassword: Boolean(user.password),
+  token: generateToken(user),
+  isAdmin: user.email === ADMIN_EMAIL,
+});
+
+const isBlocked = (user) => user.status === 'suspended' || user.status === 'banned';
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -22,7 +54,11 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Please provide name, email and password' });
     }
 
-    const userExists = await User.findOne({ email });
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const userExists = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
@@ -32,20 +68,10 @@ export const registerUser = async (req, res) => {
       name,
       email,
       password,
+      authProvider: 'local',
     });
 
-    if (user) {
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        token: generateToken(user._id),
-        isAdmin: user.email === ADMIN_EMAIL,
-      });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
-    }
+    res.status(201).json(buildAuthResponse(user));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -62,52 +88,31 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: 'Please provide email and password' });
     }
 
-    // Case-insensitive email lookup
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-
-    console.log('Login attempt for:', email);
-    console.log('User found:', user ? 'YES' : 'NO');
-    console.log('User password field:', user?.password ? 'EXISTS' : 'MISSING');
-    console.log('User googleId:', user?.googleId ? 'HAS GOOGLE ID' : 'NO GOOGLE ID');
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Google-only account trying email login
-    if (user.googleId && !user.password) {
-      return res.status(401).json({
-        message: 'This account uses Google Sign-In. Please click "Continue with Google" instead.'
+    if (isBlocked(user)) {
+      return res.status(403).json({
+        message: `Access denied: Your account is currently ${user.status}`,
       });
     }
 
-    // No password set at all
     if (!user.password) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+      return res.status(401).json({
+        message: 'No application password is set for this account. Sign in with Google and set a password from Profile.',
+      });
     }
 
     const isMatch = await user.comparePassword(password);
-    console.log('Password match:', isMatch);
 
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    if (user.status === 'suspended' || user.status === 'banned') {
-      return res.status(403).json({
-        message: `Access denied: Your account is currently ${user.status}`
-      });
-    }
-
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      avatar: user.avatar,
-      token: generateToken(user._id),
-      isAdmin: user.email === ADMIN_EMAIL,
-    });
-
+    res.json(buildAuthResponse(user));
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: error.message });
@@ -119,18 +124,71 @@ export const loginUser = async (req, res) => {
 // @access  Private
 export const getUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
-    if (user) {
-      res.json(user);
-    } else {
-      res.status(404).json({ message: 'User not found' });
+    const user = await User.findById(req.user._id).select('+password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
+
+    const profile = buildAuthResponse(user);
+    delete profile.token;
+    res.json(profile);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Google OAuth — verify ID token, find or create user, return JWT
+// @desc    Set or update application password
+// @route   PUT /api/auth/password
+// @access  Private
+export const setApplicationPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({ message: 'Please provide and confirm the new password' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const hadPassword = Boolean(user.password);
+
+    if (hadPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: 'Current password is required to change your password' });
+      }
+
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({
+      message: hadPassword ? 'Password updated successfully' : 'Password set successfully',
+      user: buildAuthResponse(user),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Google OAuth: verify Google token, find or create user, return JWT
 // @route   POST /api/auth/google
 // @access  Public
 export const googleAuth = async (req, res) => {
@@ -143,7 +201,6 @@ export const googleAuth = async (req, res) => {
 
     let googleData;
 
-    // Try as ID token first
     try {
       const googleRes = await axios.get(
         `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`
@@ -151,9 +208,8 @@ export const googleAuth = async (req, res) => {
       const { sub: googleId, email, name, picture } = googleRes.data;
       googleData = { googleId, email, name, picture };
     } catch {
-      // If ID token fails, try as access_token
       const googleRes = await axios.get(
-        `https://www.googleapis.com/oauth2/v3/userinfo`,
+        'https://www.googleapis.com/oauth2/v3/userinfo',
         { headers: { Authorization: `Bearer ${credential}` } }
       );
       const { sub: googleId, email, name, picture } = googleRes.data;
@@ -166,39 +222,39 @@ export const googleAuth = async (req, res) => {
       return res.status(400).json({ message: 'Could not retrieve email from Google' });
     }
 
-    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+    let user = await User.findOne({
+      $or: [{ googleId }, { email: email.toLowerCase().trim() }],
+    }).select('+password');
 
     if (user) {
-      if (user.status === 'suspended' || user.status === 'banned') {
-        return res.status(403).json({ message: `Access denied: Your account is currently ${user.status}` });
+      if (isBlocked(user)) {
+        return res.status(403).json({
+          message: `Access denied: Your account is currently ${user.status}`,
+        });
       }
+
       if (!user.googleId) {
         user.googleId = googleId;
-        user.avatar = user.avatar || picture;
       }
-      if (!user.password) {
-        user.password = googleId + process.env.JWT_SECRET;
+
+      const providerWasDefaulted = typeof user.$isDefault === 'function' && user.$isDefault('authProvider');
+      if (!user.authProvider || providerWasDefaulted) {
+        user.authProvider = user.password ? 'local' : 'google';
       }
+
+      user.avatar = user.avatar || picture;
       await user.save();
     } else {
-      const defaultPassword = googleId + process.env.JWT_SECRET;
       user = await User.create({
         name,
         email,
         googleId,
         avatar: picture,
-        password: defaultPassword
+        authProvider: 'google',
       });
     }
 
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      avatar: user.avatar || picture,
-      token: generateToken(user._id),
-      isAdmin: user.email === ADMIN_EMAIL,
-    });
+    res.json(buildAuthResponse(user));
   } catch (error) {
     if (error.response?.status === 400) {
       return res.status(401).json({ message: 'Invalid Google token. Please try again.' });

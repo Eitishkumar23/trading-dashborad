@@ -1,5 +1,11 @@
 import express from 'express';
-import { registerUser, loginUser, getUserProfile, googleAuth } from '../controllers/authController.js';
+import {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  googleAuth,
+  setApplicationPassword,
+} from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -8,5 +14,6 @@ router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/google', googleAuth);
 router.get('/profile', protect, getUserProfile);
+router.put('/password', protect, setApplicationPassword);
 
 export default router;

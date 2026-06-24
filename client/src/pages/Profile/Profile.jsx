@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Star, Trash2, Plus, X, Loader2, BellOff, BellRing } from 'lucide-react';
+import { Bell, Star, Trash2, Plus, Loader2, BellOff, BellRing, KeyRound, ShieldCheck } from 'lucide-react';
 import { useWatchlist, useAlerts } from '../../hooks/useMarketData.js';
-import { marketAPI } from '../../services/api.js';
-import { useSelector } from 'react-redux';
+import { authAPI, marketAPI } from '../../services/api.js';
+import { useDispatch, useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
+import { updateUserProfileLocal } from '../../redux/authSlice.js';
 
 const Profile = () => {
   const { user } = useSelector((s) => s.auth);
+  const dispatch = useDispatch();
   const { data: watchlist = [], refetch: refetchWatchlist } = useWatchlist();
   const { data: alerts = [], refetch: refetchAlerts } = useAlerts();
   const queryClient = useQueryClient();
@@ -16,8 +18,34 @@ const Profile = () => {
   const [alertLoading, setAlertLoading] = useState(false);
   const [alertSuccess, setAlertSuccess] = useState('');
   const [showAlertForm, setShowAlertForm] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const {
+    register: registerPassword,
+    handleSubmit: handleSubmitPassword,
+    reset: resetPassword,
+    watch: watchPassword,
+    formState: { errors: passwordErrors },
+  } = useForm();
+
+  const newPassword = watchPassword('newPassword', '');
+  const hasPassword = Boolean(user?.hasPassword);
+
+  useEffect(() => {
+    const refreshProfile = async () => {
+      try {
+        const { data } = await authAPI.getProfile();
+        dispatch(updateUserProfileLocal(data));
+      } catch (error) {
+        console.error('Failed to refresh profile', error);
+      }
+    };
+
+    refreshProfile();
+  }, [dispatch]);
 
   const handleRemoveWatchlist = async (symbol) => {
     await marketAPI.removeFromWatchlist(symbol);
@@ -45,6 +73,33 @@ const Profile = () => {
     }
   };
 
+  const onSetPassword = async (data) => {
+    setPasswordLoading(true);
+    setPasswordSuccess('');
+    setPasswordError('');
+
+    try {
+      const payload = {
+        newPassword: data.newPassword,
+        confirmPassword: data.confirmPassword,
+      };
+
+      if (hasPassword) {
+        payload.currentPassword = data.currentPassword;
+      }
+
+      const { data: response } = await authAPI.setPassword(payload);
+      dispatch(updateUserProfileLocal(response.user));
+      setPasswordSuccess(response.message || 'Password saved successfully');
+      resetPassword();
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    } catch (error) {
+      setPasswordError(error.response?.data?.message || 'Could not save password. Please try again.');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12">
       <div>
@@ -67,6 +122,16 @@ const Profile = () => {
                 <span className="font-bold text-brand-500">Paper Trader</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-light-muted dark:text-dark-muted font-medium">Sign-in Provider</span>
+                <span className="font-bold capitalize">{user?.authProvider || 'local'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-light-muted dark:text-dark-muted font-medium">Email Password</span>
+                <span className={`font-bold ${hasPassword ? 'text-brand-500' : 'text-amber-500'}`}>
+                  {hasPassword ? 'Enabled' : 'Not set'}
+                </span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-light-muted dark:text-dark-muted font-medium">Watchlist Items</span>
                 <span className="font-bold">{watchlist.length}</span>
               </div>
@@ -76,6 +141,88 @@ const Profile = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Account Security */}
+        <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border lg:col-span-2">
+          <div className="flex items-start justify-between gap-4 mb-5">
+            <div className="flex items-center gap-2">
+              <KeyRound size={18} className="text-brand-500" />
+              <h2 className="font-bold text-base">Account Security</h2>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-brand-500 bg-brand-500/10 px-2.5 py-1 rounded-xl">
+              <ShieldCheck size={13} />
+              <span>{hasPassword ? 'Email login enabled' : 'Google login only'}</span>
+            </div>
+          </div>
+
+          {passwordSuccess && (
+            <div className="mb-4 p-3 bg-brand-500/10 border border-brand-500/20 rounded-xl text-brand-500 text-xs font-semibold">
+              {passwordSuccess}
+            </div>
+          )}
+
+          {passwordError && (
+            <div className="mb-4 p-3 bg-danger-500/10 border border-danger-500/20 rounded-xl text-danger-500 text-xs font-semibold">
+              {passwordError}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmitPassword(onSetPassword)} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {hasPassword && (
+              <div>
+                <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">Current Password</label>
+                <input
+                  type="password"
+                  {...registerPassword('currentPassword', { required: 'Current password is required' })}
+                  className="w-full mt-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs font-semibold outline-none focus:border-brand-500"
+                />
+                {passwordErrors.currentPassword && (
+                  <p className="text-xs text-danger-500 mt-1">{passwordErrors.currentPassword.message}</p>
+                )}
+              </div>
+            )}
+
+            <div>
+              <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">New Password</label>
+              <input
+                type="password"
+                placeholder="At least 6 characters"
+                {...registerPassword('newPassword', {
+                  required: 'New password is required',
+                  minLength: { value: 6, message: 'Password must be at least 6 characters' },
+                })}
+                className="w-full mt-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs font-semibold outline-none focus:border-brand-500"
+              />
+              {passwordErrors.newPassword && (
+                <p className="text-xs text-danger-500 mt-1">{passwordErrors.newPassword.message}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">Confirm Password</label>
+              <input
+                type="password"
+                placeholder="Repeat password"
+                {...registerPassword('confirmPassword', {
+                  required: 'Confirm your password',
+                  validate: (value) => value === newPassword || 'Passwords do not match',
+                })}
+                className="w-full mt-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-3 text-xs font-semibold outline-none focus:border-brand-500"
+              />
+              {passwordErrors.confirmPassword && (
+                <p className="text-xs text-danger-500 mt-1">{passwordErrors.confirmPassword.message}</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={passwordLoading}
+              className={`md:self-end py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-60 ${hasPassword ? 'md:col-start-3' : ''}`}
+            >
+              {passwordLoading ? <Loader2 size={14} className="animate-spin" /> : <><KeyRound size={13} /><span>{hasPassword ? 'Update Password' : 'Set Password'}</span></>}
+            </button>
+          </form>
         </div>
 
         {/* Watchlist */}

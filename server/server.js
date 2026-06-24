@@ -54,6 +54,7 @@ app.post('/api/seed', async (req, res) => {
       name: 'Demo Trader',
       email: 'demo@trading.com',
       password: 'password123',
+      authProvider: 'local',
     });
 
     const userId = demoUser._id;

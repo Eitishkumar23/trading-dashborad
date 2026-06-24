@@ -50,9 +50,23 @@ const authSlice = createSlice({
         state.user.walletBalance = action.payload;
         localStorage.setItem('user', JSON.stringify(state.user));
       }
-    }
+    },
+    updateUserProfileLocal: (state, action) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+        state.isAdmin = state.user?.isAdmin || false;
+        localStorage.setItem('user', JSON.stringify(state.user));
+      }
+    },
   },
 });
 
-export const { authStart, authSuccess, authFailure, logout, updateUserWalletLocal } = authSlice.actions;
+export const {
+  authStart,
+  authSuccess,
+  authFailure,
+  logout,
+  updateUserWalletLocal,
+  updateUserProfileLocal,
+} = authSlice.actions;
 export default authSlice.reducer;
