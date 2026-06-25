@@ -52,14 +52,13 @@ import {
 } from 'recharts';
 import { logout, updateUserProfileLocal } from '../redux/authSlice.js';
 import { adminAPI, authAPI } from '../services/api.js';
-import AccountPasswordForm from '../components/AccountPasswordForm.jsx';
 import ThemedNumberInput from '../components/ThemedNumberInput.jsx';
 
 const ADMIN_EMAIL = 'eitishkoundal34@gmail.com';
 const adminTabs = [
   { id: 'dashboard', route: '', label: 'Dashboard', mobileLabel: 'Dashboard', icon: BarChart4 },
   { id: 'users', route: 'users', label: 'User Management', mobileLabel: 'Users', icon: Users },
-  { id: 'orders', route: 'orders', label: 'Orders Monitor', mobileLabel: 'Orders', icon: ArrowLeftRight },
+  { id: 'orders', route: 'orders', label: 'Transaction Log', mobileLabel: 'Log', icon: ArrowLeftRight },
   { id: 'withdrawals', route: 'withdrawals', label: 'Withdrawal Queue', mobileLabel: 'Withdrawals', icon: Clock },
   { id: 'assets', route: 'assets', label: 'Asset Limits', mobileLabel: 'Assets', icon: Database },
   { id: 'settings', route: 'settings', label: 'Platform Settings', mobileLabel: 'Settings', icon: Settings },
@@ -164,14 +163,14 @@ const AdminPanel = () => {
 
   // Authenticate Admin
   useEffect(() => {
-    if (!user || user.email !== ADMIN_EMAIL) {
+    if (!user || user.role !== 'admin') {
       navigate('/login');
     }
   }, [user, navigate]);
 
   useEffect(() => {
     const refreshAdminProfile = async () => {
-      if (!user || user.email !== ADMIN_EMAIL) return;
+      if (!user || user.role !== 'admin') return;
 
       try {
         const { data } = await authAPI.getProfile();
@@ -254,7 +253,7 @@ const AdminPanel = () => {
 
   // Fetch initial data
   useEffect(() => {
-    if (user && user.email === ADMIN_EMAIL) {
+    if (user && user.role === 'admin') {
       const timer = setTimeout(() => {
         fetchData(activeTab);
       }, 0);
@@ -428,22 +427,6 @@ const AdminPanel = () => {
       setProfileModalUser(null);
     } finally {
       setProfileLoading(false);
-    }
-  };
-
-  // Cancel Trade (Simulation / removal from list)
-  const handleCancelOrder = async (orderId, symbol, email, qty, price) => {
-    try {
-      setActionLoadingTx(orderId);
-      await adminAPI.cancelOrder(orderId);
-      showStatus(`Cancelled trade for ${symbol}`, 'success');
-      logAction('Orders Monitor', email, `Cancelled trade: Bought/Sold ${qty} units of ${symbol} @ ₹${price.toLocaleString()}.`);
-
-      setOrders(orders.filter(o => o._id !== orderId));
-    } catch (error) {
-      showStatus(error.response?.data?.message || 'Failed to cancel order.', 'error');
-    } finally {
-      setActionLoadingTx('');
     }
   };
 
@@ -736,10 +719,18 @@ const AdminPanel = () => {
                         <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-extrabold text-brand-400 border border-slate-700/60 uppercase">
                           {u.name.slice(0, 2)}
                         </div>
-                        {u.name}
+                        <span className="min-w-0 truncate">{u.name}</span>
+                        <span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${(u.role || (u.email === ADMIN_EMAIL ? 'admin' : 'user')) === 'admin'
+                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                            : (u.role || (u.email === ADMIN_EMAIL ? 'admin' : 'user')) === 'demo'
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              : 'bg-brand-500/10 text-brand-400 border border-brand-500/20'
+                          }`}>
+                          {u.role || (u.email === ADMIN_EMAIL ? 'admin' : 'user')}
+                        </span>
                       </td>
                       <td className="py-4 text-slate-300 font-medium font-mono">{u.email}</td>
-                      <td className="py-4">
+                      <td className="px-6 py-5 align-top">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${u.kycStatus === 'Verified'
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                           : u.kycStatus === 'Pending'
@@ -749,7 +740,7 @@ const AdminPanel = () => {
                           {u.kycStatus}
                         </span>
                       </td>
-                      <td className="py-4">
+                      <td className="px-6 py-5 align-top">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${u.status === 'active'
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                           : u.status === 'suspended'
@@ -799,7 +790,7 @@ const AdminPanel = () => {
                                   )}
                                   className="p-1.5 text-slate-400 hover:text-amber-500 bg-slate-950 hover:bg-amber-500/10 border border-slate-800 hover:border-amber-500/20 rounded-lg transition-colors"
                                   title="Suspend user"
-                                  disabled={u.email === ADMIN_EMAIL}
+                                  disabled={u.role === 'admin'}
                                 >
                                   <UserX size={15} />
                                 </button>
@@ -829,7 +820,7 @@ const AdminPanel = () => {
                                   )}
                                   className="p-1.5 text-slate-400 hover:text-rose-500 bg-slate-950 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/20 rounded-lg transition-colors"
                                   title="Ban user"
-                                  disabled={u.email === ADMIN_EMAIL}
+                                  disabled={u.role === 'admin'}
                                 >
                                   <ShieldAlert size={15} />
                                 </button>
@@ -863,7 +854,7 @@ const AdminPanel = () => {
     );
   };
 
-  // SECTION 3: ORDERS MONITOR
+  // SECTION 3: TRANSACTION LOG
   const renderOrdersMonitor = () => {
     const filteredOrders = orders.filter(o => {
       const query = orderSearch.toLowerCase();
@@ -900,83 +891,89 @@ const AdminPanel = () => {
         </p>
 
         {/* Orders Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
+        <div className="overflow-x-hidden rounded-2xl border border-slate-800 bg-slate-950/45">
+          <table className="w-full table-fixed border-collapse text-left text-[11px] sm:text-xs lg:text-sm">
+            <colgroup>
+              <col className="w-[26%]" />
+              <col className="w-[10%]" />
+              <col className="w-[8%]" />
+              <col className="w-[12%]" />
+              <col className="w-[17%]" />
+              <col className="w-[17%]" />
+              <col className="w-[10%]" />
+            </colgroup>
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase font-bold">
-                <th className="pb-3">User</th>
-                <th className="pb-3">Asset</th>
-                <th className="pb-3">Type</th>
-                <th className="pb-3 text-right">Quantity</th>
-                <th className="pb-3 text-right">Price</th>
-                <th className="pb-3 text-right">Total amount</th>
-                <th className="pb-3">Time</th>
-                <th className="pb-3 text-center">Actions</th>
+              <tr className="border-b border-slate-800 text-[10px] font-bold uppercase text-slate-400 sm:text-xs">
+                <th className="px-3 py-4 sm:px-4">User</th>
+                <th className="px-2 py-4">Asset</th>
+                <th className="px-2 py-4">Type</th>
+                <th className="px-2 py-4 text-right sm:px-3">Quantity</th>
+                <th className="px-2 py-4 text-right sm:px-3">Total Amount</th>
+                <th className="px-2 py-4 sm:px-3">Executed On</th>
+                <th className="px-2 py-4 text-center">Risk</th>
               </tr>
             </thead>
             <tbody>
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-500">No platform trade records found.</td>
+                  <td colSpan={7} className="py-12 text-center text-slate-500">No platform trade records found.</td>
                 </tr>
               ) : (
                 filteredOrders.map((o) => {
-                  const isActionLoading = actionLoadingTx === o._id;
-                  // Flag suspicious orders > ₹150,000
                   const isSuspicious = o.totalAmount >= 150000;
+                  const riskLabel = o.totalAmount >= 300000 ? 'Critical' : (isSuspicious ? 'High Value' : 'Normal');
+                  const riskClass = o.totalAmount >= 300000
+                    ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                    : isSuspicious
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                  const executedAt = new Date(o.createdAt);
 
                   return (
                     <tr key={o._id} className={`border-b border-slate-800/40 last:border-none hover:bg-slate-900/20 ${isSuspicious ? 'bg-rose-500/5 hover:bg-rose-500/10' : ''}`}>
-                      <td className="py-4 font-bold text-white">
-                        <span className="block max-w-[130px] truncate" title={o.userId?.email || 'N/A'}>
+                      <td className="px-3 py-4 align-top font-bold text-white sm:px-4">
+                        <span className="block truncate" title={o.userId?.name || 'N/A'}>
+                          {o.userId?.name || 'N/A'}
+                        </span>
+                        <span className="block truncate font-mono text-[10px] font-medium text-slate-400 sm:text-[11px]" title={o.userId?.email || 'N/A'}>
                           {o.userId?.email || 'N/A'}
                         </span>
                       </td>
-                      <td className="py-4">
-                        <span className="font-bold text-white">{o.symbol}</span>
+                      <td className="px-2 py-4 align-top">
+                        <span className="block truncate font-bold text-white" title={o.symbol}>{o.symbol}</span>
+                        <span className="block truncate text-[10px] uppercase tracking-wider text-slate-500" title={o.assetType || 'Asset'}>{o.assetType || 'Asset'}</span>
                       </td>
-                      <td className="py-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-extrabold ${o.type === 'BUY'
-                          ? 'bg-emerald-500/10 text-emerald-400'
-                          : 'bg-rose-500/10 text-rose-400'
+                      <td className="px-2 py-4 align-top">
+                        <span className={`inline-flex h-6 w-full items-center justify-center rounded-full border px-2 text-[10px] font-extrabold uppercase tracking-wider sm:text-xs ${o.type === 'BUY'
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                           }`}>
                           {o.type}
                         </span>
                       </td>
-                      <td className="py-4 text-right font-bold text-slate-200 font-mono">{o.quantity}</td>
-                      <td className="py-4 text-right font-medium text-slate-300 font-mono">₹{o.price.toLocaleString()}</td>
-                      <td className="py-4 text-right">
-                        <div className="flex flex-col items-end">
-                          <span className="font-extrabold text-white font-mono">₹{o.totalAmount.toLocaleString()}</span>
-                          {isSuspicious && (
-                            <span className="text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/30 px-1 py-0.2 rounded mt-0.5 font-bold flex items-center gap-0.5">
-                              <AlertTriangle size={10} />
-                              Suspicious (High Value)
-                            </span>
-                          )}
+                      <td className="px-2 py-4 align-top text-right font-mono font-bold text-slate-200 sm:px-3">
+                        <span className="block truncate" title={o.quantity?.toString()}>{o.quantity}</span>
+                      </td>
+                      <td className="px-2 py-4 align-top text-right sm:px-3">
+                        <div className="flex flex-col items-end leading-tight">
+                          <span className="max-w-full truncate font-mono font-extrabold text-white" title={`₹${o.totalAmount.toLocaleString()}`}>₹{o.totalAmount.toLocaleString()}</span>
+                          <span className="text-[10px] uppercase tracking-wider text-slate-500">Amount</span>
                         </div>
                       </td>
-                      <td className="py-4 text-slate-400 font-mono text-xs">
-                        {new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                        <span className="block text-[10px] text-slate-500">{new Date(o.createdAt).toLocaleDateString()}</span>
+                      <td className="px-2 py-4 align-top font-mono text-[10px] leading-tight text-slate-400 sm:px-3 sm:text-xs">
+                        {executedAt.toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                        <span className="block text-[10px] text-slate-500">
+                          {executedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       </td>
-                      <td className="py-4 text-center">
-                        {isActionLoading ? (
-                          <Loader2 size={16} className="animate-spin text-slate-500 mx-auto" />
-                        ) : (
-                          <button
-                            onClick={() => openConfirmDialog(
-                              'Cancel Executed Order',
-                              `WARNING: You are about to cancel this executed trade. This deletes the transaction record from history. Continue?`,
-                              () => handleCancelOrder(o._id, o.symbol, o.userId?.email || 'N/A', o.quantity, o.price),
-                              'danger'
-                            )}
-                            className="p-1.5 text-slate-500 hover:text-rose-500 bg-slate-950 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/20 rounded-lg transition-colors"
-                            title="Cancel executed trade"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        )}
+                      <td className="px-2 py-4 align-top text-center">
+                        <span className={`inline-flex h-6 w-full items-center justify-center rounded-full border px-2 text-[10px] font-bold uppercase tracking-wider ${riskClass}`}>
+                          {riskLabel}
+                        </span>
                       </td>
                     </tr>
                   );
@@ -1586,18 +1583,26 @@ const AdminPanel = () => {
   // SECTION 7: AUDIT LOG
   const renderAccountSettings = () => {
     const authProvider = user?.authProvider || 'local';
-    const hasPassword = Boolean(user?.hasPassword);
+    const accountRole = user?.role || (user?.email === ADMIN_EMAIL ? 'admin' : 'user');
     const statusCards = [
       { label: 'Email', value: user?.email || ADMIN_EMAIL, accent: 'text-slate-200' },
+      { label: 'Role', value: accountRole, accent: 'text-rose-400' },
       { label: 'Auth Provider', value: authProvider === 'google' ? 'Google' : 'Local', accent: 'text-brand-400' },
-      { label: 'Has Password', value: hasPassword ? 'Enabled' : 'Not set', accent: hasPassword ? 'text-brand-400' : 'text-amber-400' },
     ];
 
     return (
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-extrabold text-white tracking-tight">Account Settings</h2>
-          <p className="text-sm text-slate-400 mt-1">Manage admin sign-in methods and application password access.</p>
+          <p className="text-sm text-slate-400 mt-1">
+            Administrator credentials are permanently managed by the system and cannot be modified from the application.
+          </p>
+        </div>
+
+        <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-5 text-amber-300">
+          <p className="text-sm font-semibold">
+            Administrator credentials are permanently managed by the system and cannot be modified from the application.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1607,22 +1612,14 @@ const AdminPanel = () => {
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{card.label}</span>
                 <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">
                   {card.label === 'Email' && <Users size={15} />}
-                  {card.label === 'Auth Provider' && <ShieldCheck size={15} />}
-                  {card.label === 'Has Password' && <KeyRound size={15} />}
+                  {card.label === 'Role' && <ShieldCheck size={15} />}
+                  {card.label === 'Auth Provider' && <KeyRound size={15} />}
                 </div>
               </div>
               <p className={`text-base font-extrabold break-words ${card.accent}`}>{card.value}</p>
             </div>
           ))}
         </div>
-
-        <AccountPasswordForm
-          hasPassword={hasPassword}
-          theme="admin"
-          onSaved={(updatedUser) => {
-            showStatus(updatedUser?.hasPassword ? 'Admin password saved successfully.' : 'Account updated.', 'success');
-          }}
-        />
       </div>
     );
   };
@@ -1660,7 +1657,7 @@ const AdminPanel = () => {
               <option value="all">All Action Types</option>
               <option value="Asset Limits">Asset Limits</option>
               <option value="User Management">User Management</option>
-              <option value="Orders Monitor">Orders Monitor</option>
+              <option value="Transaction Log">Transaction Log</option>
               <option value="Withdrawal Queue">Withdrawals</option>
               <option value="Platform Settings">Settings</option>
             </select>
@@ -1794,16 +1791,16 @@ const AdminPanel = () => {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === tab.id
+              className={`relative w-full h-12 flex items-center justify-start gap-3 px-4 rounded-2xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === tab.id
                 ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
                 }`}
             >
-              <div className="flex items-center gap-3">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center">
                 <tab.icon size={17} />
-                <span>{tab.label}</span>
-              </div>
-              <ChevronRight size={14} className={activeTab === tab.id ? 'opacity-100 translate-x-0.5 transition-transform' : 'opacity-0'} />
+              </span>
+              <span className="min-w-0 truncate">{tab.label}</span>
+              <ChevronRight size={14} className={`absolute right-4 top-1/2 -translate-y-1/2 transition-transform ${activeTab === tab.id ? 'opacity-100 translate-x-0.5' : 'opacity-0'}`} />
             </button>
           ))}
         </div>
@@ -1816,13 +1813,15 @@ const AdminPanel = () => {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${activeTab === tab.id
+              className={`relative flex h-11 items-center justify-start gap-2 px-4 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${activeTab === tab.id
                 ? 'bg-brand-500 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
                 }`}
             >
-              <tab.icon size={14} />
-              <span>{tab.mobileLabel}</span>
+              <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center">
+                <tab.icon size={14} />
+              </span>
+              <span className="truncate">{tab.mobileLabel}</span>
             </button>
           ))}
         </div>

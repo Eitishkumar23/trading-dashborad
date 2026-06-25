@@ -18,6 +18,8 @@ import Transaction from './models/Transaction.js';
 import WalletTransaction from './models/WalletTransaction.js';
 import Watchlist from './models/Watchlist.js';
 import Alert from './models/Alert.js';
+import { DEMO_EMAIL } from './config/authConstants.js';
+import { ensureAdminAccount } from './services/authBootstrap.js';
 
 dotenv.config();
 console.log(process.env.MONGO_URI);
@@ -40,21 +42,30 @@ app.use('/api/admin', adminRoutes);
 // @route   POST /api/seed
 // @access  Public
 app.post('/api/seed', async (req, res) => {
+  console.log('seed route hit');
   try {
-    // 1. Clear existing database for clean seeding
-    await User.deleteMany({});
-    await Holding.deleteMany({});
-    await Transaction.deleteMany({});
-    await WalletTransaction.deleteMany({});
-    await Watchlist.deleteMany({});
-    await Alert.deleteMany({});
+    const existingDemoUser = await User.findOne({ email: DEMO_EMAIL }).select('_id');
 
-    // 2. Create demo user (password is automatically hashed by Mongoose schema pre-save hook)
+    if (existingDemoUser) {
+      const demoUserId = existingDemoUser._id;
+
+      await Promise.all([
+        Holding.deleteMany({ userId: demoUserId }),
+        Transaction.deleteMany({ userId: demoUserId }),
+        WalletTransaction.deleteMany({ userId: demoUserId }),
+        Watchlist.deleteMany({ userId: demoUserId }),
+        Alert.deleteMany({ userId: demoUserId }),
+        User.deleteOne({ _id: demoUserId }),
+      ]);
+    }
+
+    // Recreate the demo user with the exact seed credentials.
     const demoUser = await User.create({
       name: 'Demo Trader',
-      email: 'demo@trading.com',
+      email: DEMO_EMAIL,
       password: 'password123',
       authProvider: 'local',
+      role: 'demo',
     });
 
     const userId = demoUser._id;
@@ -66,13 +77,13 @@ app.post('/api/seed', async (req, res) => {
     await WalletTransaction.insertMany([
       { userId, transactionType: 'CREDIT', amount: 500000, description: 'Initial Funding Deposit' },
       { userId, transactionType: 'CREDIT', amount: 250000, description: 'NetBanking Quick Deposit' },
-      { userId, transactionType: 'DEBIT', amount: 292500, description: 'Bought 0.05 BTC at ₹58,50,000' },
-      { userId, transactionType: 'DEBIT', amount: 153500, description: 'Bought 10 AAPL at ₹15,350' },
-      { userId, transactionType: 'DEBIT', amount: 177000, description: 'Bought 15 SOL at ₹11,800' },
+      { userId, transactionType: 'DEBIT', amount: 292500, description: 'Bought 0.05 BTC at â‚¹58,50,000' },
+      { userId, transactionType: 'DEBIT', amount: 153500, description: 'Bought 10 AAPL at â‚¹15,350' },
+      { userId, transactionType: 'DEBIT', amount: 177000, description: 'Bought 15 SOL at â‚¹11,800' },
     ]);
 
     // 4. Create active holdings
-    const holdings = await Holding.insertMany([
+    await Holding.insertMany([
       { userId, symbol: 'BTC', assetType: 'CRYPTO', quantity: 0.05, averageBuyPrice: 5850000, investedAmount: 292500 },
       { userId, symbol: 'AAPL', assetType: 'STOCK', quantity: 10, averageBuyPrice: 15350, investedAmount: 153500 },
       { userId, symbol: 'SOL', assetType: 'CRYPTO', quantity: 15, averageBuyPrice: 11800, investedAmount: 177000 },
@@ -102,7 +113,7 @@ app.post('/api/seed', async (req, res) => {
     res.status(201).json({
       message: 'Demo database seeded successfully!',
       demoUser: {
-        email: 'demo@trading.com',
+        email: DEMO_EMAIL,
         password: 'password123',
       },
     });
@@ -119,7 +130,14 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running in development mode on port ${PORT}`);
-  });
+  ensureAdminAccount()
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`Server running in development mode on port ${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error('Failed to bootstrap admin account:', error);
+      process.exit(1);
+    });
 });

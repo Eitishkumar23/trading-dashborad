@@ -94,7 +94,6 @@ export const adminAPI = {
   getUserProfile: (id) => API.get(`/admin/users/${id}/profile`),
   resetUser2FA: (id) => API.post(`/admin/users/${id}/reset-2fa`),
   getOrders: () => API.get('/admin/orders'),
-  cancelOrder: (id) => API.delete(`/admin/orders/${id}`),
   getWithdrawals: () => API.get('/admin/withdrawals'),
   updateWithdrawalStatus: (id, status, reason) => API.put(`/admin/withdrawals/${id}/status`, { status, reason }),
   getSettings: () => API.get('/admin/settings'),

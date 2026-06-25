@@ -1,47 +1,59 @@
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
+import { ADMIN_EMAIL, DEMO_EMAIL } from '../config/authConstants.js';
 
-const ADMIN_EMAIL = 'eitishkoundal34@gmail.com';
 const JWT_SECRET = process.env.JWT_SECRET || 'ai_trading_secret_key_2026';
 
-const getAuthProvider = (user) => {
-  const providerWasDefaulted = typeof user.$isDefault === 'function' && user.$isDefault('authProvider');
+const normalizeEmail = (email) => email?.toLowerCase().trim();
 
-  if (user.authProvider && !providerWasDefaulted) {
-    return user.authProvider;
-  }
-
-  if (user.googleId && !user.password) {
-    return 'google';
-  }
-
-  return user.authProvider || 'local';
+const getRole = (user) => {
+  if (user?.role) return user.role;
+  if (user?.email === ADMIN_EMAIL) return 'admin';
+  if (user?.email === DEMO_EMAIL) return 'demo';
+  return 'user';
 };
 
-const generateToken = (user) => {
-  return jwt.sign(
+const getAuthProvider = (user) => {
+  if (user?.authProvider) return user.authProvider;
+  if (user?.googleId && !user?.password) return 'google';
+  return 'local';
+};
+
+const generateToken = (user) =>
+  jwt.sign(
     {
       id: user._id,
+      role: getRole(user),
       authProvider: getAuthProvider(user),
     },
     JWT_SECRET,
     { expiresIn: '30d' }
   );
+
+const buildAuthResponse = (user) => {
+  const role = getRole(user);
+
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar,
+    role,
+    authProvider: getAuthProvider(user),
+    hasPassword: Boolean(user.password),
+    isAdmin: role === 'admin',
+    isDemo: role === 'demo',
+    token: generateToken(user),
+  };
 };
 
-const buildAuthResponse = (user) => ({
-  _id: user._id,
-  name: user.name,
-  email: user.email,
-  avatar: user.avatar,
-  authProvider: getAuthProvider(user),
-  hasPassword: Boolean(user.password),
-  token: generateToken(user),
-  isAdmin: user.email === ADMIN_EMAIL,
-});
-
 const isBlocked = (user) => user.status === 'suspended' || user.status === 'banned';
+
+const forbidSystemAccountMutation = (user) => getRole(user) === 'admin';
+
+const adminSystemManagedMessage =
+  'Administrator credentials are permanently managed by the system and cannot be modified from the application.';
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -49,6 +61,7 @@ const isBlocked = (user) => user.status === 'suspended' || user.status === 'bann
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    const normalizedEmail = normalizeEmail(email);
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Please provide name, email and password' });
@@ -58,7 +71,15 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
-    const userExists = await User.findOne({ email: email.toLowerCase().trim() });
+    if (normalizedEmail === ADMIN_EMAIL) {
+      return res.status(403).json({ message: 'Admin account cannot be registered.' });
+    }
+
+    if (normalizedEmail === DEMO_EMAIL) {
+      return res.status(403).json({ message: 'Demo account is system managed.' });
+    }
+
+    const userExists = await User.findOne({ email: normalizedEmail });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
@@ -66,9 +87,10 @@ export const registerUser = async (req, res) => {
 
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password,
       authProvider: 'local',
+      role: 'user',
     });
 
     res.status(201).json(buildAuthResponse(user));
@@ -83,12 +105,13 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = normalizeEmail(email);
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Please provide email and password' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -102,7 +125,7 @@ export const loginUser = async (req, res) => {
 
     if (!user.password) {
       return res.status(401).json({
-        message: 'No application password is set for this account. Sign in with Google and set a password from Profile.',
+        message: 'No application password is set for this account. Please use Google login if available.',
       });
     }
 
@@ -144,6 +167,10 @@ export const getUserProfile = async (req, res) => {
 export const setApplicationPassword = async (req, res) => {
   try {
     const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (forbidSystemAccountMutation(req.user)) {
+      return res.status(403).json({ message: adminSystemManagedMessage });
+    }
 
     if (!newPassword || !confirmPassword) {
       return res.status(400).json({ message: 'Please provide and confirm the new password' });
@@ -193,8 +220,12 @@ export const setApplicationPassword = async (req, res) => {
 // @access  Private
 export const updateEmail = async (req, res) => {
   try {
+    if (forbidSystemAccountMutation(req.user)) {
+      return res.status(403).json({ message: adminSystemManagedMessage });
+    }
+
     const { newEmail, confirmEmail, password } = req.body;
-    const normalizedEmail = newEmail?.toLowerCase().trim();
+    const normalizedEmail = normalizeEmail(newEmail);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!newEmail || !confirmEmail || !password) {
@@ -205,8 +236,16 @@ export const updateEmail = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email format' });
     }
 
-    if (normalizedEmail !== confirmEmail.toLowerCase().trim()) {
+    if (normalizedEmail !== normalizeEmail(confirmEmail)) {
       return res.status(400).json({ message: 'Emails do not match' });
+    }
+
+    if (normalizedEmail === ADMIN_EMAIL) {
+      return res.status(400).json({ message: 'That email is reserved for the administrator account' });
+    }
+
+    if (normalizedEmail === DEMO_EMAIL) {
+      return res.status(400).json({ message: 'That email is reserved for the demo account' });
     }
 
     const user = await User.findById(req.user._id).select('+password');
@@ -278,16 +317,41 @@ export const googleAuth = async (req, res) => {
     }
 
     const { googleId, email, name, picture } = googleData;
+    const normalizedEmail = normalizeEmail(email);
 
-    if (!email) {
+    if (!normalizedEmail) {
       return res.status(400).json({ message: 'Could not retrieve email from Google' });
     }
 
+    if (normalizedEmail === ADMIN_EMAIL) {
+      return res.status(403).json({
+        message: 'Admin account cannot use Google Authentication. Please login using email and password.',
+      });
+    }
+
+    if (normalizedEmail === DEMO_EMAIL) {
+      return res.status(403).json({
+        message: 'Demo account cannot use Google Authentication. Please login using email and password.',
+      });
+    }
+
     let user = await User.findOne({
-      $or: [{ googleId }, { email: email.toLowerCase().trim() }],
+      $or: [{ googleId }, { email: normalizedEmail }],
     }).select('+password');
 
     if (user) {
+      if (getRole(user) === 'admin') {
+        return res.status(403).json({
+          message: 'Admin account cannot use Google Authentication. Please login using email and password.',
+        });
+      }
+
+      if (getRole(user) === 'demo') {
+        return res.status(403).json({
+          message: 'Demo account cannot use Google Authentication. Please login using email and password.',
+        });
+      }
+
       if (isBlocked(user)) {
         return res.status(403).json({
           message: `Access denied: Your account is currently ${user.status}`,
@@ -298,8 +362,23 @@ export const googleAuth = async (req, res) => {
         user.googleId = googleId;
       }
 
-      const providerWasDefaulted = typeof user.$isDefault === 'function' && user.$isDefault('authProvider');
-      if (!user.authProvider || providerWasDefaulted) {
+      if (!user.role) {
+        user.role = 'user';
+      }
+
+      if (user.email === ADMIN_EMAIL) {
+        user.role = 'admin';
+        user.authProvider = 'local';
+        user.googleId = null;
+        user.avatar = user.avatar || picture;
+        user.name = user.name || name;
+        await user.save();
+        return res.status(403).json({
+          message: 'Admin account cannot use Google Authentication. Please login using email and password.',
+        });
+      }
+
+      if (!user.authProvider || user.authProvider === 'local') {
         user.authProvider = user.password ? 'local' : 'google';
       }
 
@@ -308,10 +387,11 @@ export const googleAuth = async (req, res) => {
     } else {
       user = await User.create({
         name,
-        email,
+        email: normalizedEmail,
         googleId,
         avatar: picture,
         authProvider: 'google',
+        role: 'user',
       });
     }
 

@@ -42,7 +42,7 @@ const Login = () => {
       dispatch(authStart());
       const res = await authAPI.login(data);
       dispatch(authSuccess({ user: res.data, token: res.data.token }));
-      navigate(res.data.isAdmin ? '/admin' : '/dashboard');
+      navigate(res.data.role === 'admin' ? '/admin' : '/dashboard');
     } catch (error) {
       const msg = error.response?.data?.message || 'Login failed. Please check your credentials.';
       setErrorMessage(msg);
@@ -63,7 +63,7 @@ const Login = () => {
       const token = tokenResponse.credential || tokenResponse.access_token;
       const res = await authAPI.googleAuth(token);
       dispatch(authSuccess({ user: res.data, token: res.data.token }));
-      navigate(res.data.isAdmin ? '/admin' : '/dashboard');
+      navigate(res.data.role === 'admin' ? '/admin' : '/dashboard');
     } catch (error) {
       const msg = error.response?.data?.message || 'Google sign-in failed. Please try again.';
       setErrorMessage(msg);

@@ -19,6 +19,11 @@ const UserSchema = new mongoose.Schema({
     enum: ['local', 'google'],
     default: 'local',
   },
+  role: {
+    type: String,
+    enum: ['admin', 'user', 'demo'],
+    default: 'user',
+  },
   // Optional: Google OAuth users can add an app password later.
   password: {
     type: String,

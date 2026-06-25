@@ -21,15 +21,15 @@ const ProtectedRoute = ({ children }) => {
 
 // Admin Route component
 const AdminRoute = ({ children }) => {
-  const { isAuthenticated, isAdmin } = useSelector((state) => state.auth);
+  const { isAuthenticated, role } = useSelector((state) => state.auth);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return isAdmin ? children : <Navigate to="/dashboard" replace />;
+  return role === 'admin' ? children : <Navigate to="/dashboard" replace />;
 };
 
 // User Route component (redirects admin to /admin)
 const UserRoute = ({ children }) => {
-  const { isAuthenticated, isAdmin } = useSelector((state) => state.auth);
-  if (isAuthenticated && isAdmin) return <Navigate to="/admin" replace />;
+  const { isAuthenticated, role } = useSelector((state) => state.auth);
+  if (isAuthenticated && role === 'admin') return <Navigate to="/admin" replace />;
   return children;
 };
 

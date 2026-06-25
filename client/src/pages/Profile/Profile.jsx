@@ -34,12 +34,13 @@ const Profile = () => {
     formState: { errors: emailErrors },
   } = useForm();
   const hasPassword = Boolean(user?.hasPassword);
+  const isAdminAccount = user?.role === 'admin';
   const alertTargetValue = watch('value');
 
   const accountProvider = user?.authProvider
     ? user.authProvider.charAt(0).toUpperCase() + user.authProvider.slice(1)
     : 'Local';
-  const accountType = user?.isAdmin ? 'Admin Account' : 'Paper Trader';
+  const accountType = isAdminAccount ? 'Admin Account' : user?.role === 'demo' ? 'Demo Account' : 'User Account';
   const activeAlertsCount = alerts.filter((a) => !a.isTriggered).length;
   const profileStats = [
     { label: 'Account Type', value: accountType },
@@ -166,6 +167,12 @@ const Profile = () => {
                 </p>
                 <h2 className="mt-2 truncate text-2xl font-extrabold tracking-tight">{user?.name || 'User'}</h2>
                 <p className="mt-1 truncate text-sm text-light-muted dark:text-dark-muted">{user?.email || ''}</p>
+                {isAdminAccount && (
+                  <div className="mt-3 inline-flex flex-col gap-1 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-500">
+                    <span>Administrator Account</span>
+                    <span>System Managed</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -207,6 +214,7 @@ const Profile = () => {
           <div className="[&>div]:h-full [&>div]:w-full">
             <AccountPasswordForm
               hasPassword={hasPassword}
+              disabled={isAdminAccount}
               onSaved={() => queryClient.invalidateQueries({ queryKey: ['profile'] })}
             />
           </div>
@@ -215,7 +223,9 @@ const Profile = () => {
             <div className="flex items-center justify-between gap-3 shrink-0">
               <div>
                 <h2 className="font-bold text-base">Update Email</h2>
-                <p className="text-xs text-light-muted dark:text-dark-muted">Keep your sign-in address current</p>
+                <p className="text-xs text-light-muted dark:text-dark-muted">
+                  {isAdminAccount ? 'Administrator account settings are locked' : 'Keep your sign-in address current'}
+                </p>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">
                 Account Settings
@@ -254,6 +264,7 @@ const Profile = () => {
                   New Email
                 </label>
                 <input
+                  disabled={isAdminAccount}
                   {...registerEmail('newEmail', {
                     required: 'New email is required',
                     pattern: {
@@ -274,6 +285,7 @@ const Profile = () => {
                   Confirm New Email
                 </label>
                 <input
+                  disabled={isAdminAccount}
                   {...registerEmail('confirmEmail', {
                     required: 'Confirm new email is required',
                     validate: (value) => value === getEmailValues('newEmail') || 'Emails do not match',
@@ -292,6 +304,7 @@ const Profile = () => {
                 </label>
                 <div className="relative mt-1">
                   <input
+                    disabled={isAdminAccount}
                     {...registerEmail('password', { required: 'Password is required' })}
                     type={showEmailPassword ? 'text' : 'password'}
                     placeholder="Enter password"
@@ -301,6 +314,7 @@ const Profile = () => {
                     type="button"
                     aria-label={showEmailPassword ? 'Hide password' : 'Show password'}
                     onClick={() => setShowEmailPassword((current) => !current)}
+                    disabled={isAdminAccount}
                     className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-light-muted transition-colors hover:text-brand-500 dark:text-dark-muted"
                   >
                     {showEmailPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -313,10 +327,10 @@ const Profile = () => {
               <div className="lg:col-span-3 flex justify-end pt-2">
                 <button
                   type="submit"
-                  disabled={emailLoading}
+                  disabled={emailLoading || isAdminAccount}
                   className="inline-flex w-fit items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-brand-600 disabled:opacity-60"
                 >
-                  {emailLoading ? <Loader2 size={14} className="animate-spin" /> : <span>Update Email</span>}
+                  {isAdminAccount ? <span>Locked</span> : emailLoading ? <Loader2 size={14} className="animate-spin" /> : <span>Update Email</span>}
                 </button>
               </div>
             </form>

@@ -6,13 +6,13 @@ import Transaction from '../models/Transaction.js';
 import Holding from '../models/Holding.js';
 import WalletTransaction from '../models/WalletTransaction.js';
 import Settings from '../models/Settings.js';
+import { ADMIN_EMAIL } from '../config/authConstants.js';
 
 const router = express.Router();
-const ADMIN_EMAIL = 'eitishkoundal34@gmail.com';
 
-// Admin middleware that checks if email matches ADMIN_EMAIL
+// Admin middleware that only allows the permanent system administrator.
 const adminOnly = (req, res, next) => {
-  if (req.user && req.user.email === ADMIN_EMAIL) {
+  if (req.user && req.user.role === 'admin' && req.user.email === ADMIN_EMAIL) {
     next();
   } else {
     res.status(403).json({ message: 'Access denied: Admin authorization required' });
@@ -221,12 +221,14 @@ router.get('/users', protect, adminOnly, async (req, res) => {
       // Seed deterministic KYC status
       const seed = parseInt(u._id.toString().slice(-4), 16);
       const kycStatusOptions = ['Verified', 'Pending', 'Not Started'];
-      const kycStatus = u.email === ADMIN_EMAIL ? 'Verified' : kycStatusOptions[seed % 3];
+      const kycStatus = (u.role === 'admin' || u.email === ADMIN_EMAIL) ? 'Verified' : kycStatusOptions[seed % 3];
 
       return {
         _id: u._id,
         name: u.name,
         email: u.email,
+        role: u.role || (u.email === ADMIN_EMAIL ? 'admin' : 'user'),
+        authProvider: u.authProvider || 'local',
         status: u.status || 'active',
         kycStatus,
         createdAt: u.createdAt,
@@ -251,6 +253,10 @@ router.put('/users/:id/status', protect, adminOnly, async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role === 'admin' || user.email === ADMIN_EMAIL) {
+      return res.status(403).json({ message: 'Administrator account cannot be modified.' });
     }
 
     user.status = status;
@@ -305,28 +311,6 @@ router.get('/orders', protect, adminOnly, async (req, res) => {
       .populate('userId', 'name email')
       .sort({ createdAt: -1 });
     res.json(orders);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// DELETE /api/admin/orders/:id - cancel a trade order
-router.delete('/orders/:id', protect, adminOnly, async (req, res) => {
-  try {
-    const trade = await Transaction.findById(req.params.id);
-    if (!trade) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-
-    // Try to find the associated asset limit and restore quantity
-    const assetLimit = await AssetLimit.findOne({ symbol: trade.symbol });
-    if (assetLimit && trade.type === 'BUY') {
-      assetLimit.remainingQuantity += trade.quantity;
-      await assetLimit.save();
-    }
-
-    await Transaction.deleteOne({ _id: trade._id });
-    res.json({ message: 'Order cancelled successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

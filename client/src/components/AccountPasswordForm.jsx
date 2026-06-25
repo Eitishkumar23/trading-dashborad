@@ -25,11 +25,12 @@ const themeClasses = {
   },
 };
 
-const PasswordInput = ({ name, registration, className, placeholder, visible, onToggle }) => (
+const PasswordInput = ({ name, registration, className, placeholder, visible, onToggle, disabled }) => (
   <div className="relative mt-1 min-w-0">
     <input
       type={visible ? 'text' : 'password'}
       placeholder={placeholder}
+      disabled={disabled}
       {...registration}
       className={`${className} mt-0 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap pr-10`}
     />
@@ -37,6 +38,7 @@ const PasswordInput = ({ name, registration, className, placeholder, visible, on
       type="button"
       aria-label={visible ? `Hide ${name}` : `Show ${name}`}
       onClick={onToggle}
+      disabled={disabled}
       className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-light-muted transition-colors hover:text-brand-500 dark:text-dark-muted"
     >
       {visible ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -44,7 +46,7 @@ const PasswordInput = ({ name, registration, className, placeholder, visible, on
   </div>
 );
 
-const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
+const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved, disabled = false }) => {
   const dispatch = useDispatch();
   const classes = themeClasses[theme] || themeClasses.app;
   const hasExistingPassword = hasPassword === true;
@@ -87,6 +89,8 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
   };
 
   const onSubmit = async (data) => {
+    if (disabled) return;
+
     setLoading(true);
     setSuccess('');
     setError('');
@@ -122,9 +126,15 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
         </div>
         <div className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-xl ${classes.badge}`}>
           <ShieldCheck size={13} />
-          <span>{hasExistingPassword ? 'Email login enabled' : 'Google login only'}</span>
+          <span>{disabled ? 'System managed' : hasExistingPassword ? 'Email login enabled' : 'Google login only'}</span>
         </div>
       </div>
+
+      {disabled && (
+        <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs font-semibold text-amber-500">
+          Administrator Account. System Managed.
+        </div>
+      )}
 
       <AnimatePresence>
         {success && (
@@ -162,6 +172,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
               onToggle={() => toggleVisibility('currentPassword')}
               registration={register('currentPassword', { required: 'Current password is required' })}
               className={inputClassName}
+              disabled={disabled}
             />
             {errors.currentPassword && (
               <p className="text-xs text-danger-500 mt-1">{errors.currentPassword.message}</p>
@@ -181,6 +192,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
               minLength: { value: 6, message: 'Password must be at least 6 characters' },
             })}
             className={inputClassName}
+            disabled={disabled}
           />
           {errors.newPassword && (
             <p className="text-xs text-danger-500 mt-1">{errors.newPassword.message}</p>
@@ -199,6 +211,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
               validate: (value) => value === getValues('newPassword') || 'Passwords do not match',
             })}
             className={inputClassName}
+            disabled={disabled}
           />
           {errors.confirmPassword && (
             <p className="text-xs text-danger-500 mt-1">{errors.confirmPassword.message}</p>
@@ -207,7 +220,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved }) => {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || disabled}
           className={`md:self-end py-2.5 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-60 ${hasExistingPassword ? 'md:col-start-3' : ''}`}
         >
           {loading ? (

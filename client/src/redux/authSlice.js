@@ -3,13 +3,22 @@ import { createSlice } from '@reduxjs/toolkit';
 const token = localStorage.getItem('token');
 const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')) : null;
 
+const getUserRole = (currentUser) => {
+  if (!currentUser) return null;
+  if (currentUser.role) return currentUser.role;
+  if (currentUser.isAdmin) return 'admin';
+  return 'user';
+};
+
 const initialState = {
   user,
   token,
   isAuthenticated: !!token,
   loading: false,
   error: null,
-  isAdmin: user?.isAdmin || false,
+  role: getUserRole(user),
+  isAdmin: getUserRole(user) === 'admin',
+  isDemo: getUserRole(user) === 'demo',
 };
 
 const authSlice = createSlice({
@@ -25,7 +34,9 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.user = action.payload.user;
       state.token = action.payload.token;
-      state.isAdmin = action.payload.user?.isAdmin || false;
+      state.role = getUserRole(action.payload.user);
+      state.isAdmin = state.role === 'admin';
+      state.isDemo = state.role === 'demo';
       state.error = null;
       localStorage.setItem('token', action.payload.token);
       localStorage.setItem('user', JSON.stringify(action.payload.user));
@@ -39,6 +50,8 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.isAdmin = false;
+      state.isDemo = false;
+      state.role = null;
       state.loading = false;
       state.error = null;
       localStorage.removeItem('token');
@@ -54,7 +67,9 @@ const authSlice = createSlice({
     updateUserProfileLocal: (state, action) => {
       if (state.user) {
         state.user = { ...state.user, ...action.payload };
-        state.isAdmin = state.user?.isAdmin || false;
+        state.role = getUserRole(state.user);
+        state.isAdmin = state.role === 'admin';
+        state.isDemo = state.role === 'demo';
         localStorage.setItem('user', JSON.stringify(state.user));
       }
     },
