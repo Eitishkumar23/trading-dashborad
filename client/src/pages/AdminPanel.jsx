@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  TrendingUp, 
-  LogOut, 
-  Trash2, 
-  Plus, 
-  Loader2, 
-  AlertCircle, 
+import {
+  TrendingUp,
+  LogOut,
+  Trash2,
+  Plus,
+  Loader2,
+  AlertCircle,
   CheckCircle,
   Database,
   RefreshCw,
@@ -39,16 +39,16 @@ import {
   ShieldCheck,
   Settings
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  CartesianGrid, 
-  LineChart, 
-  Line 
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  LineChart,
+  Line
 } from 'recharts';
 import { logout, updateUserProfileLocal } from '../redux/authSlice.js';
 import { adminAPI, authAPI } from '../services/api.js';
@@ -84,7 +84,7 @@ const AdminPanel = () => {
   const [actionLoadingUser, setActionLoadingUser] = useState('');
   const [actionLoadingTx, setActionLoadingTx] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' }); // type: 'success' | 'error'
-  
+
   // Lists
   const [assets, setAssets] = useState([]);
   const [users, setUsers] = useState([]);
@@ -265,7 +265,7 @@ const AdminPanel = () => {
   // Live monitor effect (Orders tab only)
   useEffect(() => {
     if (activeTab !== 'orders') return;
-    
+
     // Set state asynchronously to avoid ESLint/React warning
     const resetTimer = setTimeout(() => {
       setCountdown(10);
@@ -308,7 +308,7 @@ const AdminPanel = () => {
       showStatus('Please fill in all fields', 'error');
       return;
     }
-    
+
     try {
       setSubmitLoading(true);
       const payload = {
@@ -317,17 +317,17 @@ const AdminPanel = () => {
         assetType,
         totalQuantity: parseFloat(totalQuantity),
       };
-      
+
       const { data } = await adminAPI.addAsset(payload);
       showStatus(`Successfully added limit for ${payload.symbol}!`, 'success');
       logAction('Asset Limits', payload.symbol, `Created new asset limit of ${payload.totalQuantity} units.`);
-      
+
       // Reset form
       setSymbol('');
       setName('');
       setAssetType('crypto');
       setTotalQuantity('');
-      
+
       // Refresh list
       setAssets([data, ...assets]);
     } catch (error) {
@@ -355,7 +355,7 @@ const AdminPanel = () => {
       const { data } = await adminAPI.updateAsset(asset.symbol, { totalQuantity: newQty });
       showStatus(`Updated quantity for ${asset.symbol} to ${newQty}!`, 'success');
       logAction('Asset Limits', asset.symbol, `Updated total quantity from ${asset.totalQuantity} to ${newQty}.`);
-      
+
       setAssets(assets.map(a => a.symbol === asset.symbol ? data : a));
     } catch (error) {
       showStatus(error.response?.data?.message || 'Failed to update asset limit.', 'error');
@@ -368,14 +368,14 @@ const AdminPanel = () => {
   // Delete Asset Limit
   const handleDeleteAsset = async () => {
     if (!deleteConfirmAsset) return;
-    
+
     const symbolToDelete = deleteConfirmAsset.symbol;
     try {
       setActionLoadingSymbol(symbolToDelete);
       await adminAPI.deleteAsset(symbolToDelete);
       showStatus(`Deleted limit for ${symbolToDelete}.`, 'success');
       logAction('Asset Limits', symbolToDelete, `Removed trading limit restriction.`);
-      
+
       setAssets(assets.filter(a => a.symbol !== symbolToDelete));
     } catch (error) {
       showStatus(error.response?.data?.message || 'Failed to delete asset limit.', 'error');
@@ -392,7 +392,7 @@ const AdminPanel = () => {
       await adminAPI.updateUserStatus(userId, newStatus);
       showStatus(`User status updated to ${newStatus}!`, 'success');
       logAction('User Management', targetEmail, `Changed account status to "${newStatus}".`);
-      
+
       // Update local state
       setUsers(users.map(u => u._id === userId ? { ...u, status: newStatus } : u));
     } catch (error) {
@@ -438,7 +438,7 @@ const AdminPanel = () => {
       await adminAPI.cancelOrder(orderId);
       showStatus(`Cancelled trade for ${symbol}`, 'success');
       logAction('Orders Monitor', email, `Cancelled trade: Bought/Sold ${qty} units of ${symbol} @ ₹${price.toLocaleString()}.`);
-      
+
       setOrders(orders.filter(o => o._id !== orderId));
     } catch (error) {
       showStatus(error.response?.data?.message || 'Failed to cancel order.', 'error');
@@ -454,7 +454,7 @@ const AdminPanel = () => {
       await adminAPI.updateWithdrawalStatus(txId, status, reason);
       showStatus(`Withdrawal ${status} successfully!`, 'success');
       logAction('Withdrawal Queue', userEmail, `Marked withdrawal of ₹${amount.toLocaleString()} as "${status}"${reason ? ` (Reason: ${reason})` : ''}.`);
-      
+
       setWithdrawals(withdrawals.map(w => w._id === txId ? { ...w, status } : w));
     } catch (error) {
       showStatus(error.response?.data?.message || 'Failed to update status.', 'error');
@@ -496,7 +496,7 @@ const AdminPanel = () => {
   // Broadcast announcement
   const handleBroadcastAnnouncement = () => {
     if (!announcementText.trim()) return;
-    
+
     showStatus(`Broadcasted: "${announcementText.trim()}" to all active users`, 'success');
     logAction('Platform Settings', 'All Users', `Broadcast announcement: "${announcementText.trim()}"`);
     setAnnouncementText('');
@@ -526,7 +526,7 @@ const AdminPanel = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     showStatus('Audit log exported successfully', 'success');
   };
 
@@ -547,7 +547,7 @@ const AdminPanel = () => {
       { label: 'Active Today', value: stats.activeToday, icon: Activity, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
       { label: 'Trades Today', value: stats.totalTradesToday, icon: ArrowLeftRight, color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
       { label: 'Platform Volume', value: formattedVolume, icon: DollarSign, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-      { label: 'Fees Collected', value: formattedFees, icon: Percent, color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
+      { label: 'Fees Collected', value: formattedFees, icon: DollarSign, color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
       { label: 'Pending Withdrawals', value: stats.pendingWithdrawals, icon: Clock, color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
     ];
 
@@ -589,8 +589,8 @@ const AdminPanel = () => {
                 <BarChart data={stats.volumeLast7Days} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                   <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(val) => `₹${val >= 1000 ? (val/1000) + 'k' : val}`} />
-                  <Tooltip 
+                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(val) => `₹${val >= 1000 ? (val / 1000) + 'k' : val}`} />
+                  <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }}
                     labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
                     itemStyle={{ color: '#10b981' }}
@@ -614,7 +614,7 @@ const AdminPanel = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                   <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} />
                   <YAxis stroke="#64748b" fontSize={11} tickLine={false} allowDecimals={false} />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }}
                     labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
                     itemStyle={{ color: '#3b82f6' }}
@@ -669,8 +669,8 @@ const AdminPanel = () => {
   // SECTION 2: USER MANAGEMENT
   const renderUserManagement = () => {
     const filteredUsers = users.filter(u => {
-      const matchesSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) || 
-                            u.email.toLowerCase().includes(userSearch.toLowerCase());
+      const matchesSearch = u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(userSearch.toLowerCase());
       const matchesFilter = userFilter === 'all' || u.status === userFilter;
       return matchesSearch && matchesFilter;
     });
@@ -740,24 +740,22 @@ const AdminPanel = () => {
                       </td>
                       <td className="py-4 text-slate-300 font-medium font-mono">{u.email}</td>
                       <td className="py-4">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                          u.kycStatus === 'Verified' 
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                            : u.kycStatus === 'Pending'
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${u.kycStatus === 'Verified'
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : u.kycStatus === 'Pending'
                             ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                             : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
-                        }`}>
+                          }`}>
                           {u.kycStatus}
                         </span>
                       </td>
                       <td className="py-4">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${
-                          u.status === 'active' 
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
-                            : u.status === 'suspended'
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${u.status === 'active'
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : u.status === 'suspended'
                             ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                             : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                        }`}>
+                          }`}>
                           {u.status}
                         </span>
                       </td>
@@ -870,8 +868,8 @@ const AdminPanel = () => {
     const filteredOrders = orders.filter(o => {
       const query = orderSearch.toLowerCase();
       const symbolMatch = o.symbol.toLowerCase().includes(query);
-      const userMatch = o.userId?.email?.toLowerCase().includes(query) || 
-                        o.userId?.name?.toLowerCase().includes(query);
+      const userMatch = o.userId?.email?.toLowerCase().includes(query) ||
+        o.userId?.name?.toLowerCase().includes(query);
       return symbolMatch || userMatch;
     });
 
@@ -938,11 +936,10 @@ const AdminPanel = () => {
                         <span className="font-bold text-white">{o.symbol}</span>
                       </td>
                       <td className="py-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-extrabold ${
-                          o.type === 'BUY' 
-                            ? 'bg-emerald-500/10 text-emerald-400' 
-                            : 'bg-rose-500/10 text-rose-400'
-                        }`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-extrabold ${o.type === 'BUY'
+                          ? 'bg-emerald-500/10 text-emerald-400'
+                          : 'bg-rose-500/10 text-rose-400'
+                          }`}>
                           {o.type}
                         </span>
                       </td>
@@ -1037,16 +1034,14 @@ const AdminPanel = () => {
                 <button
                   key={status}
                   onClick={() => setWithdrawalTab(status)}
-                  className={`py-3 px-6 text-sm font-bold border-b-2 capitalize whitespace-nowrap transition-all flex items-center gap-2 ${
-                    withdrawalTab === status 
-                      ? 'border-brand-500 text-brand-400 bg-brand-500/5' 
-                      : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/20'
-                  }`}
+                  className={`py-3 px-6 text-sm font-bold border-b-2 capitalize whitespace-nowrap transition-all flex items-center gap-2 ${withdrawalTab === status
+                    ? 'border-brand-500 text-brand-400 bg-brand-500/5'
+                    : 'border-transparent text-slate-400 hover:text-white hover:bg-slate-800/20'
+                    }`}
                 >
                   {status.replace('_', ' ')}
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold font-mono ${
-                    withdrawalTab === status ? 'bg-brand-500/20 text-brand-400' : 'bg-slate-800 text-slate-400'
-                  }`}>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold font-mono ${withdrawalTab === status ? 'bg-brand-500/20 text-brand-400' : 'bg-slate-800 text-slate-400'
+                    }`}>
                     {count}
                   </span>
                 </button>
@@ -1084,7 +1079,7 @@ const AdminPanel = () => {
                     const isActionLoading = actionLoadingTx === w._id;
                     // Risk score model
                     const riskScore = Math.min(100, Math.floor((w.amount / 50000) * 10) + (w.amount > 100000 ? 55 : 0));
-                    
+
                     return (
                       <tr key={w._id} className="border-b border-slate-800/40 last:border-none hover:bg-slate-900/20">
                         <td className="py-4 font-bold text-white">
@@ -1099,13 +1094,12 @@ const AdminPanel = () => {
                         </td>
                         <td className="py-4 text-center">
                           <div className="flex flex-col items-center">
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full font-mono ${
-                              riskScore > 75 
-                                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' 
-                                : riskScore > 35 
-                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full font-mono ${riskScore > 75
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              : riskScore > 35
+                                ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                                 : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            }`}>
+                              }`}>
                               {riskScore}%
                             </span>
                           </div>
@@ -1287,10 +1281,10 @@ const AdminPanel = () => {
                     {assets.map((asset) => {
                       const isEditing = editingSymbol === asset.symbol;
                       const isActionLoading = actionLoadingSymbol === asset.symbol;
-                      
+
                       // Calculate remaining progress bar
-                      const remainingPercent = asset.totalQuantity > 0 
-                        ? (asset.remainingQuantity / asset.totalQuantity) * 100 
+                      const remainingPercent = asset.totalQuantity > 0
+                        ? (asset.remainingQuantity / asset.totalQuantity) * 100
                         : 0;
                       const isWarning = remainingPercent < 20;
 
@@ -1301,13 +1295,12 @@ const AdminPanel = () => {
                             <span className="text-slate-400 text-xs truncate max-w-[130px] block">{asset.name}</span>
                           </td>
                           <td className="py-4">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${
-                              asset.assetType === 'crypto' 
-                                ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' 
-                                : asset.assetType === 'stock'
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${asset.assetType === 'crypto'
+                              ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
+                              : asset.assetType === 'stock'
                                 ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                                 : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                            }`}>
+                              }`}>
                               {asset.assetType}
                             </span>
                           </td>
@@ -1337,11 +1330,10 @@ const AdminPanel = () => {
                                 </span>
                               </div>
                               <div className="w-full bg-slate-950 h-1.5 border border-slate-900 rounded-full overflow-hidden">
-                                <div 
-                                  className={`h-full rounded-full transition-all duration-300 ${
-                                    isWarning ? 'bg-rose-500' : 'bg-brand-500'
-                                  }`} 
-                                  style={{ width: `${Math.max(0, Math.min(100, remainingPercent))}%` }} 
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${isWarning ? 'bg-rose-500' : 'bg-brand-500'
+                                    }`}
+                                  style={{ width: `${Math.max(0, Math.min(100, remainingPercent))}%` }}
                                 />
                               </div>
                             </div>
@@ -1445,11 +1437,10 @@ const AdminPanel = () => {
               {/* Maintenance toggle */}
               <div className="flex items-center justify-between p-3.5 bg-slate-950 rounded-2xl border border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2.5 rounded-xl border ${
-                    settings.maintenanceMode 
-                      ? 'text-rose-500 bg-rose-500/10 border-rose-500/20' 
-                      : 'text-slate-400 bg-slate-800/40 border-slate-800'
-                  }`}>
+                  <div className={`p-2.5 rounded-xl border ${settings.maintenanceMode
+                    ? 'text-rose-500 bg-rose-500/10 border-rose-500/20'
+                    : 'text-slate-400 bg-slate-800/40 border-slate-800'
+                    }`}>
                     <Power size={18} />
                   </div>
                   <div>
@@ -1460,13 +1451,11 @@ const AdminPanel = () => {
                 <button
                   onClick={() => handleSaveSettings('maintenanceMode', !settings.maintenanceMode)}
                   disabled={settingsLoading}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                    settings.maintenanceMode ? 'bg-rose-600' : 'bg-slate-700'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${settings.maintenanceMode ? 'bg-rose-600' : 'bg-slate-700'
+                    }`}
                 >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    settings.maintenanceMode ? 'translate-x-6' : 'translate-x-1'
-                  }`} />
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.maintenanceMode ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
                 </button>
               </div>
             </div>
@@ -1641,8 +1630,8 @@ const AdminPanel = () => {
   // SECTION 8: AUDIT LOG
   const renderAuditLog = () => {
     const filteredLogs = auditLog.filter(log => {
-      const matchesSearch = log.target.toLowerCase().includes(auditSearch.toLowerCase()) || 
-                            log.description.toLowerCase().includes(auditSearch.toLowerCase());
+      const matchesSearch = log.target.toLowerCase().includes(auditSearch.toLowerCase()) ||
+        log.description.toLowerCase().includes(auditSearch.toLowerCase());
       const matchesFilter = auditFilter === 'all' || log.actionType === auditFilter;
       return matchesSearch && matchesFilter;
     });
@@ -1741,7 +1730,7 @@ const AdminPanel = () => {
       {/* ── Background decoration ── */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-brand-500/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-danger-500/5 rounded-full blur-[120px] pointer-events-none" />
-      
+
       {/* ── Top Header / Navbar ── */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-slate-950 border-b border-slate-900 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -1764,7 +1753,7 @@ const AdminPanel = () => {
               <p className="text-xs text-slate-400 font-medium">Logged in as admin</p>
               <p className="text-sm font-semibold text-slate-200">{user?.email || ADMIN_EMAIL}</p>
             </div>
-            
+
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 py-2 px-4 rounded-xl text-sm font-bold transition-all duration-150 text-danger-500 group shadow-md"
@@ -1783,11 +1772,10 @@ const AdminPanel = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-20 right-4 z-[60] p-4 rounded-2xl shadow-xl flex items-center gap-3 max-w-md border ${
-              message.type === 'success' 
-                ? 'bg-emerald-950/90 border-brand-500/30 text-brand-400' 
-                : 'bg-rose-950/90 border-danger-500/30 text-rose-400'
-            }`}
+            className={`fixed top-20 right-4 z-[60] p-4 rounded-2xl shadow-xl flex items-center gap-3 max-w-md border ${message.type === 'success'
+              ? 'bg-emerald-950/90 border-brand-500/30 text-brand-400'
+              : 'bg-rose-950/90 border-danger-500/30 text-rose-400'
+              }`}
           >
             {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
             <span className="text-sm font-semibold">{message.text}</span>
@@ -1806,11 +1794,10 @@ const AdminPanel = () => {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
-                activeTab === tab.id 
-                  ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25' 
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
-              }`}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === tab.id
+                ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <tab.icon size={17} />
@@ -1829,11 +1816,10 @@ const AdminPanel = () => {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                activeTab === tab.id 
-                  ? 'bg-brand-500 text-white' 
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
-              }`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${activeTab === tab.id
+                ? 'bg-brand-500 text-white'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                }`}
             >
               <tab.icon size={14} />
               <span>{tab.mobileLabel}</span>
@@ -1878,7 +1864,7 @@ const AdminPanel = () => {
               className="fixed inset-0 bg-black/70 backdrop-blur-xs"
               onClick={() => setConfirmDialog(null)}
             />
-            
+
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -1887,7 +1873,7 @@ const AdminPanel = () => {
             >
               <h3 className="text-lg font-bold text-white mb-2">{confirmDialog.title}</h3>
               <p className="text-sm text-slate-400 mb-6">{confirmDialog.message}</p>
-              
+
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setConfirmDialog(null)}
@@ -1900,11 +1886,10 @@ const AdminPanel = () => {
                     confirmDialog.onConfirm();
                     setConfirmDialog(null);
                   }}
-                  className={`py-2 px-4 rounded-xl text-sm font-bold transition-colors text-white shadow-lg active:scale-[0.98] ${
-                    confirmDialog.type === 'danger' 
-                      ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/15' 
-                      : 'bg-brand-500 hover:bg-brand-600 shadow-brand-500/15'
-                  }`}
+                  className={`py-2 px-4 rounded-xl text-sm font-bold transition-colors text-white shadow-lg active:scale-[0.98] ${confirmDialog.type === 'danger'
+                    ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/15'
+                    : 'bg-brand-500 hover:bg-brand-600 shadow-brand-500/15'
+                    }`}
                 >
                   Confirm
                 </button>
@@ -2016,9 +2001,8 @@ const AdminPanel = () => {
                               <tr key={t._id} className="border-b border-slate-850/40 last:border-none hover:bg-slate-900/10">
                                 <td className="p-3 font-bold text-white">{t.symbol}</td>
                                 <td className="p-3">
-                                  <span className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold ${
-                                    t.type === 'BUY' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                                  }`}>
+                                  <span className={`inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-extrabold ${t.type === 'BUY' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                                    }`}>
                                     {t.type}
                                   </span>
                                 </td>
@@ -2065,15 +2049,14 @@ const AdminPanel = () => {
                                 <td className="p-3 font-extrabold text-white font-mono">₹{tx.amount.toLocaleString()}</td>
                                 <td className="p-3 text-slate-300">{tx.description}</td>
                                 <td className="p-3">
-                                  <span className={`inline-flex px-1.5 py-0.2 rounded font-extrabold capitalize text-[10px] ${
-                                    tx.status === 'approved' 
-                                      ? 'bg-emerald-500/15 text-emerald-400' 
-                                      : tx.status === 'pending'
+                                  <span className={`inline-flex px-1.5 py-0.2 rounded font-extrabold capitalize text-[10px] ${tx.status === 'approved'
+                                    ? 'bg-emerald-500/15 text-emerald-400'
+                                    : tx.status === 'pending'
                                       ? 'bg-amber-500/15 text-amber-400 animate-pulse'
                                       : tx.status === 'on_hold'
-                                      ? 'bg-blue-500/15 text-blue-400'
-                                      : 'bg-rose-500/15 text-rose-400'
-                                  }`}>
+                                        ? 'bg-blue-500/15 text-blue-400'
+                                        : 'bg-rose-500/15 text-rose-400'
+                                    }`}>
                                     {tx.status}
                                   </span>
                                 </td>
@@ -2134,10 +2117,10 @@ const AdminPanel = () => {
                 </button>
                 <button
                   onClick={() => handleUpdateWithdrawalStatus(
-                    reasonModalTx._id, 
-                    reasonModalTx.userId?.email || 'N/A', 
-                    reasonModalTx.amount, 
-                    'rejected', 
+                    reasonModalTx._id,
+                    reasonModalTx.userId?.email || 'N/A',
+                    reasonModalTx.amount,
+                    'rejected',
                     rejectionReason
                   )}
                   disabled={!rejectionReason.trim()}
@@ -2150,7 +2133,7 @@ const AdminPanel = () => {
           </div>
         )}
       </AnimatePresence>
-      
+
       {/* Delete asset limits confirmation (original preserved) */}
       <AnimatePresence>
         {deleteConfirmAsset && (
@@ -2162,7 +2145,7 @@ const AdminPanel = () => {
               className="fixed inset-0 bg-black/70 backdrop-blur-xs"
               onClick={() => setDeleteConfirmAsset(null)}
             />
-            
+
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -2172,10 +2155,10 @@ const AdminPanel = () => {
               <h3 className="text-lg font-bold text-white mb-2">Delete Limit Restriction</h3>
               <p className="text-sm text-slate-400 mb-6">
                 Are you sure you want to remove the trading limit for{' '}
-                <span className="font-extrabold text-white">{deleteConfirmAsset.symbol}</span>? 
+                <span className="font-extrabold text-white">{deleteConfirmAsset.symbol}</span>?
                 This will allow users to buy any quantity of this asset.
               </p>
-              
+
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setDeleteConfirmAsset(null)}
