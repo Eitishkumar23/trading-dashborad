@@ -130,7 +130,7 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
     const allTrades = await Transaction.find({});
     const platformVolume = allTrades.reduce((acc, t) => acc + t.totalAmount, 0);
 
-    // Fees Collected (simulated at current fee rate, default 0.15%)
+    // Fees Collected (simulated at current fee rate)
     const settings = await Settings.getSettings();
     const feeRate = settings.tradingFeePercent / 100;
     const feesCollected = platformVolume * feeRate;

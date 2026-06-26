@@ -40,6 +40,18 @@ const formatSteppedValue = (value, step) => {
   return precision > 0 ? value.toFixed(precision) : String(value);
 };
 
+const isDecimalInput = (value, min) => {
+  if (value === '') {
+    return true;
+  }
+
+  const decimalPattern = typeof min === 'number' && min >= 0
+    ? /^\d*(?:\.\d*)?$/
+    : /^-?\d*(?:\.\d*)?$/;
+
+  return decimalPattern.test(value);
+};
+
 const ThemedNumberInput = ({
   value,
   min,
@@ -60,7 +72,6 @@ const ThemedNumberInput = ({
 }) => {
   const styles = themeClasses[theme] || themeClasses.default;
   const numericValue = Number(value);
-  const isIntegerStep = Number.isInteger(step);
   const canDecrement = !disabled && (value === '' || !Number.isFinite(numericValue) || typeof min !== 'number' || numericValue > min);
   const canIncrement = !disabled && (value === '' || !Number.isFinite(numericValue) || typeof max !== 'number' || numericValue < max);
 
@@ -71,18 +82,7 @@ const ThemedNumberInput = ({
   const handleInputChange = (event) => {
     const rawValue = event.target.value;
 
-    if (!isIntegerStep) {
-      emitValue(rawValue);
-      return;
-    }
-
-    if (rawValue === '') {
-      emitValue('');
-      return;
-    }
-
-    const integerPattern = typeof min === 'number' && min >= 0 ? /^\d+$/ : /^-?\d+$/;
-    if (integerPattern.test(rawValue)) {
+    if (isDecimalInput(rawValue, min)) {
       emitValue(rawValue);
     }
   };
@@ -108,10 +108,9 @@ const ThemedNumberInput = ({
 
     const parsedValue = Number(rawValue);
     if (Number.isFinite(parsedValue)) {
-      const normalizedValue = isIntegerStep ? Math.round(parsedValue) : parsedValue;
-      const clampedValue = clampValue(normalizedValue, min, max);
+      const clampedValue = clampValue(parsedValue, min, max);
       if (clampedValue !== parsedValue) {
-        emitValue(formatSteppedValue(clampedValue, typeof step === 'number' ? step : 1));
+        emitValue(String(clampedValue));
       }
     }
 
@@ -127,18 +126,15 @@ const ThemedNumberInput = ({
         value={value}
         min={min}
         max={max}
-        step={step}
+        step="any"
         disabled={disabled}
         autoFocus={autoFocus}
-        inputMode={inputMode || (isIntegerStep ? 'numeric' : 'decimal')}
+        inputMode={inputMode || 'decimal'}
         placeholder={placeholder}
         onChange={handleInputChange}
         onBlur={handleBlur}
         onKeyDown={(event) => {
           if (['e', 'E'].includes(event.key)) {
-            event.preventDefault();
-          }
-          if (isIntegerStep && ['.', ','].includes(event.key)) {
             event.preventDefault();
           }
           if (typeof min === 'number' && min >= 0 && ['-', '+'].includes(event.key)) {

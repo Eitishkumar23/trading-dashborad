@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const SettingsSchema = new mongoose.Schema({
   tradingFeePercent: {
     type: Number,
-    default: 0.15,
+    default: 0,
   },
   maintenanceMode: {
     type: Boolean,

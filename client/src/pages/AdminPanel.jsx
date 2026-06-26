@@ -39,7 +39,8 @@ import {
   ShieldCheck,
   Settings,
   Sun,
-  Moon
+  Moon,
+  Info
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -92,6 +93,26 @@ const FOREX_ASSET_OPTIONS = [
 
 const normalizeAssetType = (value) => value?.toLowerCase() || '';
 const toNonNegativeInteger = (value) => Math.max(0, Math.round(Number(value) || 0));
+const toNonNegativeNumber = (value) => Math.max(0, Number(value) || 0);
+
+const toastStyles = {
+  dark: {
+    success: 'bg-emerald-950/90 border-brand-500/30 text-brand-400',
+    error: 'bg-rose-950/90 border-danger-500/30 text-rose-400',
+    info: 'bg-sky-950/90 border-sky-500/30 text-sky-400',
+  },
+  light: {
+    success: 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-emerald-900/10',
+    error: 'bg-rose-50 border-rose-200 text-rose-800 shadow-rose-900/10',
+    info: 'bg-sky-50 border-sky-200 text-sky-800 shadow-sky-900/10',
+  },
+};
+
+const ToastIcon = ({ type }) => {
+  if (type === 'success') return <CheckCircle size={18} />;
+  if (type === 'info') return <Info size={18} />;
+  return <AlertCircle size={18} />;
+};
 
 const AdminPanel = () => {
   const { section } = useParams();
@@ -125,7 +146,7 @@ const AdminPanel = () => {
 
   // Settings
   const [settings, setSettings] = useState({
-    tradingFeePercent: 0.15,
+    tradingFeePercent: 0,
     maintenanceMode: false,
     userTiers: []
   });
@@ -159,7 +180,7 @@ const AdminPanel = () => {
   const [openAssetDropdown, setOpenAssetDropdown] = useState(null);
 
   // Settings modification
-  const [settingsFee, setSettingsFee] = useState('0.15');
+  const [settingsFee, setSettingsFee] = useState('');
   const [editingTierIdx, setEditingTierIdx] = useState(null);
   const [editingTierValue, setEditingTierValue] = useState({ withdrawalLimit: '', feeDiscount: '' });
   const [announcementText, setAnnouncementText] = useState('');
@@ -278,7 +299,7 @@ const AdminPanel = () => {
       } else if (tab === 'settings') {
         const { data } = await adminAPI.getSettings();
         setSettings(data);
-        setSettingsFee(data.tradingFeePercent.toString());
+        setSettingsFee(data.tradingFeePercent == null ? '' : data.tradingFeePercent.toString());
       }
     } catch (error) {
       showStatus(error.response?.data?.message || `Failed to fetch data for ${tab}`, 'error');
@@ -1594,7 +1615,7 @@ const AdminPanel = () => {
                     inputClassName="rounded-xl py-2.5 pr-16 text-sm"
                   />
                   <button
-                    onClick={() => handleSaveSettings('tradingFeePercent', toNonNegativeInteger(settingsFee))}
+                    onClick={() => handleSaveSettings('tradingFeePercent', toNonNegativeNumber(settingsFee))}
                     disabled={settingsLoading}
                     className="bg-brand-500 hover:bg-brand-600 active:scale-[0.98] py-2 px-5 text-sm font-bold text-white rounded-xl shadow-lg shadow-brand-500/25 transition-all"
                   >
@@ -1952,12 +1973,9 @@ const AdminPanel = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-20 right-4 z-[60] p-4 rounded-2xl shadow-xl flex items-center gap-3 max-w-md border ${message.type === 'success'
-              ? 'bg-emerald-950/90 border-brand-500/30 text-brand-400'
-              : 'bg-rose-950/90 border-danger-500/30 text-rose-400'
-              }`}
+            className={`fixed top-20 right-4 z-[60] p-4 rounded-2xl shadow-xl flex items-center gap-3 max-w-md border ${toastStyles[mode === 'dark' ? 'dark' : 'light'][message.type] || toastStyles[mode === 'dark' ? 'dark' : 'light'].info}`}
           >
-            {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+            <ToastIcon type={message.type} />
             <span className="text-sm font-semibold">{message.text}</span>
           </motion.div>
         )}
