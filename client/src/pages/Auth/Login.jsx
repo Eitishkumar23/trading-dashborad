@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Mail, TrendingUp, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, TrendingUp, Loader2, ArrowRight, ShieldCheck, Shield } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { authAPI } from '../../services/api.js';
 import { authStart, authSuccess, authFailure } from '../../redux/authSlice.js';
@@ -23,6 +23,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [seedLoading, setSeedLoading] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const navigate = useNavigate();
@@ -104,7 +105,24 @@ const Login = () => {
     }
   };
 
-  const isAnyLoading = loading || googleLoading || seedLoading;
+  const handleDemoAdminAccess = async () => {
+    try {
+      setAdminLoading(true);
+      setErrorMessage('');
+      dispatch(authStart());
+      const res = await authAPI.login({ email: 'eitishkoundal34@gmail.com', password: 'Eitish@2002' });
+      dispatch(authSuccess({ user: res.data, token: res.data.token }));
+      navigate('/admin');
+    } catch (error) {
+      const msg = error.response?.data?.message || 'Demo admin login failed.';
+      setErrorMessage(msg);
+      dispatch(authFailure(msg));
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const isAnyLoading = loading || googleLoading || seedLoading || adminLoading;
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 relative overflow-hidden">
@@ -291,6 +309,23 @@ const Login = () => {
               <>
                 <span>⚡ Seed Demo Database &amp; Login</span>
                 <ArrowRight size={15} />
+              </>
+            )}
+          </button>
+
+          <button
+            id="demo-admin-access-btn"
+            type="button"
+            onClick={handleDemoAdminAccess}
+            disabled={isAnyLoading}
+            className="w-full bg-slate-950/80 hover:bg-slate-900 border border-slate-800 hover:border-blue-500/40 active:scale-[0.98] text-blue-400 hover:text-blue-300 py-3 rounded-xl font-bold text-sm transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed mt-3"
+          >
+            {adminLoading ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <>
+                <Shield size={15} />
+                <span>Demo Admin Login</span>
               </>
             )}
           </button>

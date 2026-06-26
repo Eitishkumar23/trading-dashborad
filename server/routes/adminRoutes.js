@@ -10,6 +10,29 @@ import { ADMIN_EMAIL } from '../config/authConstants.js';
 
 const router = express.Router();
 
+const buildLastSevenDayBuckets = () => {
+  const buckets = [];
+  for (let i = 6; i >= 0; i--) {
+    const start = new Date();
+    start.setDate(start.getDate() - i);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(start.getDate() + 1);
+
+    buckets.push({
+      start,
+      end,
+      label: start.toLocaleDateString('en-US', { weekday: 'short' }),
+    });
+  }
+  return buckets;
+};
+
+const mapBucketResults = (results) => {
+  return new Map(results.map((item) => [new Date(item._id).getTime(), item]));
+};
+
 // Admin middleware that only allows the permanent system administrator.
 const adminOnly = (req, res, next) => {
   if (req.user && req.user.role === 'admin' && req.user.email === ADMIN_EMAIL) {
@@ -114,48 +137,100 @@ router.delete('/assets/:symbol', protect, adminOnly, async (req, res) => {
 // GET /api/admin/stats - return platform statistics and charts data
 router.get('/stats', protect, adminOnly, async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments({});
-    
-    // Active today: unique users with trades or wallet transactions in last 24h
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const activeTradesUsers = await Transaction.find({ createdAt: { $gte: oneDayAgo } }).distinct('userId');
-    const activeWalletUsers = await WalletTransaction.find({ createdAt: { $gte: oneDayAgo } }).distinct('userId');
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const dayBuckets = buildLastSevenDayBuckets();
+    const bucketBoundaries = [...dayBuckets.map((bucket) => bucket.start), dayBuckets[dayBuckets.length - 1].end];
+    const bucketStart = bucketBoundaries[0];
+    const bucketEnd = bucketBoundaries[bucketBoundaries.length - 1];
+
+    const [
+      totalUsers,
+      activeTradesUsers,
+      activeWalletUsers,
+      totalTradesToday,
+      platformVolumeResult,
+      settings,
+      pendingWithdrawalsCount,
+      topAssetsResult,
+      volumeBuckets,
+      signupBuckets,
+    ] = await Promise.all([
+      User.countDocuments({}),
+      Transaction.distinct('userId', { createdAt: { $gte: oneDayAgo } }),
+      WalletTransaction.distinct('userId', { createdAt: { $gte: oneDayAgo } }),
+      Transaction.countDocuments({ createdAt: { $gte: oneDayAgo } }),
+      Transaction.aggregate([
+        {
+          $group: {
+            _id: null,
+            platformVolume: { $sum: '$totalAmount' },
+          },
+        },
+      ]),
+      Settings.getSettings(),
+      WalletTransaction.countDocuments({
+        transactionType: 'DEBIT',
+        status: 'pending',
+        description: { $not: /^Bought/ },
+      }),
+      Transaction.aggregate([
+        { $match: { createdAt: { $gte: sevenDaysAgo } } },
+        {
+          $group: {
+            _id: '$symbol',
+            volume: { $sum: '$totalAmount' },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { volume: -1 } },
+        { $limit: 5 },
+        {
+          $project: {
+            _id: 0,
+            symbol: '$_id',
+            volume: 1,
+            count: 1,
+          },
+        },
+      ]),
+      Transaction.aggregate([
+        { $match: { createdAt: { $gte: bucketStart, $lt: bucketEnd } } },
+        {
+          $bucket: {
+            groupBy: '$createdAt',
+            boundaries: bucketBoundaries,
+            output: {
+              volume: { $sum: '$totalAmount' },
+            },
+          },
+        },
+      ]),
+      User.aggregate([
+        { $match: { createdAt: { $gte: bucketStart, $lt: bucketEnd } } },
+        {
+          $bucket: {
+            groupBy: '$createdAt',
+            boundaries: bucketBoundaries,
+            output: {
+              signups: { $sum: 1 },
+            },
+          },
+        },
+      ]),
+    ]);
+
+    // Active today: unique users with trades or wallet transactions in last 24h
     const uniqueActive = new Set([...activeTradesUsers.map(id => id.toString()), ...activeWalletUsers.map(id => id.toString())]);
     const activeUsersCount = uniqueActive.size;
 
-    // Total Trades Today
-    const totalTradesToday = await Transaction.countDocuments({ createdAt: { $gte: oneDayAgo } });
-
-    // Platform Volume (Sum of all trade totalAmounts)
-    const allTrades = await Transaction.find({});
-    const platformVolume = allTrades.reduce((acc, t) => acc + t.totalAmount, 0);
-
     // Fees Collected (simulated at current fee rate)
-    const settings = await Settings.getSettings();
+    const platformVolume = platformVolumeResult[0]?.platformVolume || 0;
     const feeRate = settings.tradingFeePercent / 100;
     const feesCollected = platformVolume * feeRate;
 
-    // Pending Withdrawals
-    const pendingWithdrawalsCount = await WalletTransaction.countDocuments({
-      transactionType: 'DEBIT',
-      status: 'pending',
-      description: { $not: /^Bought/ }
-    });
-
     // Top 5 most traded assets this week
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const recentTrades = await Transaction.find({ createdAt: { $gte: sevenDaysAgo } });
-    const assetStats = {};
-    recentTrades.forEach(t => {
-      if (!assetStats[t.symbol]) {
-        assetStats[t.symbol] = { symbol: t.symbol, volume: 0, count: 0 };
-      }
-      assetStats[t.symbol].volume += t.totalAmount;
-      assetStats[t.symbol].count += 1;
-    });
-    const topAssets = Object.values(assetStats)
-      .sort((a, b) => b.volume - a.volume)
-      .slice(0, 5)
+    const topAssets = topAssetsResult
       .map((item, idx) => ({
         rank: idx + 1,
         symbol: item.symbol,
@@ -164,35 +239,18 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
       }));
 
     // Volume last 7 days (Bar chart)
-    const volumeLast7Days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      d.setHours(0, 0, 0, 0);
-      const nextD = new Date(d);
-      nextD.setDate(d.getDate() + 1);
-      const dayTrades = await Transaction.find({ createdAt: { $gte: d, $lt: nextD } });
-      const dayVolume = dayTrades.reduce((acc, t) => acc + t.totalAmount, 0);
-      volumeLast7Days.push({
-        date: d.toLocaleDateString('en-US', { weekday: 'short' }),
-        volume: dayVolume
-      });
-    }
+    const volumeByDay = mapBucketResults(volumeBuckets);
+    const volumeLast7Days = dayBuckets.map((bucket) => ({
+      date: bucket.label,
+      volume: volumeByDay.get(bucket.start.getTime())?.volume || 0,
+    }));
 
     // New signups last 7 days (Line chart)
-    const signupsLast7Days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      d.setHours(0, 0, 0, 0);
-      const nextD = new Date(d);
-      nextD.setDate(d.getDate() + 1);
-      const count = await User.countDocuments({ createdAt: { $gte: d, $lt: nextD } });
-      signupsLast7Days.push({
-        date: d.toLocaleDateString('en-US', { weekday: 'short' }),
-        signups: count
-      });
-    }
+    const signupsByDay = mapBucketResults(signupBuckets);
+    const signupsLast7Days = dayBuckets.map((bucket) => ({
+      date: bucket.label,
+      signups: signupsByDay.get(bucket.start.getTime())?.signups || 0,
+    }));
 
     res.json({
       totalUsers,
@@ -213,11 +271,35 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
 // GET /api/admin/users - return list of all users
 router.get('/users', protect, adminOnly, async (req, res) => {
   try {
-    const users = await User.find({}).sort({ createdAt: -1 });
-    const usersWithDetails = await Promise.all(users.map(async (u) => {
-      const holdingsCount = await Holding.countDocuments({ userId: u._id });
-      const tradeCount = await Transaction.countDocuments({ userId: u._id });
-      
+    const [users, holdingCounts, tradeCounts] = await Promise.all([
+      User.find({})
+        .select('_id name email role authProvider status createdAt')
+        .sort({ createdAt: -1 })
+        .lean(),
+      Holding.aggregate([
+        {
+          $group: {
+            _id: '$userId',
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      Transaction.aggregate([
+        {
+          $group: {
+            _id: '$userId',
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+    ]);
+
+    const holdingCountByUser = new Map(holdingCounts.map((item) => [item._id.toString(), item.count]));
+    const tradeCountByUser = new Map(tradeCounts.map((item) => [item._id.toString(), item.count]));
+
+    const usersWithDetails = users.map((u) => {
+      const userId = u._id.toString();
+
       // Seed deterministic KYC status
       const seed = parseInt(u._id.toString().slice(-4), 16);
       const kycStatusOptions = ['Verified', 'Pending', 'Not Started'];
@@ -232,10 +314,10 @@ router.get('/users', protect, adminOnly, async (req, res) => {
         status: u.status || 'active',
         kycStatus,
         createdAt: u.createdAt,
-        holdingsCount,
-        tradeCount,
+        holdingsCount: holdingCountByUser.get(userId) || 0,
+        tradeCount: tradeCountByUser.get(userId) || 0,
       };
-    }));
+    });
     res.json(usersWithDetails);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -284,14 +366,24 @@ router.post('/users/:id/reset-2fa', protect, adminOnly, async (req, res) => {
 // GET /api/admin/users/:id/profile - get user profile data (holdings, trade history, wallet history)
 router.get('/users/:id/profile', protect, adminOnly, async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findById(req.params.id).select('-password').lean();
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const holdings = await Holding.find({ userId: user._id });
-    const trades = await Transaction.find({ userId: user._id }).sort({ createdAt: -1 });
-    const walletTxs = await WalletTransaction.find({ userId: user._id }).sort({ createdAt: -1 });
+    const [holdings, trades, walletTxs] = await Promise.all([
+      Holding.find({ userId: user._id })
+        .select('_id userId symbol assetType quantity averageBuyPrice investedAmount createdAt __v')
+        .lean(),
+      Transaction.find({ userId: user._id })
+        .select('_id userId type symbol quantity price totalAmount profit createdAt __v')
+        .sort({ createdAt: -1 })
+        .lean(),
+      WalletTransaction.find({ userId: user._id })
+        .select('_id userId transactionType amount description status createdAt __v')
+        .sort({ createdAt: -1 })
+        .lean(),
+    ]);
 
     res.json({
       user,
@@ -308,8 +400,10 @@ router.get('/users/:id/profile', protect, adminOnly, async (req, res) => {
 router.get('/orders', protect, adminOnly, async (req, res) => {
   try {
     const orders = await Transaction.find({})
+      .select('_id userId type symbol quantity price totalAmount profit createdAt __v')
       .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     res.json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -323,8 +417,10 @@ router.get('/withdrawals', protect, adminOnly, async (req, res) => {
       transactionType: 'DEBIT',
       description: { $not: /^Bought/ }
     })
+      .select('_id userId transactionType amount description status createdAt __v')
       .populate('userId', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     
     res.json(withdrawals);
   } catch (error) {
