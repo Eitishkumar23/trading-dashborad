@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   TrendingUp,
   LogOut,
-  Trash2,
   Plus,
   Loader2,
   AlertCircle,
@@ -170,7 +169,6 @@ const AdminPanel = () => {
   const [editingValue, setEditingValue] = useState('');
 
   // Modals / Dialogs
-  const [deleteConfirmAsset, setDeleteConfirmAsset] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null); // { title, message, onConfirm, type: 'danger' | 'info' }
   const [profileModalUser, setProfileModalUser] = useState(null);
   const [profileModalData, setProfileModalData] = useState({ holdings: [], trades: [], walletTxs: [] });
@@ -451,26 +449,6 @@ const AdminPanel = () => {
     } finally {
       setActionLoadingSymbol('');
       setEditingSymbol(null);
-    }
-  };
-
-  // Delete Asset Limit
-  const handleDeleteAsset = async () => {
-    if (!deleteConfirmAsset) return;
-
-    const symbolToDelete = deleteConfirmAsset.symbol;
-    try {
-      setActionLoadingSymbol(symbolToDelete);
-      await adminAPI.deleteAsset(symbolToDelete);
-      showStatus(`Deleted limit for ${symbolToDelete}.`, 'success');
-      logAction('Asset Limits', symbolToDelete, `Removed trading limit restriction.`);
-
-      setAssets(assets.filter(a => a.symbol !== symbolToDelete));
-    } catch (error) {
-      showStatus(error.response?.data?.message || 'Failed to delete asset limit.', 'error');
-    } finally {
-      setActionLoadingSymbol('');
-      setDeleteConfirmAsset(null);
     }
   };
 
@@ -819,10 +797,10 @@ const AdminPanel = () => {
                         </div>
                         <span className="min-w-0 truncate">{u.name}</span>
                         <span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${(u.role || (u.email === ADMIN_EMAIL ? 'admin' : 'user')) === 'admin'
-                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                            : (u.role || (u.email === ADMIN_EMAIL ? 'admin' : 'user')) === 'demo'
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                              : 'bg-brand-500/10 text-brand-400 border border-brand-500/20'
+                          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          : (u.role || (u.email === ADMIN_EMAIL ? 'admin' : 'user')) === 'demo'
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            : 'bg-brand-500/10 text-brand-400 border border-brand-500/20'
                           }`}>
                           {u.role || (u.email === ADMIN_EMAIL ? 'admin' : 'user')}
                         </span>
@@ -1401,7 +1379,7 @@ const AdminPanel = () => {
                 label: 'Asset Name',
                 value: name,
                 options: nameOptions,
-                onSelect: () => {},
+                onSelect: () => { },
                 placeholder: 'Select a symbol first',
                 disabled: !name,
               })}
@@ -1562,13 +1540,6 @@ const AdminPanel = () => {
                                     title="Edit quantity"
                                   >
                                     <Edit2 size={13} />
-                                  </button>
-                                  <button
-                                    onClick={() => setDeleteConfirmAsset(asset)}
-                                    className="p-1.5 text-slate-500 hover:text-rose-500 bg-slate-950 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/20 rounded-lg"
-                                    title="Delete limit"
-                                  >
-                                    <Trash2 size={13} />
                                   </button>
                                 </>
                               )}
@@ -2335,48 +2306,6 @@ const AdminPanel = () => {
       </AnimatePresence>
 
       {/* Delete asset limits confirmation (original preserved) */}
-      <AnimatePresence>
-        {deleteConfirmAsset && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 backdrop-blur-xs"
-              onClick={() => setDeleteConfirmAsset(null)}
-            />
-
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md relative z-10 shadow-2xl"
-            >
-              <h3 className="text-lg font-bold text-white mb-2">Delete Limit Restriction</h3>
-              <p className="text-sm text-slate-400 mb-6">
-                Are you sure you want to remove the trading limit for{' '}
-                <span className="font-extrabold text-white">{deleteConfirmAsset.symbol}</span>?
-                This will allow users to buy any quantity of this asset.
-              </p>
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setDeleteConfirmAsset(null)}
-                  className="bg-slate-950 hover:bg-slate-900 border border-slate-800 py-2 px-4 text-sm font-bold text-slate-400"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteAsset}
-                  className="bg-rose-600 hover:bg-rose-700 active:scale-[0.98] py-2 px-4 text-sm font-bold text-white shadow-lg shadow-rose-500/15"
-                >
-                  Confirm Delete
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
