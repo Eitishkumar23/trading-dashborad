@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { updateUserProfileLocal } from '../../redux/authSlice.js';
 import AccountPasswordForm from '../../components/AccountPasswordForm.jsx';
 import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
+import { useMaintenance } from '../../context/MaintenanceContext.jsx';
 
 const Profile = () => {
   const { user } = useSelector((s) => s.auth);
@@ -24,6 +25,7 @@ const Profile = () => {
   const [emailSuccess, setEmailSuccess] = useState('');
   const [emailError, setEmailError] = useState('');
   const [showEmailPassword, setShowEmailPassword] = useState(false);
+  const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
 
   const { register, handleSubmit, reset, setValue, watch } = useForm();
   const {
@@ -35,6 +37,7 @@ const Profile = () => {
   } = useForm();
   const hasPassword = Boolean(user?.hasPassword);
   const isAdminAccount = user?.role === 'admin';
+  const accountSettingsDisabled = isAdminAccount || maintenanceMode;
   const alertTargetValue = watch('value');
 
   const accountProvider = user?.authProvider
@@ -76,16 +79,22 @@ const Profile = () => {
   }, [emailError]);
 
   const handleRemoveWatchlist = async (symbol) => {
+    if (maintenanceMode) return;
+
     await marketAPI.removeFromWatchlist(symbol);
     refetchWatchlist();
   };
 
   const handleDeleteAlert = async (id) => {
+    if (maintenanceMode) return;
+
     await marketAPI.deleteAlert(id);
     refetchAlerts();
   };
 
   const onCreateAlert = async (data) => {
+    if (maintenanceMode) return;
+
     setAlertLoading(true);
     setAlertSuccess('');
     try {
@@ -106,6 +115,8 @@ const Profile = () => {
   };
 
   const onUpdateEmail = async (data) => {
+    if (accountSettingsDisabled) return;
+
     setEmailLoading(true);
     setEmailSuccess('');
     setEmailError('');
@@ -214,7 +225,8 @@ const Profile = () => {
           <div className="[&>div]:h-full [&>div]:w-full">
             <AccountPasswordForm
               hasPassword={hasPassword}
-              disabled={isAdminAccount}
+              disabled={accountSettingsDisabled}
+              disabledReason={maintenanceMode ? maintenanceMessage : undefined}
               onSaved={() => queryClient.invalidateQueries({ queryKey: ['profile'] })}
             />
           </div>
@@ -224,7 +236,7 @@ const Profile = () => {
               <div>
                 <h2 className="font-bold text-base">Update Email</h2>
                 <p className="text-xs text-light-muted dark:text-dark-muted">
-                  {isAdminAccount ? 'Administrator account settings are locked' : 'Keep your sign-in address current'}
+                  {maintenanceMode ? 'Account settings are temporarily unavailable' : isAdminAccount ? 'Administrator account settings are locked' : 'Keep your sign-in address current'}
                 </p>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">
@@ -264,7 +276,7 @@ const Profile = () => {
                   New Email
                 </label>
                 <input
-                  disabled={isAdminAccount}
+                  disabled={accountSettingsDisabled}
                   {...registerEmail('newEmail', {
                     required: 'New email is required',
                     pattern: {
@@ -285,7 +297,7 @@ const Profile = () => {
                   Confirm New Email
                 </label>
                 <input
-                  disabled={isAdminAccount}
+                  disabled={accountSettingsDisabled}
                   {...registerEmail('confirmEmail', {
                     required: 'Confirm new email is required',
                     validate: (value) => value === getEmailValues('newEmail') || 'Emails do not match',
@@ -304,7 +316,7 @@ const Profile = () => {
                 </label>
                 <div className="relative mt-1">
                   <input
-                    disabled={isAdminAccount}
+                    disabled={accountSettingsDisabled}
                     {...registerEmail('password', { required: 'Password is required' })}
                     type={showEmailPassword ? 'text' : 'password'}
                     placeholder="Enter password"
@@ -314,7 +326,7 @@ const Profile = () => {
                     type="button"
                     aria-label={showEmailPassword ? 'Hide password' : 'Show password'}
                     onClick={() => setShowEmailPassword((current) => !current)}
-                    disabled={isAdminAccount}
+                    disabled={accountSettingsDisabled}
                     className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-light-muted transition-colors hover:text-brand-500 dark:text-dark-muted"
                   >
                     {showEmailPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -327,10 +339,11 @@ const Profile = () => {
               <div className="lg:col-span-3 flex justify-end pt-2">
                 <button
                   type="submit"
-                  disabled={emailLoading || isAdminAccount}
+                  disabled={emailLoading || accountSettingsDisabled}
+                  title={maintenanceMode ? maintenanceMessage : undefined}
                   className="inline-flex w-fit items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-brand-600 disabled:opacity-60"
                 >
-                  {isAdminAccount ? <span>Locked</span> : emailLoading ? <Loader2 size={14} className="animate-spin" /> : <span>Update Email</span>}
+                  {accountSettingsDisabled ? <span>Locked</span> : emailLoading ? <Loader2 size={14} className="animate-spin" /> : <span>Update Email</span>}
                 </button>
               </div>
             </form>

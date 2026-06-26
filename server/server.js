@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
+import { getMaintenanceStatus, requireWritablePlatform } from './middleware/maintenanceMiddleware.js';
 
 // Route imports
 import authRoutes from './routes/authRoutes.js';
@@ -31,6 +32,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.get('/api/settings/status', getMaintenanceStatus);
 app.use('/api/auth', authRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/trade', tradeRoutes);
@@ -41,7 +43,7 @@ app.use('/api/admin', adminRoutes);
 // @desc    Seed demo database profile
 // @route   POST /api/seed
 // @access  Public
-app.post('/api/seed', async (req, res) => {
+app.post('/api/seed', requireWritablePlatform, async (req, res) => {
   console.log('seed route hit');
   try {
     const existingDemoUser = await User.findOne({ email: DEMO_EMAIL }).select('_id');

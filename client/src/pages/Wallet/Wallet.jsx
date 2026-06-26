@@ -10,6 +10,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { walletAPI } from '../../services/api.js';
+import { useMaintenance } from '../../context/MaintenanceContext.jsx';
 
 const QUICK_AMOUNTS = [10000, 50000, 100000, 500000];
 
@@ -36,6 +37,7 @@ const WalletPage = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [showSuccessMsg, setShowSuccessMsg] = useState(false);
   const [activeQuickAmount, setActiveQuickAmount] = useState(null);
+  const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
 
   const {
     register,
@@ -55,7 +57,7 @@ const WalletPage = () => {
   const amountValue = watch('amount');
   const depositAmount = Number(amountValue || 0);
   const isDepositDisabled =
-    submitLoading || !Number.isFinite(depositAmount) || depositAmount <= 0;
+    maintenanceMode || submitLoading || !Number.isFinite(depositAmount) || depositAmount <= 0;
 
   const fetchWalletDetails = async () => {
     try {
@@ -103,6 +105,8 @@ const WalletPage = () => {
   };
 
   const handleQuickAmount = (amount) => {
+    if (maintenanceMode) return;
+
     const currentAmount = Number(getValues('amount') || 0);
     const safeAmount = Number.isFinite(currentAmount) && currentAmount > 0 ? currentAmount : 0;
     const nextAmount = safeAmount + amount;
@@ -116,6 +120,8 @@ const WalletPage = () => {
   };
 
   const handleClearAmount = () => {
+    if (maintenanceMode) return;
+
     setValue('amount', 0, {
       shouldDirty: true,
       shouldTouch: true,
@@ -125,6 +131,8 @@ const WalletPage = () => {
   };
 
   const onSubmit = async (formData) => {
+    if (maintenanceMode) return;
+
     const amount = Number(formData.amount || 0);
     if (!Number.isFinite(amount) || amount <= 0) {
       return;
@@ -230,6 +238,12 @@ const WalletPage = () => {
               )}
             </AnimatePresence>
 
+            {maintenanceMode && (
+              <div className="mb-4 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-3 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                {maintenanceMessage}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <div className="flex items-center justify-between gap-3 mb-1.5">
@@ -246,6 +260,7 @@ const WalletPage = () => {
                   step="1"
                   inputMode="numeric"
                   placeholder="Enter amount (e.g. 50000)"
+                  disabled={maintenanceMode}
                   onKeyDown={(event) => {
                     if (['-', '+', 'e', 'E', '.', ','].includes(event.key)) {
                       event.preventDefault();
@@ -281,6 +296,7 @@ const WalletPage = () => {
                         ? 'bg-brand-500/15 text-brand-500 border-brand-500/30 shadow-sm shadow-brand-500/10'
                         : 'bg-slate-200/50 dark:bg-slate-800/40 border-transparent hover:bg-brand-500/10 hover:text-brand-500 hover:border-brand-500/20'
                     }`}
+                    disabled={maintenanceMode}
                   >
                     +{formatCurrency(amt)}
                   </button>
@@ -288,6 +304,7 @@ const WalletPage = () => {
                 <button
                   type="button"
                   onClick={handleClearAmount}
+                  disabled={maintenanceMode}
                   className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-300/70 dark:border-slate-700 text-light-muted dark:text-dark-muted hover:text-rose-500 hover:border-rose-500/30 hover:bg-rose-500/10 transition-all duration-150 active:scale-95"
                 >
                   Clear
@@ -301,6 +318,7 @@ const WalletPage = () => {
                 <input
                   type="text"
                   placeholder="Bank transfer reference / comment"
+                  disabled={maintenanceMode}
                   {...register('description')}
                   className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 text-sm focus:border-brand-500 outline-none transition-colors"
                 />
@@ -309,9 +327,10 @@ const WalletPage = () => {
               <button
                 type="submit"
                 disabled={isDepositDisabled}
+                title={maintenanceMode ? maintenanceMessage : undefined}
                 className="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:bg-slate-400 disabled:dark:bg-slate-700 disabled:cursor-not-allowed disabled:shadow-none text-white rounded-xl font-bold transition-all shadow-lg shadow-brand-500/10 flex items-center justify-center gap-2"
               >
-                {submitLoading ? 'Depositing...' : 'Add Funds to Wallet'}
+                {maintenanceMode ? 'Deposits Unavailable' : submitLoading ? 'Depositing...' : 'Add Funds to Wallet'}
               </button>
             </form>
           </div>

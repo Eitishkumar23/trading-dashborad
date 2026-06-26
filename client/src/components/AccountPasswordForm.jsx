@@ -46,7 +46,7 @@ const PasswordInput = ({ name, registration, className, placeholder, visible, on
   </div>
 );
 
-const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved, disabled = false }) => {
+const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved, disabled = false, disabledReason }) => {
   const dispatch = useDispatch();
   const classes = themeClasses[theme] || themeClasses.app;
   const hasExistingPassword = hasPassword === true;
@@ -132,7 +132,7 @@ const AccountPasswordForm = ({ hasPassword, theme = 'app', onSaved, disabled = f
 
       {disabled && (
         <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs font-semibold text-amber-500">
-          Administrator Account. System Managed.
+          {disabledReason || 'Administrator Account. System Managed.'}
         </div>
       )}
 

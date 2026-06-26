@@ -11,6 +11,7 @@ import {
   deleteAlert,
 } from '../controllers/marketController.js';
 import { protect } from '../middleware/authMiddleware.js';
+import { requireWritablePlatform } from '../middleware/maintenanceMiddleware.js';
 
 const router = express.Router();
 
@@ -22,12 +23,12 @@ router.get('/overview', getMarketOverview);
 
 // Watchlist routes
 router.get('/watchlist', getWatchlist);
-router.post('/watchlist', addToWatchlist);
-router.delete('/watchlist/:symbol', removeFromWatchlist);
+router.post('/watchlist', requireWritablePlatform, addToWatchlist);
+router.delete('/watchlist/:symbol', requireWritablePlatform, removeFromWatchlist);
 
 // Price Alerts routes
 router.get('/alerts', getAlerts);
-router.post('/alerts', createAlert);
-router.delete('/alerts/:id', deleteAlert);
+router.post('/alerts', requireWritablePlatform, createAlert);
+router.delete('/alerts/:id', requireWritablePlatform, deleteAlert);
 
 export default router;

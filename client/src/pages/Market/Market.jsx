@@ -6,6 +6,7 @@ import { marketAPI, tradeAPI, walletAPI } from '../../services/api.js';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
+import { useMaintenance } from '../../context/MaintenanceContext.jsx';
 
 const Market = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +25,7 @@ const Market = () => {
   const { data: watchlist = [], refetch: refetchWatchlist } = useWatchlist();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
 
   // Handle URL search param from global search
   useEffect(() => {
@@ -60,6 +62,8 @@ const Market = () => {
         : markets;
 
   const handleToggleWatchlist = async (symbol, assetType) => {
+    if (maintenanceMode) return;
+
     if (watchlistSymbols.includes(symbol)) {
       await marketAPI.removeFromWatchlist(symbol);
     } else {
@@ -69,6 +73,8 @@ const Market = () => {
   };
 
   const openBuyModal = async (asset) => {
+    if (maintenanceMode) return;
+
     setBuyModal(asset);
     setBuyQuantity('');
     setBuyError('');
@@ -76,6 +82,11 @@ const Market = () => {
   };
 
   const handleBuy = async () => {
+    if (maintenanceMode) {
+      setBuyError(maintenanceMessage);
+      return;
+    }
+
     const qty = parseFloat(buyQuantity);
     if (!qty || qty <= 0) { setBuyError('Enter a valid quantity'); return; }
     const total = qty * buyModal.price;
@@ -133,11 +144,10 @@ const Market = () => {
                       navigate('/market', { replace: true });
                     }
                   }}
-                  className={`px-4 py-2 rounded-2xl text-xs font-bold capitalize transition-all ${
-                    activeTab === tab
+                  className={`px-4 py-2 rounded-2xl text-xs font-bold capitalize transition-all ${activeTab === tab
                       ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
                       : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
-                  }`}
+                    }`}
                 >
                   {tab === 'all' ? 'All Assets' : tab === 'stocks' ? 'Stocks' : 'Crypto'}
                 </button>
@@ -164,7 +174,7 @@ const Market = () => {
                 <thead>
                   <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-xs uppercase font-bold text-light-muted dark:text-dark-muted sticky top-0 bg-slate-50/90 dark:bg-[#101423]/90 backdrop-blur-md z-10">
                     <th className="px-4 py-3 lg:px-3 text-left">Asset</th>
-                    <th className="px-4 py-3 lg:px-3 text-left">Type</th>
+                    <th className="px-4 py-3 lg:px-3 text-center">Type</th>
                     <th className="px-4 py-3 lg:px-3 text-right">Price (₹)</th>
                     <th className="px-4 py-3 lg:px-3 text-right">24h Change</th>
                     <th className="px-4 py-3 lg:px-3 text-right">High</th>
@@ -197,14 +207,13 @@ const Market = () => {
                             <p className="text-xs text-light-muted dark:text-dark-muted">{asset.name}</p>
                           </div>
                         </td>
-                        <td className="px-4 py-3 lg:px-3">
-                          <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
-                            asset.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'
-                          }`}>
+                        <td className="px-4 py-3 lg:px-3 text-center">
+                          <span className={`inline-flex items-center justify-center px-2 py-1 rounded-lg text-xs font-bold ${asset.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'
+                            }`}>
                             {asset.assetType}
                           </span>
                         </td>
-                        <td className="px-4 py-3 lg:px-3 text-right font-bold">₹{asset.price.toLocaleString()}</td>
+                        <td className="px-4 py-3 lg:px-3 text-right font-bold tabular-nums">₹{asset.price.toLocaleString()}</td>
                         <td className={`px-4 py-3 lg:px-3 text-right font-bold ${asset.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
                           <div className="flex items-center justify-end gap-1">
                             {asset.change >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -217,17 +226,20 @@ const Market = () => {
                           <div className="flex items-center justify-center gap-1.5">
                             <button
                               onClick={() => handleToggleWatchlist(asset.symbol, asset.assetType)}
-                              className={`p-1.5 rounded-xl transition-colors ${
-                                watchlistSymbols.includes(asset.symbol)
+                              disabled={maintenanceMode}
+                              title={maintenanceMode ? maintenanceMessage : undefined}
+                              className={`p-1.5 rounded-xl transition-colors ${watchlistSymbols.includes(asset.symbol)
                                   ? 'text-amber-500 bg-amber-500/10'
                                   : 'text-light-muted dark:text-dark-muted hover:text-amber-500 hover:bg-amber-500/10'
-                              }`}
+                                } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               {watchlistSymbols.includes(asset.symbol) ? <Star size={14} fill="currentColor" /> : <Star size={14} />}
                             </button>
                             <button
                               onClick={() => openBuyModal(asset)}
-                              className="flex items-center gap-1 px-2.5 py-1.5 bg-brand-500/10 hover:bg-brand-500 hover:text-white text-brand-500 rounded-xl text-xs font-bold transition-all duration-200 border border-brand-500/20 hover:border-brand-500 hover:shadow-lg hover:shadow-brand-500/20"
+                              disabled={maintenanceMode}
+                              title={maintenanceMode ? maintenanceMessage : undefined}
+                              className="flex items-center gap-1 px-2.5 py-1.5 bg-brand-500/10 hover:bg-brand-500 hover:text-white text-brand-500 rounded-xl text-xs font-bold transition-all duration-200 border border-brand-500/20 hover:border-brand-500 hover:shadow-lg hover:shadow-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand-500/10 disabled:hover:text-brand-500 disabled:hover:shadow-none"
                             >
                               <ShoppingCart size={11} />
                               <span>Buy</span>
@@ -345,10 +357,11 @@ const Market = () => {
 
                     <button
                       onClick={handleBuy}
-                      disabled={buyLoading || !buyQuantity}
+                      disabled={maintenanceMode || buyLoading || !buyQuantity}
+                      title={maintenanceMode ? maintenanceMessage : undefined}
                       className="w-full py-3 bg-brand-500 hover:bg-brand-600 disabled:opacity-60 text-white rounded-2xl font-extrabold transition-all shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2"
                     >
-                      {buyLoading ? <Loader2 size={18} className="animate-spin" /> : <><ShoppingCart size={16} /><span>Confirm Buy</span></>}
+                      {maintenanceMode ? <span>Buying Unavailable</span> : buyLoading ? <Loader2 size={18} className="animate-spin" /> : <><ShoppingCart size={16} /><span>Confirm Buy</span></>}
                     </button>
                   </>
                 )}

@@ -62,9 +62,8 @@ const Transactions = () => {
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-              filter === f.value ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
-            }`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === f.value ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+              }`}
           >
             {f.label}
           </button>
@@ -77,8 +76,8 @@ const Transactions = () => {
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="text-xs uppercase font-bold text-light-muted dark:text-dark-muted bg-slate-50/50 dark:bg-slate-900/20">
-                <th className="px-6 py-4 text-left">Type</th>
                 <th className="px-6 py-4 text-left">Asset</th>
+                <th className="px-6 py-4 text-center">Type</th>
                 <th className="px-6 py-4 text-right">Qty</th>
                 <th className="px-6 py-4 text-right">Price</th>
                 <th className="px-6 py-4 text-right">Total</th>
@@ -98,13 +97,17 @@ const Transactions = () => {
               ) : (
                 history.map((tx) => (
                   <tr key={tx._id} className="border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50 dark:hover:bg-slate-800/15 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${tx.type === 'BUY' ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500'}`}>
-                        {tx.type === 'BUY' ? <ArrowUpRight size={12} /> : <ArrowDownLeft size={12} />}
-                        {tx.type}
-                      </span>
+                    <td className="px-6 py-4 font-bold">
+                      {tx.symbol}
                     </td>
-                    <td className="px-6 py-4 font-bold">{tx.symbol}</td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${tx.type === 'BUY' ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500'}`}>
+                          {tx.type === 'BUY' ? <ArrowUpRight size={12} /> : <ArrowDownLeft size={12} />}
+                          {tx.type}
+                        </span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 text-right">{tx.quantity}</td>
                     <td className="px-6 py-4 text-right">₹{tx.price.toLocaleString()}</td>
                     <td className="px-6 py-4 text-right font-semibold">₹{tx.totalAmount.toLocaleString()}</td>

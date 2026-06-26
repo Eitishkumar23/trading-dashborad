@@ -23,6 +23,7 @@ import {
 import { logout } from '../redux/authSlice.js';
 import { toggleTheme } from '../redux/themeSlice.js';
 import { walletAPI, marketAPI } from '../services/api.js';
+import { useMaintenance } from '../context/MaintenanceContext.jsx';
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -40,6 +41,7 @@ const DashboardLayout = () => {
 
   const { user } = useSelector((state) => state.auth);
   const { mode } = useSelector((state) => state.theme);
+  const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
 
   // Apply body classes for theme
   useEffect(() => {
@@ -396,6 +398,12 @@ const DashboardLayout = () => {
             </div>
           </div>
         </header>
+
+        {maintenanceMode && (
+          <div className="mb-4 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-700 dark:text-amber-300">
+            {maintenanceMessage}
+          </div>
+        )}
 
         {/* Dynamic Nested Routes */}
         <main className="flex-1 lg:overflow-y-auto min-h-0">

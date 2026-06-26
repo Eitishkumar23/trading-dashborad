@@ -48,6 +48,10 @@ export const authAPI = {
   seedData: () => API.post('/seed'),// Seed bypass
 };
 
+export const maintenanceAPI = {
+  getStatus: () => API.get('/settings/status'),
+};
+
 export const walletAPI = {
   addFunds: (amount, description) => API.post('/wallet/add', { amount, description }),
   withdrawFunds: (amount, destination) => API.post('/wallet/withdraw', { amount, destination }),

@@ -5,6 +5,7 @@ import { useHoldings } from '../../hooks/useMarketData.js';
 import { tradeAPI } from '../../services/api.js';
 import { useQueryClient } from '@tanstack/react-query';
 import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
+import { useMaintenance } from '../../context/MaintenanceContext.jsx';
 
 const Portfolio = () => {
   const { data: holdings = [], isLoading, refetch } = useHoldings();
@@ -14,8 +15,14 @@ const Portfolio = () => {
   const [sellError, setSellError] = useState('');
   const [sellSuccess, setSellSuccess] = useState('');
   const queryClient = useQueryClient();
+  const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
 
   const handleSell = async () => {
+    if (maintenanceMode) {
+      setSellError(maintenanceMessage);
+      return;
+    }
+
     const qty = parseFloat(sellQty);
     if (!qty || qty <= 0) {
       setSellError('Enter a valid quantity');
@@ -124,7 +131,9 @@ const Portfolio = () => {
                     <td className="px-3 py-4 text-center">
                       <button
                         onClick={() => { setSellModal(h); setSellQty('1'); setSellError(''); setSellSuccess(''); }}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-500 rounded-xl text-xs font-bold border border-danger-500/20 hover:border-danger-500 transition-all duration-200 mx-auto whitespace-nowrap"
+                        disabled={maintenanceMode}
+                        title={maintenanceMode ? maintenanceMessage : undefined}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-500 rounded-xl text-xs font-bold border border-danger-500/20 hover:border-danger-500 transition-all duration-200 mx-auto whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-danger-500/10 disabled:hover:text-danger-500"
                       >
                         <ArrowDownCircle size={12} /><span>Sell</span>
                       </button>
@@ -190,10 +199,11 @@ const Portfolio = () => {
                     {sellError && <div className="mb-4 p-3 bg-danger-500/10 border border-danger-500/20 rounded-xl text-danger-500 text-xs font-semibold">{sellError}</div>}
                     <button
                       onClick={handleSell}
-                      disabled={sellLoading || !sellQty}
+                      disabled={maintenanceMode || sellLoading || !sellQty}
+                      title={maintenanceMode ? maintenanceMessage : undefined}
                       className="w-full py-3 bg-danger-500 hover:bg-danger-600 disabled:opacity-60 text-white rounded-2xl font-extrabold transition-all flex items-center justify-center gap-2"
                     >
-                      {sellLoading ? <Loader2 size={18} className="animate-spin" /> : <><ArrowDownCircle size={16} /><span>Confirm Sell</span></>}
+                      {maintenanceMode ? <span>Selling Unavailable</span> : sellLoading ? <Loader2 size={18} className="animate-spin" /> : <><ArrowDownCircle size={16} /><span>Confirm Sell</span></>}
                     </button>
                   </>
                 )}
