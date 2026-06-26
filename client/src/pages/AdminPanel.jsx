@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,7 +37,9 @@ import {
   ChevronRight,
   Eye,
   ShieldCheck,
-  Settings
+  Settings,
+  Sun,
+  Moon
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -51,7 +53,8 @@ import {
   Line
 } from 'recharts';
 import { logout, updateUserProfileLocal } from '../redux/authSlice.js';
-import { adminAPI, authAPI } from '../services/api.js';
+import { toggleTheme } from '../redux/themeSlice.js';
+import { adminAPI, authAPI, marketAPI } from '../services/api.js';
 import ThemedNumberInput from '../components/ThemedNumberInput.jsx';
 
 const ADMIN_EMAIL = 'eitishkoundal34@gmail.com';
@@ -74,6 +77,22 @@ const getRouteFromTab = (tabId) => {
   return adminTabs.find((tab) => tab.id === tabId)?.route || '';
 };
 
+const ASSET_TYPE_OPTIONS = [
+  { value: 'crypto', label: 'Cryptocurrency' },
+  { value: 'stock', label: 'Stock Equity' },
+  { value: 'forex', label: 'Foreign Exchange (Forex)' },
+];
+
+const FOREX_ASSET_OPTIONS = [
+  { symbol: 'USD/INR', name: 'Dollar-Rupee', assetType: 'forex' },
+  { symbol: 'EUR/INR', name: 'Euro-Rupee', assetType: 'forex' },
+  { symbol: 'GBP/INR', name: 'Pound-Rupee', assetType: 'forex' },
+  { symbol: 'JPY/INR', name: 'Yen-Rupee', assetType: 'forex' },
+];
+
+const normalizeAssetType = (value) => value?.toLowerCase() || '';
+const toNonNegativeInteger = (value) => Math.max(0, Math.round(Number(value) || 0));
+
 const AdminPanel = () => {
   const { section } = useParams();
   const [activeTab, setActiveTab] = useState(() => getTabFromSection(section));
@@ -86,6 +105,7 @@ const AdminPanel = () => {
 
   // Lists
   const [assets, setAssets] = useState([]);
+  const [marketAssets, setMarketAssets] = useState([]);
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
@@ -136,6 +156,7 @@ const AdminPanel = () => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [reasonModalTx, setReasonModalTx] = useState(null); // withdrawal to reject
   const [rejectionReason, setRejectionReason] = useState('');
+  const [openAssetDropdown, setOpenAssetDropdown] = useState(null);
 
   // Settings modification
   const [settingsFee, setSettingsFee] = useState('0.15');
@@ -156,6 +177,17 @@ const AdminPanel = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const { mode } = useSelector((state) => state.theme);
+
+  useEffect(() => {
+    if (mode === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.body.className = 'bg-slate-950 text-slate-100';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.className = 'bg-light-bg text-light-text';
+    }
+  }, [mode]);
 
   useEffect(() => {
     setActiveTab(getTabFromSection(section));
@@ -237,8 +269,12 @@ const AdminPanel = () => {
         const { data } = await adminAPI.getWithdrawals();
         setWithdrawals(data);
       } else if (tab === 'assets') {
-        const { data } = await adminAPI.getAssets();
-        setAssets(data);
+        const [{ data: assetLimitData }, { data: marketAssetData }] = await Promise.all([
+          adminAPI.getAssets(),
+          marketAPI.getMarkets(),
+        ]);
+        setAssets(assetLimitData);
+        setMarketAssets(marketAssetData);
       } else if (tab === 'settings') {
         const { data } = await adminAPI.getSettings();
         setSettings(data);
@@ -260,6 +296,39 @@ const AdminPanel = () => {
       return () => clearTimeout(timer);
     }
   }, [activeTab, user, fetchData]);
+
+  const assetOptions = useMemo(() => {
+    const tradeableAssets = marketAssets.map((asset) => ({
+      symbol: asset.symbol,
+      name: asset.name,
+      assetType: normalizeAssetType(asset.assetType),
+    }));
+
+    return [...tradeableAssets, ...FOREX_ASSET_OPTIONS];
+  }, [marketAssets]);
+
+  const selectedTypeAssets = useMemo(() => {
+    return assetOptions.filter((asset) => asset.assetType === assetType);
+  }, [assetOptions, assetType]);
+
+  useEffect(() => {
+    if (activeTab !== 'assets') return;
+    if (selectedTypeAssets.length === 0) {
+      setSymbol('');
+      setName('');
+      return;
+    }
+
+    const currentAsset = selectedTypeAssets.find((asset) => asset.symbol === symbol);
+    const nextAsset = currentAsset || selectedTypeAssets[0];
+
+    if (symbol !== nextAsset.symbol) {
+      setSymbol(nextAsset.symbol);
+    }
+    if (name !== nextAsset.name) {
+      setName(nextAsset.name);
+    }
+  }, [activeTab, assetType, name, selectedTypeAssets, symbol]);
 
   // Live monitor effect (Orders tab only)
   useEffect(() => {
@@ -314,7 +383,7 @@ const AdminPanel = () => {
         symbol: symbol.toUpperCase().trim(),
         name: name.trim(),
         assetType,
-        totalQuantity: parseFloat(totalQuantity),
+        totalQuantity: toNonNegativeInteger(totalQuantity),
       };
 
       const { data } = await adminAPI.addAsset(payload);
@@ -343,7 +412,7 @@ const AdminPanel = () => {
       return;
     }
 
-    const newQty = parseFloat(editingValue);
+    const newQty = toNonNegativeInteger(editingValue);
     if (newQty === asset.totalQuantity) {
       setEditingSymbol(null);
       return;
@@ -469,8 +538,8 @@ const AdminPanel = () => {
     const updatedTiers = [...settings.userTiers];
     updatedTiers[idx] = {
       ...updatedTiers[idx],
-      withdrawalLimit: Number(editingTierValue.withdrawalLimit),
-      feeDiscount: Number(editingTierValue.feeDiscount)
+      withdrawalLimit: toNonNegativeInteger(editingTierValue.withdrawalLimit),
+      feeDiscount: toNonNegativeInteger(editingTierValue.feeDiscount)
     };
     await handleSaveSettings('userTiers', updatedTiers);
     setEditingTierIdx(null);
@@ -695,12 +764,20 @@ const AdminPanel = () => {
         {/* Users Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm border-collapse">
+            <colgroup>
+              <col />
+              <col />
+              <col className="w-32" />
+              <col className="w-32" />
+              <col />
+              <col />
+            </colgroup>
             <thead>
               <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase font-bold">
                 <th className="pb-3">Name</th>
                 <th className="pb-3">Email</th>
-                <th className="pb-3">KYC Status</th>
-                <th className="pb-3">Status</th>
+                <th className="pb-3 text-center">KYC Status</th>
+                <th className="pb-3 text-center">Status</th>
                 <th className="pb-3">Join Date</th>
                 <th className="pb-3 text-center">Actions</th>
               </tr>
@@ -730,25 +807,29 @@ const AdminPanel = () => {
                         </span>
                       </td>
                       <td className="py-4 text-slate-300 font-medium font-mono">{u.email}</td>
-                      <td className="px-6 py-5 align-top">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${u.kycStatus === 'Verified'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : u.kycStatus === 'Pending'
-                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                            : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
-                          }`}>
-                          {u.kycStatus}
-                        </span>
+                      <td className="py-4 align-middle">
+                        <div className="flex justify-center">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${u.kycStatus === 'Verified'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : u.kycStatus === 'Pending'
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                              : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
+                            }`}>
+                            {u.kycStatus}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-6 py-5 align-top">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${u.status === 'active'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : u.status === 'suspended'
-                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                            : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                          }`}>
-                          {u.status}
-                        </span>
+                      <td className="py-4 align-middle">
+                        <div className="flex justify-center">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${u.status === 'active'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : u.status === 'suspended'
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                              : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                            }`}>
+                            {u.status}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-4 text-slate-400 font-mono">{new Date(u.createdAt).toLocaleDateString()}</td>
                       <td className="py-4 text-center">
@@ -906,10 +987,10 @@ const AdminPanel = () => {
               <tr className="border-b border-slate-800 text-[10px] font-bold uppercase text-slate-400 sm:text-xs">
                 <th className="px-3 py-4 sm:px-4">User</th>
                 <th className="px-2 py-4">Asset</th>
-                <th className="px-2 py-4">Type</th>
-                <th className="px-2 py-4 text-right sm:px-3">Quantity</th>
-                <th className="px-2 py-4 text-right sm:px-3">Total Amount</th>
-                <th className="px-2 py-4 sm:px-3">Executed On</th>
+                <th className="px-2 py-4 text-center">Type</th>
+                <th className="px-2 py-4 text-center sm:px-3">Quantity</th>
+                <th className="px-2 py-4 text-center sm:px-3">Total Amount</th>
+                <th className="px-2 py-4 text-center sm:px-3">Executed On</th>
                 <th className="px-2 py-4 text-center">Risk</th>
               </tr>
             </thead>
@@ -931,7 +1012,7 @@ const AdminPanel = () => {
 
                   return (
                     <tr key={o._id} className={`border-b border-slate-800/40 last:border-none hover:bg-slate-900/20 ${isSuspicious ? 'bg-rose-500/5 hover:bg-rose-500/10' : ''}`}>
-                      <td className="px-3 py-4 align-top font-bold text-white sm:px-4">
+                      <td className="px-3 py-4 align-middle font-bold text-white sm:px-4">
                         <span className="block truncate" title={o.userId?.name || 'N/A'}>
                           {o.userId?.name || 'N/A'}
                         </span>
@@ -939,28 +1020,29 @@ const AdminPanel = () => {
                           {o.userId?.email || 'N/A'}
                         </span>
                       </td>
-                      <td className="px-2 py-4 align-top">
+                      <td className="px-2 py-4 align-middle">
                         <span className="block truncate font-bold text-white" title={o.symbol}>{o.symbol}</span>
                         <span className="block truncate text-[10px] uppercase tracking-wider text-slate-500" title={o.assetType || 'Asset'}>{o.assetType || 'Asset'}</span>
                       </td>
-                      <td className="px-2 py-4 align-top">
-                        <span className={`inline-flex h-6 w-full items-center justify-center rounded-full border px-2 text-[10px] font-extrabold uppercase tracking-wider sm:text-xs ${o.type === 'BUY'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                          }`}>
-                          {o.type}
-                        </span>
-                      </td>
-                      <td className="px-2 py-4 align-top text-right font-mono font-bold text-slate-200 sm:px-3">
-                        <span className="block truncate" title={o.quantity?.toString()}>{o.quantity}</span>
-                      </td>
-                      <td className="px-2 py-4 align-top text-right sm:px-3">
-                        <div className="flex flex-col items-end leading-tight">
-                          <span className="max-w-full truncate font-mono font-extrabold text-white" title={`₹${o.totalAmount.toLocaleString()}`}>₹{o.totalAmount.toLocaleString()}</span>
-                          <span className="text-[10px] uppercase tracking-wider text-slate-500">Amount</span>
+                      <td className="px-2 py-4 align-middle">
+                        <div className="flex justify-center">
+                          <span className={`inline-flex h-6 w-full items-center justify-center rounded-full border px-2 text-[10px] font-extrabold uppercase tracking-wider sm:text-xs ${o.type === 'BUY'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                            }`}>
+                            {o.type}
+                          </span>
                         </div>
                       </td>
-                      <td className="px-2 py-4 align-top font-mono text-[10px] leading-tight text-slate-400 sm:px-3 sm:text-xs">
+                      <td className="px-2 py-4 align-middle text-center font-mono font-bold text-slate-200 sm:px-3">
+                        <span className="block truncate" title={o.quantity?.toString()}>{o.quantity}</span>
+                      </td>
+                      <td className="px-2 py-4 align-middle text-center sm:px-3">
+                        <div className="flex justify-center leading-tight">
+                          <span className="max-w-full truncate font-mono font-extrabold text-white" title={`₹${o.totalAmount.toLocaleString()}`}>₹{o.totalAmount.toLocaleString()}</span>
+                        </div>
+                      </td>
+                      <td className="px-2 py-4 align-middle text-center font-mono text-[10px] leading-tight text-slate-400 sm:px-3 sm:text-xs">
                         {executedAt.toLocaleDateString('en-GB', {
                           day: '2-digit',
                           month: 'short',
@@ -970,10 +1052,12 @@ const AdminPanel = () => {
                           {executedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </td>
-                      <td className="px-2 py-4 align-top text-center">
-                        <span className={`inline-flex h-6 w-full items-center justify-center rounded-full border px-2 text-[10px] font-bold uppercase tracking-wider ${riskClass}`}>
-                          {riskLabel}
-                        </span>
+                      <td className="px-2 py-4 align-middle">
+                        <div className="flex justify-center">
+                          <span className={`inline-flex h-6 w-full items-center justify-center rounded-full border px-2 text-[10px] font-bold uppercase tracking-wider ${riskClass}`}>
+                            {riskLabel}
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1163,6 +1247,97 @@ const AdminPanel = () => {
 
   // SECTION 5: ASSET LIMITS (enhanced)
   const renderAssetLimits = () => {
+    const symbolOptions = selectedTypeAssets.map((asset) => ({
+      value: asset.symbol,
+      label: asset.symbol,
+      description: asset.name,
+    }));
+    const nameOptions = name ? [{ value: name, label: name, description: symbol }] : [];
+
+    const renderAssetDropdown = ({
+      id,
+      label,
+      value,
+      options,
+      onSelect,
+      placeholder = 'Select option',
+      disabled = false,
+    }) => {
+      const selectedOption = options.find((option) => option.value === value);
+      const isOpen = openAssetDropdown === id;
+
+      return (
+        <div className="relative" onBlur={() => setTimeout(() => setOpenAssetDropdown(null), 150)}>
+          <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">{label}</label>
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => !disabled && setOpenAssetDropdown(isOpen ? null : id)}
+            className={`w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-left text-sm text-white outline-none transition-all focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 ${disabled
+              ? 'cursor-not-allowed opacity-75'
+              : 'hover:border-slate-700'
+              }`}
+          >
+            <span className="flex items-center justify-between gap-3">
+              <span className="min-w-0">
+                <span className={`block truncate font-semibold ${selectedOption ? 'text-white' : 'text-slate-500'}`}>
+                  {selectedOption?.label || placeholder}
+                </span>
+                {selectedOption?.description && (
+                  <span className="block truncate text-[10px] font-medium text-slate-500">
+                    {selectedOption.description}
+                  </span>
+                )}
+              </span>
+              <ChevronRight size={16} className={`shrink-0 text-slate-500 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+            </span>
+          </button>
+
+          <AnimatePresence>
+            {isOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                transition={{ duration: 0.12 }}
+                className="admin-dropdown-menu absolute left-0 right-0 z-50 mt-2 max-h-64 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950 p-1.5 shadow-2xl shadow-black/30"
+              >
+                {options.length === 0 ? (
+                  <div className="px-3 py-2.5 text-sm font-medium text-slate-500">No options available</div>
+                ) : (
+                  options.map((option) => {
+                    const isSelected = option.value === value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          onSelect(option.value);
+                          setOpenAssetDropdown(null);
+                        }}
+                        className={`admin-dropdown-option w-full rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${isSelected
+                          ? 'admin-dropdown-option-selected bg-brand-500 text-white shadow-lg shadow-brand-500/20'
+                          : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+                          }`}
+                      >
+                        <span className="block truncate font-bold">{option.label}</span>
+                        {option.description && (
+                          <span className={`block truncate text-[10px] font-medium ${isSelected ? 'text-white/80' : 'text-slate-500'}`}>
+                            {option.description}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      );
+    };
+
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form: Add Limit */}
@@ -1174,52 +1349,51 @@ const AdminPanel = () => {
             </div>
 
             <form onSubmit={handleAddAsset} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Asset Symbol</label>
-                <input
-                  type="text"
-                  placeholder="e.g. BTC, TSLA, USD/INR"
-                  value={symbol}
-                  onChange={(e) => setSymbol(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 rounded-xl py-2.5 px-4 text-sm text-white outline-none transition-all"
-                  required
-                />
-              </div>
+              {renderAssetDropdown({
+                id: 'assetType',
+                label: 'Asset Type',
+                value: assetType,
+                options: ASSET_TYPE_OPTIONS,
+                onSelect: (nextType) => {
+                  setAssetType(nextType);
+                  setSymbol('');
+                  setName('');
+                },
+              })}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Asset Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Bitcoin, Tesla, Dollar-Rupee"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 rounded-xl py-2.5 px-4 text-sm text-white outline-none transition-all"
-                  required
-                />
-              </div>
+              {renderAssetDropdown({
+                id: 'symbol',
+                label: 'Asset Symbol',
+                value: symbol,
+                options: symbolOptions,
+                onSelect: (nextSymbol) => {
+                  const selectedAsset = selectedTypeAssets.find((asset) => asset.symbol === nextSymbol);
+                  setSymbol(nextSymbol);
+                  setName(selectedAsset?.name || '');
+                },
+                placeholder: 'Select asset symbol',
+                disabled: symbolOptions.length === 0,
+              })}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Asset Type</label>
-                <select
-                  value={assetType}
-                  onChange={(e) => setAssetType(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30 rounded-xl py-2.5 px-4 text-sm text-white outline-none"
-                >
-                  <option value="crypto">Cryptocurrency</option>
-                  <option value="stock">Stock Equity</option>
-                  <option value="forex">Foreign Exchange (Forex)</option>
-                </select>
-              </div>
+              {renderAssetDropdown({
+                id: 'name',
+                label: 'Asset Name',
+                value: name,
+                options: nameOptions,
+                onSelect: () => {},
+                placeholder: 'Select a symbol first',
+                disabled: !name,
+              })}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Total Allowed Quantity</label>
                 <ThemedNumberInput
                   value={totalQuantity}
                   min={0}
-                  step={0.01}
+                  step={1}
                   onChange={setTotalQuantity}
                   placeholder="e.g. 1000, 250"
-                  theme="dark"
+                  theme={mode === 'dark' ? 'dark' : 'default'}
                   inputClassName="rounded-xl py-2.5 pr-16 text-sm"
                 />
               </div>
@@ -1306,9 +1480,9 @@ const AdminPanel = () => {
                               <ThemedNumberInput
                                 value={editingValue}
                                 min={0}
-                                step={0.01}
+                                step={1}
                                 onChange={setEditingValue}
-                                theme="dark"
+                                theme={mode === 'dark' ? 'dark' : 'default'}
                                 autoFocus
                                 className="ml-auto w-28"
                                 inputClassName="rounded-lg py-1.5 pr-14 pl-3 text-right text-sm border-brand-500 focus:border-brand-500"
@@ -1413,14 +1587,14 @@ const AdminPanel = () => {
                     value={settingsFee}
                     min={0}
                     max={10}
-                    step={0.01}
+                    step={1}
                     onChange={setSettingsFee}
-                    theme="dark"
+                    theme={mode === 'dark' ? 'dark' : 'default'}
                     className="flex-1"
                     inputClassName="rounded-xl py-2.5 pr-16 text-sm"
                   />
                   <button
-                    onClick={() => handleSaveSettings('tradingFeePercent', parseFloat(settingsFee))}
+                    onClick={() => handleSaveSettings('tradingFeePercent', toNonNegativeInteger(settingsFee))}
                     disabled={settingsLoading}
                     className="bg-brand-500 hover:bg-brand-600 active:scale-[0.98] py-2 px-5 text-sm font-bold text-white rounded-xl shadow-lg shadow-brand-500/25 transition-all"
                   >
@@ -1512,9 +1686,9 @@ const AdminPanel = () => {
                           <ThemedNumberInput
                             value={editingTierValue.withdrawalLimit}
                             min={0}
-                            step={1000}
+                            step={1}
                             onChange={(nextValue) => setEditingTierValue({ ...editingTierValue, withdrawalLimit: nextValue })}
-                            theme="dark"
+                            theme={mode === 'dark' ? 'dark' : 'default'}
                             className="ml-auto w-32"
                             inputClassName="rounded-lg py-1.5 pr-14 pl-3 text-right text-sm border-brand-500 focus:border-brand-500"
                           />
@@ -1528,9 +1702,9 @@ const AdminPanel = () => {
                             value={editingTierValue.feeDiscount}
                             min={0}
                             max={100}
-                            step={0.1}
+                            step={1}
                             onChange={(nextValue) => setEditingTierValue({ ...editingTierValue, feeDiscount: nextValue })}
-                            theme="dark"
+                            theme={mode === 'dark' ? 'dark' : 'default'}
                             className="ml-auto w-28"
                             inputClassName="rounded-lg py-1.5 pr-14 pl-3 text-right text-sm border-brand-500 focus:border-brand-500"
                           />
@@ -1723,7 +1897,7 @@ const AdminPanel = () => {
   };
 
   return (
-    <div className="h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden">
+    <div className={`admin-theme ${mode === 'dark' ? 'admin-theme-dark' : 'admin-theme-light'} h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden`}>
       {/* ── Background decoration ── */}
       <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-brand-500/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-danger-500/5 rounded-full blur-[120px] pointer-events-none" />
@@ -1750,6 +1924,15 @@ const AdminPanel = () => {
               <p className="text-xs text-slate-400 font-medium">Logged in as admin</p>
               <p className="text-sm font-semibold text-slate-200">{user?.email || ADMIN_EMAIL}</p>
             </div>
+
+            <button
+              onClick={() => dispatch(toggleTheme())}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 shadow-md transition-all duration-150 hover:border-slate-700 hover:bg-slate-800 hover:text-white"
+              title="Toggle theme"
+              aria-label="Toggle admin theme"
+            >
+              {mode === 'dark' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
+            </button>
 
             <button
               onClick={handleLogout}

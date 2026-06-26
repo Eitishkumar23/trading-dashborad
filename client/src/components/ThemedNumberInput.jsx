@@ -55,7 +55,7 @@ const ThemedNumberInput = ({
   name,
   id,
   autoFocus = false,
-  inputMode = 'decimal',
+  inputMode,
   hideControls = false,
 }) => {
   const styles = themeClasses[theme] || themeClasses.default;
@@ -130,7 +130,7 @@ const ThemedNumberInput = ({
         step={step}
         disabled={disabled}
         autoFocus={autoFocus}
-        inputMode={inputMode}
+        inputMode={inputMode || (isIntegerStep ? 'numeric' : 'decimal')}
         placeholder={placeholder}
         onChange={handleInputChange}
         onBlur={handleBlur}
@@ -145,7 +145,7 @@ const ThemedNumberInput = ({
             event.preventDefault();
           }
         }}
-        className={`no-spinner w-full rounded-2xl border py-3 pl-4 ${hideControls ? 'pr-4' : 'pr-16'} text-sm font-semibold outline-none transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${styles.input} ${inputClassName}`}
+        className={`themed-number-input no-spinner w-full rounded-2xl border py-3 pl-4 ${hideControls ? 'pr-4' : 'pr-16'} text-sm font-semibold outline-none transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${styles.input} ${inputClassName}`}
       />
 
       {!hideControls && (
@@ -155,7 +155,7 @@ const ThemedNumberInput = ({
           aria-label="Increase value"
           disabled={!canIncrement}
           onClick={() => handleStep(1)}
-          className={`flex flex-1 items-center justify-center rounded-xl border transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${styles.control}`}
+          className={`themed-number-control flex flex-1 items-center justify-center rounded-xl border transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${styles.control}`}
         >
           <ChevronUp size={14} strokeWidth={2.2} />
         </button>
@@ -164,7 +164,7 @@ const ThemedNumberInput = ({
           aria-label="Decrease value"
           disabled={!canDecrement}
           onClick={() => handleStep(-1)}
-          className={`flex flex-1 items-center justify-center rounded-xl border transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${styles.control}`}
+          className={`themed-number-control flex flex-1 items-center justify-center rounded-xl border transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${styles.control}`}
         >
           <ChevronDown size={14} strokeWidth={2.2} />
         </button>
