@@ -441,11 +441,25 @@ router.put('/withdrawals/:id/status', protect, adminOnly, async (req, res) => {
       return res.status(404).json({ message: 'Withdrawal transaction not found' });
     }
 
+    const previousStatus = tx.status;
     tx.status = status;
     if (reason) {
       tx.description = `${tx.description.split(' (Reason:')[0]} (Reason: ${reason})`;
     }
     await tx.save();
+
+    // If rejecting a pending/on_hold withdrawal, create a CREDIT refund entry
+    // so the balance is restored and a clear "Withdrawal Refund" entry appears
+    // in the user's ledger history.
+    if (status === 'rejected' && previousStatus !== 'rejected') {
+      await WalletTransaction.create({
+        userId: tx.userId,
+        transactionType: 'CREDIT',
+        amount: tx.amount,
+        description: 'Withdrawal Refund',
+        status: 'approved',
+      });
+    }
 
     res.json({ message: `Withdrawal successfully updated to ${status}`, transaction: tx });
   } catch (error) {

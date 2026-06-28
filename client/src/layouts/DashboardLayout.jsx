@@ -282,8 +282,8 @@ const DashboardLayout = () => {
               <Menu size={22} />
             </button>
 
-            {/* Live Autocomplete Search */}
-            <div className="relative sm:block hidden w-40 sm:w-52 md:w-72 lg:w-96">
+            {/* Live Autocomplete Search — only visible on the Market page */}
+            {isMarketPage && <div className="relative sm:block hidden w-40 sm:w-52 md:w-72 lg:w-96">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-light-muted dark:text-dark-muted">
                 <Search size={18} />
               </div>
@@ -327,7 +327,7 @@ const DashboardLayout = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </div>}
           </div>
 
           <div className="flex items-center gap-3">
