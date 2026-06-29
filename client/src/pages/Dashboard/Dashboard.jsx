@@ -19,6 +19,7 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { useDashboard, useAlerts } from '../../hooks/useMarketData.js';
 import { marketAPI } from '../../services/api.js';
+import WatchlistPanel from '../../components/WatchlistPanel.jsx';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
@@ -246,33 +247,15 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
-      <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Financial Dashboard</h1>
-          <p className="text-sm text-light-muted dark:text-dark-muted">
-            Track investments, wallet balances, and profits.
-          </p>
-        </div>
+      <section>
+        <h1 className="text-2xl font-extrabold tracking-tight">
+          Financial Dashboard
+        </h1>
 
-        <div className="flex flex-col sm:items-end">
-          <span className="text-[11px] text-light-muted dark:text-dark-muted font-bold uppercase tracking-wider mb-1">
-            Total Profits/Losses
-          </span>
-          <div
-            className={`flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-extrabold border ${returnsPositive
-              ? 'bg-brand-500/10 text-brand-500 border-brand-500/20'
-              : 'bg-danger-500/10 text-danger-500 border-danger-500/20'
-              }`}
-          >
-            {returnsPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-            <span>{formatCurrency(metrics.totalProfitLoss)}</span>
-            <span className="text-xs">
-              ({metrics.totalReturnPercent >= 0 ? '+' : ''}{metrics.totalReturnPercent.toFixed(2)}%)
-            </span>
-          </div>
-        </div>
+        <p className="text-sm text-light-muted dark:text-dark-muted">
+          Track investments, wallet balances, and profits.
+        </p>
       </section>
-
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {metricCards.map((card) => {
           const Icon = card.icon;
@@ -455,59 +438,12 @@ const Dashboard = () => {
         </div>
       </section>
 
-      <motion.section
-        variants={cardVariants}
-        className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col h-[320px] overflow-hidden min-h-0 hover:shadow-xl transition-shadow"
-      >
-        <div className="flex items-center justify-between mb-3 shrink-0">
-          <h2 className="text-base font-extrabold">Recent Trade Orders</h2>
-          <Link to="/transactions" className="text-xs text-brand-500 hover:underline font-bold">View All Trades</Link>
-        </div>
-
-        <div className="flex-1 overflow-y-auto scrollbar-on-hover min-h-0">
-          <table className="w-full text-sm border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-xs uppercase font-bold text-light-muted dark:text-dark-muted sticky top-0 bg-slate-50/90 dark:bg-[#101423]/90 backdrop-blur-md z-10">
-                <th className="py-3 text-left">Action</th>
-                <th className="py-3 text-left">Asset</th>
-                <th className="py-3 text-right">Rate</th>
-                <th className="py-3 text-right">Total Amount</th>
-                <th className="py-3 text-right">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentTransactions.length > 0 ? (
-                recentTransactions.map((tx) => (
-                  <tr key={tx._id} className="border-b border-slate-100/60 dark:border-slate-800/30 last:border-none hover:bg-slate-100/40 dark:hover:bg-slate-900/30 transition-colors">
-                    <td className="py-3.5 pr-3">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${tx.type === 'BUY'
-                          ? 'bg-brand-500/10 text-brand-500'
-                          : 'bg-danger-500/10 text-danger-500'
-                          }`}
-                      >
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td className="py-3.5 pr-3 font-semibold">{tx.symbol}</td>
-                    <td className="py-3.5 pr-3 text-right">{formatCurrency(tx.price, { maximumFractionDigits: 0 })}</td>
-                    <td className="py-3.5 pr-3 text-right font-semibold">{formatCurrency(tx.totalAmount, { maximumFractionDigits: 0 })}</td>
-                    <td className="py-3.5 text-right text-xs text-light-muted dark:text-dark-muted">
-                      {new Date(tx.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-light-muted dark:text-dark-muted text-xs italic">
-                    No recent trades
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </motion.section>
+      <motion.div variants={cardVariants}>
+        <WatchlistPanel
+          height="320px"
+          className="hover:shadow-xl transition-shadow"
+        />
+      </motion.div>
     </motion.div>
   );
 };
