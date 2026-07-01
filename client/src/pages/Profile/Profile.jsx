@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Plus, BellOff, BellRing } from 'lucide-react';
+import {
+  Bell,
+  Plus,
+  BellOff,
+  BellRing,
+  Trash2,
+  Loader2
+} from 'lucide-react';
 import { useAlerts } from '../../hooks/useMarketData.js';
 import { marketAPI } from '../../services/api.js';
 import { useDispatch, useSelector } from 'react-redux';
