@@ -48,20 +48,18 @@ app.post('/api/seed', requireWritablePlatform, async (req, res) => {
   try {
     const existingDemoUser = await User.findOne({ email: DEMO_EMAIL }).select('_id');
 
+    // If demo user already exists, skip re-seeding so persisted data is preserved
     if (existingDemoUser) {
-      const demoUserId = existingDemoUser._id;
-
-      await Promise.all([
-        Holding.deleteMany({ userId: demoUserId }),
-        Transaction.deleteMany({ userId: demoUserId }),
-        WalletTransaction.deleteMany({ userId: demoUserId }),
-        Watchlist.deleteMany({ userId: demoUserId }),
-        Alert.deleteMany({ userId: demoUserId }),
-        User.deleteOne({ _id: demoUserId }),
-      ]);
+      return res.status(200).json({
+        message: 'Demo account already exists. Skipping seed to preserve persisted data.',
+        demoUser: {
+          email: DEMO_EMAIL,
+          password: 'password123',
+        },
+      });
     }
 
-    // Recreate the demo user with the exact seed credentials.
+    // First-time setup: create demo user and seed initial data
     const demoUser = await User.create({
       name: 'Demo Trader',
       email: DEMO_EMAIL,
@@ -72,33 +70,35 @@ app.post('/api/seed', requireWritablePlatform, async (req, res) => {
 
     const userId = demoUser._id;
 
-    // 3. Create wallet credits (deposits) and debits (asset buys)
+    // Create wallet credits (deposits) and debits (asset buys)
     // Ledger total credits: 5,00,000 + 2,50,000 = 7,50,000
     // Ledger total debits: 2,92,500 (BTC) + 1,53,500 (AAPL) + 1,77,000 (SOL) = 6,23,000
     // Net ledger balance: 7,50,000 - 6,23,000 = 1,27,000
+    const now = new Date();
+    const dayMs = 24 * 60 * 60 * 1000;
     await WalletTransaction.insertMany([
-      { userId, transactionType: 'CREDIT', amount: 500000, description: 'Initial Funding Deposit' },
-      { userId, transactionType: 'CREDIT', amount: 250000, description: 'NetBanking Quick Deposit' },
-      { userId, transactionType: 'DEBIT', amount: 292500, description: 'Bought 0.05 BTC at â‚¹58,50,000' },
-      { userId, transactionType: 'DEBIT', amount: 153500, description: 'Bought 10 AAPL at â‚¹15,350' },
-      { userId, transactionType: 'DEBIT', amount: 177000, description: 'Bought 15 SOL at â‚¹11,800' },
+      { userId, transactionType: 'CREDIT', amount: 500000, description: 'Initial Funding Deposit', createdAt: new Date(now - 7 * dayMs) },
+      { userId, transactionType: 'CREDIT', amount: 250000, description: 'NetBanking Quick Deposit', createdAt: new Date(now - 5 * dayMs) },
+      { userId, transactionType: 'DEBIT', amount: 292500, description: 'Bought 0.05 BTC at ₹58,50,000', createdAt: new Date(now - 4 * dayMs) },
+      { userId, transactionType: 'DEBIT', amount: 153500, description: 'Bought 10 AAPL at ₹15,350', createdAt: new Date(now - 3 * dayMs) },
+      { userId, transactionType: 'DEBIT', amount: 177000, description: 'Bought 15 SOL at ₹11,800', createdAt: new Date(now - 2 * dayMs) },
     ]);
 
-    // 4. Create active holdings
+    // Create active holdings
     await Holding.insertMany([
       { userId, symbol: 'BTC', assetType: 'CRYPTO', quantity: 0.05, averageBuyPrice: 5850000, investedAmount: 292500 },
       { userId, symbol: 'AAPL', assetType: 'STOCK', quantity: 10, averageBuyPrice: 15350, investedAmount: 153500 },
       { userId, symbol: 'SOL', assetType: 'CRYPTO', quantity: 15, averageBuyPrice: 11800, investedAmount: 177000 },
     ]);
 
-    // 5. Create transaction history logs
+    // Create transaction history logs with proper timestamps
     await Transaction.insertMany([
-      { userId, type: 'BUY', symbol: 'BTC', quantity: 0.05, price: 5850000, totalAmount: 292500 },
-      { userId, type: 'BUY', symbol: 'AAPL', quantity: 10, price: 15350, totalAmount: 153500 },
-      { userId, type: 'BUY', symbol: 'SOL', quantity: 15, price: 11800, totalAmount: 177000 },
+      { userId, type: 'BUY', symbol: 'BTC', quantity: 0.05, price: 5850000, totalAmount: 292500, createdAt: new Date(now - 4 * dayMs) },
+      { userId, type: 'BUY', symbol: 'AAPL', quantity: 10, price: 15350, totalAmount: 153500, createdAt: new Date(now - 3 * dayMs) },
+      { userId, type: 'BUY', symbol: 'SOL', quantity: 15, price: 11800, totalAmount: 177000, createdAt: new Date(now - 2 * dayMs) },
     ]);
 
-    // 6. Seed Watchlist symbols
+    // Seed Watchlist symbols
     await Watchlist.insertMany([
       { userId, symbol: 'BTC', assetType: 'CRYPTO' },
       { userId, symbol: 'AAPL', assetType: 'STOCK' },
@@ -106,7 +106,7 @@ app.post('/api/seed', requireWritablePlatform, async (req, res) => {
       { userId, symbol: 'ETH', assetType: 'CRYPTO' },
     ]);
 
-    // 7. Seed Price Alerts
+    // Seed Price Alerts
     await Alert.insertMany([
       { userId, symbol: 'BTC', condition: 'ABOVE', value: 6500000 },
       { userId, symbol: 'TSLA', condition: 'BELOW', value: 14000 },
@@ -127,6 +127,79 @@ app.post('/api/seed', requireWritablePlatform, async (req, res) => {
 // Root route
 app.get('/', (req, res) => {
   res.send('AI Trading Portfolio Management API is running...');
+});
+
+// @desc    Explicitly reset the demo account to its initial seeded state
+// @route   POST /api/seed/reset
+// @access  Public (protected only by requireWritablePlatform)
+app.post('/api/seed/reset', requireWritablePlatform, async (req, res) => {
+  console.log('demo reset route hit');
+  try {
+    const existingDemoUser = await User.findOne({ email: DEMO_EMAIL }).select('_id');
+
+    if (existingDemoUser) {
+      const demoUserId = existingDemoUser._id;
+      await Promise.all([
+        Holding.deleteMany({ userId: demoUserId }),
+        Transaction.deleteMany({ userId: demoUserId }),
+        WalletTransaction.deleteMany({ userId: demoUserId }),
+        Watchlist.deleteMany({ userId: demoUserId }),
+        Alert.deleteMany({ userId: demoUserId }),
+        User.deleteOne({ _id: demoUserId }),
+      ]);
+    }
+
+    const demoUser = await User.create({
+      name: 'Demo Trader',
+      email: DEMO_EMAIL,
+      password: 'password123',
+      authProvider: 'local',
+      role: 'demo',
+    });
+
+    const userId = demoUser._id;
+    const now = new Date();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    await WalletTransaction.insertMany([
+      { userId, transactionType: 'CREDIT', amount: 500000, description: 'Initial Funding Deposit', createdAt: new Date(now - 7 * dayMs) },
+      { userId, transactionType: 'CREDIT', amount: 250000, description: 'NetBanking Quick Deposit', createdAt: new Date(now - 5 * dayMs) },
+      { userId, transactionType: 'DEBIT', amount: 292500, description: 'Bought 0.05 BTC at ₹58,50,000', createdAt: new Date(now - 4 * dayMs) },
+      { userId, transactionType: 'DEBIT', amount: 153500, description: 'Bought 10 AAPL at ₹15,350', createdAt: new Date(now - 3 * dayMs) },
+      { userId, transactionType: 'DEBIT', amount: 177000, description: 'Bought 15 SOL at ₹11,800', createdAt: new Date(now - 2 * dayMs) },
+    ]);
+
+    await Holding.insertMany([
+      { userId, symbol: 'BTC', assetType: 'CRYPTO', quantity: 0.05, averageBuyPrice: 5850000, investedAmount: 292500 },
+      { userId, symbol: 'AAPL', assetType: 'STOCK', quantity: 10, averageBuyPrice: 15350, investedAmount: 153500 },
+      { userId, symbol: 'SOL', assetType: 'CRYPTO', quantity: 15, averageBuyPrice: 11800, investedAmount: 177000 },
+    ]);
+
+    await Transaction.insertMany([
+      { userId, type: 'BUY', symbol: 'BTC', quantity: 0.05, price: 5850000, totalAmount: 292500, createdAt: new Date(now - 4 * dayMs) },
+      { userId, type: 'BUY', symbol: 'AAPL', quantity: 10, price: 15350, totalAmount: 153500, createdAt: new Date(now - 3 * dayMs) },
+      { userId, type: 'BUY', symbol: 'SOL', quantity: 15, price: 11800, totalAmount: 177000, createdAt: new Date(now - 2 * dayMs) },
+    ]);
+
+    await Watchlist.insertMany([
+      { userId, symbol: 'BTC', assetType: 'CRYPTO' },
+      { userId, symbol: 'AAPL', assetType: 'STOCK' },
+      { userId, symbol: 'TSLA', assetType: 'STOCK' },
+      { userId, symbol: 'ETH', assetType: 'CRYPTO' },
+    ]);
+
+    await Alert.insertMany([
+      { userId, symbol: 'BTC', condition: 'ABOVE', value: 6500000 },
+      { userId, symbol: 'TSLA', condition: 'BELOW', value: 14000 },
+    ]);
+
+    res.status(201).json({
+      message: 'Demo database reset successfully!',
+      demoUser: { email: DEMO_EMAIL, password: 'password123' },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 const PORT = process.env.PORT || 5000;

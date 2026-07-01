@@ -18,7 +18,6 @@ import { updateUserProfileLocal } from '../../redux/authSlice.js';
 import { setPreferredCurrency } from '../../redux/currencySlice.js';
 import AccountPasswordForm from '../../components/AccountPasswordForm.jsx';
 import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
-import WatchlistPanel from '../../components/WatchlistPanel.jsx';
 import { useMaintenance } from '../../context/MaintenanceContext.jsx';
 import {
   CURRENCY_OPTIONS,
@@ -104,7 +103,7 @@ const Profile = () => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Profile & Alerts</h1>
-        <p className="text-sm text-light-muted dark:text-dark-muted">Manage watchlist, price alerts, and account</p>
+        <p className="text-sm text-light-muted dark:text-dark-muted">Manage price alerts and account settings</p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
@@ -209,8 +208,7 @@ const Profile = () => {
       </div>
 
       {/* ── Price Alerts ── */}
-      <div className="grid grid-cols-1">
-        <section className="glass-panel flex h-[430px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
+      <section className="glass-panel flex h-[430px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
           <div className="flex items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2">
               <Bell size={18} className="text-brand-500" />
@@ -331,9 +329,6 @@ const Profile = () => {
             </div>
           </div>
         </section>
-      </div>
-
-      <WatchlistPanel />
     </motion.div>
   );
 };
