@@ -21,8 +21,7 @@ import { useDashboard, useAlerts } from '../../hooks/useMarketData.js';
 import { marketAPI } from '../../services/api.js';
 import WatchlistPanel from '../../components/WatchlistPanel.jsx';
 import { formatCurrency } from '../../utils/currencyUtils.js';
-
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+import { getAssetColor } from '../../utils/assetColors.js';
 
 const Dashboard = () => {
   const { data, isLoading, error } = useDashboard();
@@ -371,8 +370,8 @@ const Dashboard = () => {
                     paddingAngle={3}
                     dataKey="value"
                   >
-                    {charts.distribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    {charts.distribution.map((entry) => (
+                      <Cell key={`cell-${entry.name}`} fill={getAssetColor(entry.name)} />
                     ))}
                   </Pie>
                   <Tooltip

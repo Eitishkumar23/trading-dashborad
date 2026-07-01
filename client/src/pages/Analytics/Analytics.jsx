@@ -9,8 +9,7 @@ import {
 import { useDashboard } from '../../hooks/useMarketData.js';
 import { TrendingUp, TrendingDown, PieChart as PieIcon, BarChart3, LineChart as LineIcon } from 'lucide-react';
 import { formatCurrency, formatCurrencyChart } from '../../utils/currencyUtils.js';
-
-const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f43f5e'];
+import { getAssetColor, CLASS_COLORS } from '../../utils/assetColors.js';
 
 const Analytics = () => {
   const { data, isLoading } = useDashboard();
@@ -77,7 +76,7 @@ const Analytics = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Portfolio Distribution Pie Chart */}
+        {/* Portfolio Distribution Pie Chart — colored by asset name */}
         <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
           <div className="flex items-center gap-2 mb-5">
             <div className="p-2 bg-brand-500/10 text-brand-500 rounded-xl"><PieIcon size={18} /></div>
@@ -90,7 +89,9 @@ const Analytics = () => {
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
                 <Pie data={distribution} cx="50%" cy="50%" innerRadius={70} outerRadius={95} paddingAngle={3} dataKey="value">
-                  {distribution.map((_, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
+                  {distribution.map((entry) => (
+                    <Cell key={entry.name} fill={getAssetColor(entry.name)} />
+                  ))}
                 </Pie>
                 <Tooltip
                   contentStyle={tooltipContentStyle}
@@ -147,7 +148,7 @@ const Analytics = () => {
           )}
         </div>
 
-        {/* Asset Allocation Bar */}
+        {/* Asset Class Allocation Bar — colored by class */}
         <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
           <div className="flex items-center gap-2 mb-5">
             <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl"><BarChart3 size={18} /></div>
@@ -168,10 +169,9 @@ const Analytics = () => {
                   itemStyle={tooltipItemStyle}
                 />
                 <Bar dataKey="value" name="Allocation" radius={[8, 8, 0, 0]}>
-                  {allocation.map((entry, i) => {
-                    const colors = ['#3b82f6', '#8b5cf6', '#f59e0b'];
-                    return <Cell key={i} fill={colors[i % colors.length]} />;
-                  })}
+                  {allocation.map((entry) => (
+                    <Cell key={entry.name} fill={getAssetColor(entry.name)} />
+                  ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -180,13 +180,13 @@ const Analytics = () => {
           )}
         </div>
 
-        {/* Profit by Asset Horizontal Bar */}
+        {/* Unrealized P&L by Asset — colored by symbol, profit/loss tint on opacity */}
         <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
           <div className="flex items-center gap-2 mb-5">
             <div className="p-2 bg-purple-500/10 text-purple-500 rounded-xl"><BarChart3 size={18} /></div>
             <div>
-              <h2 className="font-bold text-base">Unrealized P&L by Asset</h2>
-              <p className="text-xs text-light-muted dark:text-dark-muted">Green = profit, Red = loss</p>
+              <h2 className="font-bold text-base">Unrealized P&amp;L by Asset</h2>
+              <p className="text-xs text-light-muted dark:text-dark-muted">Solid = profit, faded = loss</p>
             </div>
           </div>
           {profitByAsset.length > 0 ? (
@@ -206,7 +206,13 @@ const Analytics = () => {
                   formatter={(v) => [formatCurrency(v, currency, { maximumFractionDigits: 0 }), 'P&L']}
                 />
                 <Bar dataKey="profit" name="P&L" radius={[0, 8, 8, 0]}>
-                  {profitByAsset.map((entry, i) => <Cell key={i} fill={entry.profit >= 0 ? '#10b981' : '#f43f5e'} />)}
+                  {profitByAsset.map((entry) => (
+                    <Cell
+                      key={entry.name}
+                      fill={getAssetColor(entry.name)}
+                      opacity={entry.profit >= 0 ? 1 : 0.5}
+                    />
+                  ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
