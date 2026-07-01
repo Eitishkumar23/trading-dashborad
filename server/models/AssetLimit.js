@@ -16,7 +16,7 @@ const AssetLimitSchema = new mongoose.Schema({
   assetType: {
     type: String,
     required: true,
-    enum: ['crypto', 'stock'],
+    enum: ['crypto', 'stock', 'real_asset'],
     lowercase: true,
     trim: true,
   },

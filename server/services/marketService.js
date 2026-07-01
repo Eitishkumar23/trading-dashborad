@@ -20,6 +20,19 @@ const INITIAL_ASSETS = [
   { symbol: 'GOOGL', name: 'Alphabet Inc.', assetType: 'STOCK', price: 14200, change: 0.45, high: 14350, low: 14050, volume: 38000000 },
   { symbol: 'META', name: 'Meta Platforms', assetType: 'STOCK', price: 39800, change: 2.34, high: 40200, low: 38900, volume: 42000000 },
   { symbol: 'NFLX', name: 'Netflix Inc.', assetType: 'STOCK', price: 52400, change: -1.12, high: 53200, low: 52000, volume: 18000000 },
+
+  // Real Assets — Precious Metals (price per gram in INR)
+  { symbol: 'GOLD', name: 'Gold', assetType: 'REAL_ASSET', category: 'PRECIOUS_METALS', unit: 'gram', price: 7200, change: 0.42, high: 7280, low: 7150, volume: 85000000 },
+  { symbol: 'SILVER', name: 'Silver', assetType: 'REAL_ASSET', category: 'PRECIOUS_METALS', unit: 'gram', price: 90, change: -0.31, high: 92, low: 88, volume: 42000000 },
+  { symbol: 'PLAT', name: 'Platinum', assetType: 'REAL_ASSET', category: 'PRECIOUS_METALS', unit: 'gram', price: 3100, change: 0.78, high: 3150, low: 3060, volume: 18000000 },
+
+  // Real Assets — Energy
+  { symbol: 'CRUDEOIL', name: 'Crude Oil', assetType: 'REAL_ASSET', category: 'ENERGY', unit: 'barrel', price: 6700, change: -1.05, high: 6820, low: 6640, volume: 320000000 },
+  { symbol: 'NATGAS', name: 'Natural Gas', assetType: 'REAL_ASSET', category: 'ENERGY', unit: 'MMBtu', price: 250, change: 2.15, high: 258, low: 244, volume: 95000000 },
+
+  // Real Assets — Real Estate (price per unit in INR; fractional ownership supported)
+  { symbol: 'RSDNPROP', name: 'Residential Property', assetType: 'REAL_ASSET', category: 'REAL_ESTATE', unit: 'unit', price: 8500000, change: 0.18, high: 8540000, low: 8460000, volume: 5000000 },
+  { symbol: 'CMPROP', name: 'Commercial Property', assetType: 'REAL_ASSET', category: 'REAL_ESTATE', unit: 'unit', price: 22000000, change: 0.25, high: 22100000, low: 21900000, volume: 8000000 },
 ];
 
 // In-memory cache for live prices

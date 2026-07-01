@@ -56,6 +56,7 @@ import { logout, updateUserProfileLocal } from '../redux/authSlice.js';
 import { toggleTheme } from '../redux/themeSlice.js';
 import { adminAPI, authAPI, marketAPI } from '../services/api.js';
 import ThemedNumberInput from '../components/ThemedNumberInput.jsx';
+import { formatCurrency, formatCurrencyChart } from '../utils/currencyUtils.js';
 
 const ADMIN_EMAIL = 'eitishkoundal34@gmail.com';
 const adminTabs = [
@@ -197,6 +198,7 @@ const AdminPanel = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { mode } = useSelector((state) => state.theme);
+  const { preferred: currency } = useSelector((state) => state.currency);
 
   useEffect(() => {
     if (mode === 'dark') {
@@ -504,7 +506,7 @@ const AdminPanel = () => {
       setActionLoadingTx(txId);
       await adminAPI.updateWithdrawalStatus(txId, status, reason);
       showStatus(`Withdrawal ${status} successfully!`, 'success');
-      logAction('Withdrawal Queue', userEmail, `Marked withdrawal of ₹${amount.toLocaleString()} as "${status}"${reason ? ` (Reason: ${reason})` : ''}.`);
+      logAction('Withdrawal Queue', userEmail, `Marked withdrawal of ${formatCurrency(amount, currency, { maximumFractionDigits: 0 })} as "${status}"${reason ? ` (Reason: ${reason})` : ''}.`);
 
       setWithdrawals(withdrawals.map(w => w._id === txId ? { ...w, status } : w));
     } catch (error) {
@@ -590,8 +592,8 @@ const AdminPanel = () => {
 
   // SECTION 1: DASHBOARD
   const renderDashboard = () => {
-    const formattedVolume = `₹${stats.platformVolume.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-    const formattedFees = `₹${stats.feesCollected.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+    const formattedVolume = formatCurrency(stats.platformVolume, currency, { maximumFractionDigits: 0 });
+    const formattedFees = formatCurrency(stats.feesCollected, currency, { maximumFractionDigits: 2 });
 
     const cards = [
       { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
@@ -640,12 +642,12 @@ const AdminPanel = () => {
                 <BarChart data={stats.volumeLast7Days} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                   <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(val) => `₹${val >= 1000 ? (val / 1000) + 'k' : val}`} />
+                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(val) => formatCurrencyChart(val, currency)} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }}
                     labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
                     itemStyle={{ color: '#10b981' }}
-                    formatter={(val) => [`₹${val.toLocaleString()}`, 'Volume']}
+                    formatter={(val) => [formatCurrency(val, currency, { maximumFractionDigits: 0 }), 'Volume']}
                   />
                   <Bar dataKey="volume" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={35} />
                 </BarChart>
@@ -704,7 +706,7 @@ const AdminPanel = () => {
                     <tr key={asset.rank} className="border-b border-slate-800/40 last:border-none hover:bg-slate-900/20">
                       <td className="py-3.5 text-center font-bold text-slate-400">{asset.rank}</td>
                       <td className="py-3.5 font-bold text-white text-base">{asset.symbol}</td>
-                      <td className="py-3.5 text-right text-emerald-400 font-bold font-mono">₹{asset.volume.toLocaleString()}</td>
+                      <td className="py-3.5 text-right text-emerald-400 font-bold font-mono">{formatCurrency(asset.volume, currency, { maximumFractionDigits: 0 })}</td>
                       <td className="py-3.5 text-right text-slate-300 font-mono">{asset.tradesCount}</td>
                     </tr>
                   ))
@@ -1038,7 +1040,7 @@ const AdminPanel = () => {
                       </td>
                       <td className="px-2 py-4 align-middle text-center sm:px-3">
                         <div className="flex justify-center leading-tight">
-                          <span className="max-w-full truncate font-mono font-extrabold text-white" title={`₹${o.totalAmount.toLocaleString()}`}>₹{o.totalAmount.toLocaleString()}</span>
+                          <span className="max-w-full truncate font-mono font-extrabold text-white" title={formatCurrency(o.totalAmount, currency, { maximumFractionDigits: 0 })}>{formatCurrency(o.totalAmount, currency, { maximumFractionDigits: 0 })}</span>
                         </div>
                       </td>
                       <td className="px-2 py-4 align-middle text-center font-mono text-[10px] leading-tight text-slate-400 sm:px-3 sm:text-xs">
@@ -1093,15 +1095,15 @@ const AdminPanel = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-900/40 border border-slate-800/80 rounded-3xl p-5 backdrop-blur-md">
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Pending Amount</span>
-            <span className="text-xl font-extrabold text-amber-400 mt-1 font-mono">₹{totalPending.toLocaleString()}</span>
+            <span className="text-xl font-extrabold text-amber-400 mt-1 font-mono">{formatCurrency(totalPending, currency, { maximumFractionDigits: 0 })}</span>
           </div>
           <div className="flex flex-col border-t sm:border-t-0 sm:border-l border-slate-800/80 pt-3 sm:pt-0 sm:pl-5">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Approved Today</span>
-            <span className="text-xl font-extrabold text-emerald-400 mt-1 font-mono">₹{totalApprovedToday.toLocaleString()}</span>
+            <span className="text-xl font-extrabold text-emerald-400 mt-1 font-mono">{formatCurrency(totalApprovedToday, currency, { maximumFractionDigits: 0 })}</span>
           </div>
           <div className="flex flex-col border-t sm:border-t-0 sm:border-l border-slate-800/80 pt-3 sm:pt-0 sm:pl-5">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Rejected Today</span>
-            <span className="text-xl font-extrabold text-rose-400 mt-1 font-mono">₹{totalRejectedToday.toLocaleString()}</span>
+            <span className="text-xl font-extrabold text-rose-400 mt-1 font-mono">{formatCurrency(totalRejectedToday, currency, { maximumFractionDigits: 0 })}</span>
           </div>
         </div>
 
@@ -1167,7 +1169,7 @@ const AdminPanel = () => {
                             {w.userId?.email || 'N/A'}
                           </span>
                         </td>
-                        <td className="py-4 font-extrabold text-white font-mono">₹{w.amount.toLocaleString()}</td>
+                        <td className="py-4 font-extrabold text-white font-mono">{formatCurrency(w.amount, currency, { maximumFractionDigits: 0 })}</td>
                         <td className="py-4 text-slate-300 font-medium">{w.description}</td>
                         <td className="py-4 text-slate-400 font-mono text-xs">
                           {new Date(w.createdAt).toLocaleString()}
@@ -1195,7 +1197,7 @@ const AdminPanel = () => {
                                   <button
                                     onClick={() => openConfirmDialog(
                                       'Approve Withdrawal',
-                                      `Are you sure you want to approve this withdrawal request for ₹${w.amount.toLocaleString()}?`,
+                                      `Are you sure you want to approve this withdrawal request for ${formatCurrency(w.amount, currency, { maximumFractionDigits: 0 })}?`,
                                       () => handleUpdateWithdrawalStatus(w._id, w.userId?.email || 'N/A', w.amount, 'approved'),
                                       'info'
                                     )}
@@ -1662,7 +1664,7 @@ const AdminPanel = () => {
               <thead>
                 <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase font-bold">
                   <th className="pb-3">Tier Name</th>
-                  <th className="pb-3 text-right">Withdraw Limit (₹)</th>
+                  <th className="pb-3 text-right">Withdraw Limit</th>
                   <th className="pb-3 text-right">Fee Discount (%)</th>
                   <th className="pb-3 text-center">Edit</th>
                 </tr>
@@ -1685,7 +1687,7 @@ const AdminPanel = () => {
                             inputClassName="rounded-lg py-1.5 pr-14 pl-3 text-right text-sm border-brand-500 focus:border-brand-500"
                           />
                         ) : (
-                          <span className="font-bold text-slate-200 font-mono">₹{tier.withdrawalLimit.toLocaleString()}</span>
+                          <span className="font-bold text-slate-200 font-mono">{formatCurrency(tier.withdrawalLimit, currency, { maximumFractionDigits: 0 })}</span>
                         )}
                       </td>
                       <td className="py-4 text-right">
@@ -2138,7 +2140,7 @@ const AdminPanel = () => {
                             </div>
                             <div className="text-right">
                               <span className="font-bold text-slate-200 block font-mono">Qty: {h.quantity}</span>
-                              <span className="text-xs text-slate-400 font-mono">Avg Price: ₹{h.averageBuyPrice.toLocaleString()}</span>
+                              <span className="text-xs text-slate-400 font-mono">Avg Price: {formatCurrency(h.averageBuyPrice, currency, { maximumFractionDigits: 2 })}</span>
                             </div>
                           </div>
                         ))
@@ -2178,7 +2180,7 @@ const AdminPanel = () => {
                                   </span>
                                 </td>
                                 <td className="p-3 text-right font-bold text-slate-300 font-mono">{t.quantity}</td>
-                                <td className="p-3 text-right font-medium text-slate-400 font-mono">₹{t.price.toLocaleString()}</td>
+                                <td className="p-3 text-right font-medium text-slate-400 font-mono">{formatCurrency(t.price, currency, { maximumFractionDigits: 2 })}</td>
                                 <td className="p-3 text-slate-400 font-mono">{new Date(t.createdAt).toLocaleDateString()}</td>
                               </tr>
                             ))
@@ -2217,7 +2219,7 @@ const AdminPanel = () => {
                                     {tx.transactionType}
                                   </span>
                                 </td>
-                                <td className="p-3 font-extrabold text-white font-mono">₹{tx.amount.toLocaleString()}</td>
+                                <td className="p-3 font-extrabold text-white font-mono">{formatCurrency(tx.amount, currency, { maximumFractionDigits: 0 })}</td>
                                 <td className="p-3 text-slate-300">{tx.description}</td>
                                 <td className="p-3">
                                   <span className={`inline-flex px-1.5 py-0.2 rounded font-extrabold capitalize text-[10px] ${tx.status === 'approved'
@@ -2267,7 +2269,7 @@ const AdminPanel = () => {
               <h3 className="text-lg font-bold text-white">Specify Rejection Reason</h3>
               <p className="text-sm text-slate-400">
                 Please provide a brief explanation for rejecting the withdrawal of{' '}
-                <span className="font-bold text-white">₹{reasonModalTx.amount.toLocaleString()}</span> for{' '}
+                <span className="font-bold text-white">{formatCurrency(reasonModalTx.amount, currency, { maximumFractionDigits: 0 })}</span> for{' '}
                 <span className="font-bold text-white">{reasonModalTx.userId?.email || 'N/A'}</span>.
               </p>
 

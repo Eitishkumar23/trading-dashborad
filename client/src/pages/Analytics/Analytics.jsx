@@ -153,7 +153,7 @@ const Analytics = () => {
             <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl"><BarChart3 size={18} /></div>
             <div>
               <h2 className="font-bold text-base">Asset Class Allocation</h2>
-              <p className="text-xs text-light-muted dark:text-dark-muted">Stocks vs Cryptocurrencies</p>
+              <p className="text-xs text-light-muted dark:text-dark-muted">Stocks vs Crypto vs Real Assets</p>
             </div>
           </div>
           {allocation.some(a => a.amount > 0) ? (
@@ -168,7 +168,10 @@ const Analytics = () => {
                   itemStyle={tooltipItemStyle}
                 />
                 <Bar dataKey="value" name="Allocation" radius={[8, 8, 0, 0]}>
-                  {allocation.map((_, i) => <Cell key={i} fill={i === 0 ? '#3b82f6' : '#8b5cf6'} />)}
+                  {allocation.map((entry, i) => {
+                    const colors = ['#3b82f6', '#8b5cf6', '#f59e0b'];
+                    return <Cell key={i} fill={colors[i % colors.length]} />;
+                  })}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

@@ -47,6 +47,8 @@ export const getPortfolioHoldings = async (req, res) => {
         symbol: h.symbol,
         name,
         assetType: h.assetType,
+        category: live?.category || null,
+        unit: live?.unit || null,
         quantity: h.quantity,
         averageBuyPrice: h.averageBuyPrice,
         currentPrice,
@@ -99,6 +101,8 @@ export const getDashboardData = async (req, res) => {
         symbol: h.symbol,
         name,
         assetType: h.assetType,
+        category: live?.category || null,
+        unit: live?.unit || null,
         quantity: h.quantity,
         averageBuyPrice: h.averageBuyPrice,
         currentPrice,
@@ -149,18 +153,21 @@ export const getDashboardData = async (req, res) => {
       amount: h.currentValue,
     }));
 
-    // Chart: Asset Allocation (Bar: Stocks vs Crypto)
+    // Chart: Asset Allocation (Bar: Stocks vs Crypto vs Real Assets)
     let stockVal = 0;
     let cryptoVal = 0;
+    let realAssetVal = 0;
     enrichedHoldings.forEach((h) => {
       if (h.assetType === 'STOCK') stockVal += h.currentValue;
       else if (h.assetType === 'CRYPTO') cryptoVal += h.currentValue;
+      else if (h.assetType === 'REAL_ASSET') realAssetVal += h.currentValue;
     });
     
-    const allocationTotal = stockVal + cryptoVal;
+    const allocationTotal = stockVal + cryptoVal + realAssetVal;
     const allocation = [
       { name: 'Stocks', value: allocationTotal > 0 ? parseFloat(((stockVal / allocationTotal) * 100).toFixed(2)) : 0, amount: stockVal },
       { name: 'Cryptocurrencies', value: allocationTotal > 0 ? parseFloat(((cryptoVal / allocationTotal) * 100).toFixed(2)) : 0, amount: cryptoVal },
+      { name: 'Real Assets', value: allocationTotal > 0 ? parseFloat(((realAssetVal / allocationTotal) * 100).toFixed(2)) : 0, amount: realAssetVal },
     ];
 
     // Chart: Profit by Asset (Horizontal Bar)

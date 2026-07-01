@@ -311,8 +311,16 @@ const Dashboard = () => {
                       <td className="py-3.5 pr-3 font-semibold">
                         <span className="block">{h.symbol}</span>
                         <span className="text-[10px] text-light-muted dark:text-dark-muted font-normal line-clamp-1">{h.name}</span>
+                        {h.assetType === 'REAL_ASSET' && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            {h.category === 'PRECIOUS_METALS' ? 'Metals' : h.category === 'ENERGY' ? 'Energy' : h.category === 'REAL_ESTATE' ? 'Real Estate' : 'Real Asset'}
+                          </span>
+                        )}
                       </td>
-                      <td className="py-3.5 pr-3 font-medium">{h.quantity}</td>
+                      <td className="py-3.5 pr-3 font-medium">
+                        {h.quantity}
+                        {h.unit && <span className="text-[10px] text-light-muted dark:text-dark-muted ml-1">{h.unit}</span>}
+                      </td>
                       <td className="py-3.5 pr-3 text-right">{formatCurrency(h.averageBuyPrice, currency, { maximumFractionDigits: 0 })}</td>
                       <td className="py-3.5 pr-3 text-right font-semibold">{formatCurrency(h.currentValue, currency, { maximumFractionDigits: 0 })}</td>
                       <td className={`py-3.5 text-right font-bold ${h.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>

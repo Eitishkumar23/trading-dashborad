@@ -9,6 +9,34 @@ import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
 import { useMaintenance } from '../../context/MaintenanceContext.jsx';
 import { formatCurrency } from '../../utils/currencyUtils.js';
 
+// Badge config for all asset types
+const getAssetTypeBadge = (assetType, category) => {
+  if (assetType === 'CRYPTO') return 'bg-purple-500/10 text-purple-500';
+  if (assetType === 'STOCK') return 'bg-blue-500/10 text-blue-500';
+  if (assetType === 'REAL_ASSET') {
+    if (category === 'PRECIOUS_METALS') return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400';
+    if (category === 'ENERGY') return 'bg-orange-500/10 text-orange-500';
+    if (category === 'REAL_ESTATE') return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
+    return 'bg-amber-500/10 text-amber-600';
+  }
+  return 'bg-slate-500/10 text-slate-500';
+};
+
+const getAssetTypeLabel = (assetType, category) => {
+  if (assetType === 'CRYPTO') return 'CRYPTO';
+  if (assetType === 'STOCK') return 'STOCK';
+  if (assetType === 'REAL_ASSET') {
+    if (category === 'PRECIOUS_METALS') return 'Metals';
+    if (category === 'ENERGY') return 'Energy';
+    if (category === 'REAL_ESTATE') return 'Real Estate';
+    return 'Real Asset';
+  }
+  return assetType;
+};
+
+// Step size for sell modal input — whole integers for all asset types
+const getSellStep = () => 1;
+
 const Portfolio = () => {
   const { data: holdings = [], isLoading, refetch } = useHoldings();
   const [sellModal, setSellModal] = useState(null);
@@ -112,10 +140,15 @@ const Portfolio = () => {
                       <div className="min-w-0">
                         <p className="font-bold truncate">{h.symbol}</p>
                         <p className="text-xs text-light-muted dark:text-dark-muted truncate">{h.name}</p>
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${h.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'}`}>{h.assetType}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${getAssetTypeBadge(h.assetType, h.category)}`}>
+                          {getAssetTypeLabel(h.assetType, h.category)}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-3 py-4 text-right font-semibold">{h.quantity}</td>
+                    <td className="px-3 py-4 text-right font-semibold">
+                      {h.quantity}
+                      {h.unit && <span className="text-[10px] text-light-muted dark:text-dark-muted ml-1">{h.unit}</span>}
+                    </td>
                     <td className="px-3 py-4 text-right truncate">{formatCurrency(h.averageBuyPrice, currency, { maximumFractionDigits: 2 })}</td>
                     <td className="px-3 py-4 text-right font-semibold">
                       <div className="flex flex-col items-end">
@@ -158,7 +191,7 @@ const Portfolio = () => {
                 <div className="flex items-center justify-between mb-5">
                   <div>
                     <h3 className="text-lg font-extrabold text-danger-500">Sell {sellModal.symbol}</h3>
-                    <p className="text-xs text-light-muted dark:text-dark-muted">{sellModal.name} - You own {sellModal.quantity}</p>
+                    <p className="text-xs text-light-muted dark:text-dark-muted">{sellModal.name} — You own {sellModal.quantity}{sellModal.unit ? ' ' + sellModal.unit + 's' : ''}</p>
                   </div>
                   <button onClick={() => setSellModal(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"><X size={18} /></button>
                 </div>
@@ -181,15 +214,15 @@ const Portfolio = () => {
                   <div className="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl text-brand-500 font-bold text-sm text-center">{sellSuccess}</div>
                 ) : (
                   <>
-                    <label className="block text-xs font-bold uppercase text-light-muted dark:text-dark-muted mb-1.5">Quantity to Sell (Max: {sellModal.quantity})</label>
+                    <label className="block text-xs font-bold uppercase text-light-muted dark:text-dark-muted mb-1.5">Quantity to Sell (Max: {sellModal.quantity}{sellModal.unit ? ' ' + sellModal.unit + 's' : ''})</label>
                     <ThemedNumberInput
                       value={sellQty}
-                      min={0}
+                      min={1}
                       max={sellModal.quantity}
-                      step={1}
+                      step={getSellStep()}
                       inputMode="numeric"
                       onChange={setSellQty}
-                      placeholder={`0 - ${sellModal.quantity}`}
+                      placeholder={`1 - ${sellModal.quantity}${sellModal.unit ? ' ' + sellModal.unit + 's' : ''}`}
                       className="mb-4"
                       inputClassName="focus:border-danger-500 focus:ring-danger-500/10 focus:shadow-[0_0_0_1px_rgba(239,68,68,0.2),0_0_0_6px_rgba(239,68,68,0.08)] dark:focus:border-danger-500"
                     />

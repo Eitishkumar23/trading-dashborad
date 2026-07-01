@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Flame, X, ShoppingCart, Star, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Flame, X, ShoppingCart, Star, Loader2, Gem, Zap, Building } from 'lucide-react';
 import { useMarkets, useMarketOverview, useWatchlist } from '../../hooks/useMarketData.js';
 import { marketAPI, tradeAPI, walletAPI } from '../../services/api.js';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,6 +9,37 @@ import { useSelector } from 'react-redux';
 import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
 import { useMaintenance } from '../../context/MaintenanceContext.jsx';
 import { formatCurrency, getCurrencySymbol } from '../../utils/currencyUtils.js';
+
+// Helper to get Real Asset sub-category badge
+const getRealAssetCategoryBadge = (category) => {
+  switch (category) {
+    case 'PRECIOUS_METALS': return { label: 'Precious Metals', icon: Gem, color: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' };
+    case 'ENERGY':          return { label: 'Energy',          icon: Zap, color: 'bg-orange-500/10 text-orange-500' };
+    case 'REAL_ESTATE':     return { label: 'Real Estate',     icon: Building, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' };
+    default:                return { label: 'Real Asset',      icon: Gem, color: 'bg-amber-500/10 text-amber-600' };
+  }
+};
+
+// Step size for real assets — whole integers only
+const getRealAssetStep = (unit) => 1;
+
+const getQuantityPlaceholder = (asset) => {
+  if (asset?.assetType !== 'REAL_ASSET') return 'e.g. 1, 2, 10';
+  switch (asset?.unit) {
+    case 'gram':   return 'e.g. 10g, 50g, 100g';
+    case 'barrel': return 'e.g. 1, 5, 10 barrels';
+    case 'MMBtu':  return 'e.g. 10, 50 MMBtu';
+    case 'unit':   return 'e.g. 0.05, 0.10 units';
+    default:       return 'e.g. 1, 5, 10';
+  }
+};
+
+const TABS = [
+  { value: 'all',         label: 'All Assets' },
+  { value: 'stocks',      label: 'Stocks' },
+  { value: 'crypto',      label: 'Crypto' },
+  { value: 'real_assets', label: 'Real Assets' },
+];
 
 const Market = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,7 +93,15 @@ const Market = () => {
       ? markets.filter((m) => m.assetType === 'STOCK')
       : activeTab === 'crypto'
         ? markets.filter((m) => m.assetType === 'CRYPTO')
-        : markets;
+        : activeTab === 'real_assets'
+          ? markets.filter((m) => m.assetType === 'REAL_ASSET')
+          : activeTab === 'precious_metals'
+            ? markets.filter((m) => m.assetType === 'REAL_ASSET' && m.category === 'PRECIOUS_METALS')
+            : activeTab === 'energy'
+              ? markets.filter((m) => m.assetType === 'REAL_ASSET' && m.category === 'ENERGY')
+              : activeTab === 'real_estate'
+                ? markets.filter((m) => m.assetType === 'REAL_ASSET' && m.category === 'REAL_ESTATE')
+                : markets;
 
   const handleToggleWatchlist = async (symbol, assetType) => {
     if (maintenanceMode) return;
@@ -77,9 +116,8 @@ const Market = () => {
 
   const openBuyModal = async (asset) => {
     if (maintenanceMode) return;
-
     setBuyModal(asset);
-    setBuyQuantity('');
+    setBuyQuantity(asset.assetType === 'REAL_ASSET' ? '1' : '');
     setBuyError('');
     setBuySuccess('');
   };
@@ -101,7 +139,8 @@ const Market = () => {
     setBuyError('');
     try {
       await tradeAPI.buyAsset({ symbol: buyModal.symbol, assetType: buyModal.assetType, quantity: qty, price: buyModal.price });
-      setBuySuccess(`Successfully bought ${qty} ${buyModal.symbol}!`);
+      const unitLabel = buyModal.unit ? buyModal.unit : '';
+      setBuySuccess(`Successfully bought ${qty}${unitLabel ? ' ' + unitLabel + ' of' : ''} ${buyModal.symbol}!`);
       setWalletBalance((prev) => prev - total);
       queryClient.invalidateQueries(['dashboard']);
       queryClient.invalidateQueries(['holdings']);
@@ -114,6 +153,25 @@ const Market = () => {
   };
 
   const totalCost = parseFloat(buyQuantity) * (buyModal?.price || 0);
+
+  // Badge renderer for asset type column
+  const renderAssetTypeBadge = (asset) => {
+    if (asset.assetType === 'REAL_ASSET') {
+      const { label, color } = getRealAssetCategoryBadge(asset.category);
+      return (
+        <span className={`inline-flex items-center justify-center px-2 py-1 rounded-lg text-xs font-bold ${color}`}>
+          {label}
+        </span>
+      );
+    }
+    return (
+      <span className={`inline-flex items-center justify-center px-2 py-1 rounded-lg text-xs font-bold ${
+        asset.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'
+      }`}>
+        {asset.assetType}
+      </span>
+    );
+  };
 
   return (
     <motion.div
@@ -136,26 +194,30 @@ const Market = () => {
       <div className="flex-1 flex flex-col lg:flex-row gap-6 lg:overflow-hidden min-h-0">
         {/* Left column (77%): Search/Tabs + Asset Table */}
         <div className="w-full lg:w-[77%] flex flex-col gap-4 lg:overflow-hidden min-h-0">
-          {/* Filter Tabs — search is driven by the global header search bar */}
+          {/* Filter Tabs */}
           <div className="flex-shrink-0 glass-panel p-3 rounded-2xl border border-slate-200/50 dark:border-dark-border flex items-center justify-between gap-3">
-            <div className="flex gap-2">
-              {['all', 'stocks', 'crypto'].map((tab) => (
+            <div className="flex gap-2 flex-wrap">
+              {TABS.map((tab) => (
                 <button
-                  key={tab}
+                  key={tab.value}
                   onClick={() => {
-                    setActiveTab(tab);
-                    // Clear any active search when switching tabs
+                    setActiveTab(tab.value);
                     if (searchQuery) {
                       setSearchQuery('');
                       navigate('/market', { replace: true });
                     }
                   }}
-                  className={`px-4 py-2 rounded-2xl text-xs font-bold capitalize transition-all ${activeTab === tab
-                      ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
+                  className={`px-4 py-2 rounded-2xl text-xs font-bold capitalize transition-all ${
+                    activeTab === tab.value ||
+                    (tab.value === 'real_assets' && ['precious_metals', 'energy', 'real_estate'].includes(activeTab))
+                      ? tab.value === 'real_assets' ||
+                        ['precious_metals', 'energy', 'real_estate'].includes(activeTab)
+                        ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
+                        : 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
                       : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
-                    }`}
+                  }`}
                 >
-                  {tab === 'all' ? 'All Assets' : tab === 'stocks' ? 'Stocks' : 'Crypto'}
+                  {tab.label}
                 </button>
               ))}
             </div>
@@ -173,6 +235,39 @@ const Market = () => {
             )}
           </div>
 
+          {/* Real Assets Sub-category Legend (shown when real_assets tab or a sub-category is active) */}
+          <AnimatePresence>
+            {(activeTab === 'real_assets' || activeTab === 'precious_metals' || activeTab === 'energy' || activeTab === 'real_estate') && !searchQuery && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex-shrink-0 flex flex-wrap gap-2 px-1"
+              >
+                {[
+                  { value: 'real_assets',     label: 'All Real Assets',          icon: Gem,      color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',       activeColor: 'bg-amber-500 text-white border-amber-500' },
+                  { value: 'precious_metals', label: 'Precious Metals',          icon: Gem,      color: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20', activeColor: 'bg-yellow-500 text-white border-yellow-500' },
+                  { value: 'energy',          label: 'Energy',                   icon: Zap,      color: 'bg-orange-500/10 text-orange-500 border-orange-500/20',                      activeColor: 'bg-orange-500 text-white border-orange-500' },
+                  { value: 'real_estate',     label: 'Real Estate (Fractional)', icon: Building, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20', activeColor: 'bg-emerald-500 text-white border-emerald-500' },
+                ].map(({ value, label, icon: Icon, color, activeColor }) => {
+                  const isActive = activeTab === value;
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setActiveTab(value)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                        isActive ? activeColor : `${color} hover:opacity-80`
+                      }`}
+                    >
+                      <Icon size={11} />
+                      {label}
+                    </button>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Market Table */}
           <div className="flex-1 glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border overflow-hidden flex flex-col min-h-0">
             <div className="flex-1 overflow-y-auto min-h-0">
@@ -180,7 +275,7 @@ const Market = () => {
                 <thead>
                   <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-xs uppercase font-bold text-light-muted dark:text-dark-muted sticky top-0 bg-slate-50/90 dark:bg-[#101423]/90 backdrop-blur-md z-10">
                     <th className="px-4 py-3 lg:px-3 text-left">Asset</th>
-                    <th className="px-4 py-3 lg:px-3 text-center">Type</th>
+                    <th className="px-4 py-3 lg:px-3 text-center">Category</th>
                     <th className="px-4 py-3 lg:px-3 text-right">Price ({getCurrencySymbol(currency)})</th>
                     <th className="px-4 py-3 lg:px-3 text-right">24h Change</th>
                     <th className="px-4 py-3 lg:px-3 text-right">High</th>
@@ -211,13 +306,13 @@ const Market = () => {
                           <div>
                             <p className="font-bold">{asset.symbol}</p>
                             <p className="text-xs text-light-muted dark:text-dark-muted">{asset.name}</p>
+                            {asset.unit && (
+                              <p className="text-[10px] text-light-muted dark:text-dark-muted opacity-70">per {asset.unit}</p>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3 lg:px-3 text-center">
-                          <span className={`inline-flex items-center justify-center px-2 py-1 rounded-lg text-xs font-bold ${asset.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'
-                            }`}>
-                            {asset.assetType}
-                          </span>
+                          {renderAssetTypeBadge(asset)}
                         </td>
                         <td className="px-4 py-3 lg:px-3 text-right font-bold tabular-nums">
                           {formatCurrency(asset.price, currency, { maximumFractionDigits: 2 })}
@@ -240,10 +335,11 @@ const Market = () => {
                               onClick={() => handleToggleWatchlist(asset.symbol, asset.assetType)}
                               disabled={maintenanceMode}
                               title={maintenanceMode ? maintenanceMessage : undefined}
-                              className={`p-1.5 rounded-xl transition-colors ${watchlistSymbols.includes(asset.symbol)
+                              className={`p-1.5 rounded-xl transition-colors ${
+                                watchlistSymbols.includes(asset.symbol)
                                   ? 'text-amber-500 bg-amber-500/10'
                                   : 'text-light-muted dark:text-dark-muted hover:text-amber-500 hover:bg-amber-500/10'
-                                } disabled:cursor-not-allowed disabled:opacity-50`}
+                              } disabled:cursor-not-allowed disabled:opacity-50`}
                             >
                               {watchlistSymbols.includes(asset.symbol) ? <Star size={14} fill="currentColor" /> : <Star size={14} />}
                             </button>
@@ -318,6 +414,11 @@ const Market = () => {
                   <div>
                     <h3 className="text-lg font-extrabold">Buy {buyModal.symbol}</h3>
                     <p className="text-xs text-light-muted dark:text-dark-muted">{buyModal.name}</p>
+                    {buyModal.assetType === 'REAL_ASSET' && buyModal.unit && (
+                      <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-bold px-2 py-0.5 rounded-lg ${getRealAssetCategoryBadge(buyModal.category).color}`}>
+                        {buyModal.category === 'REAL_ESTATE' ? '🏠 Fractional Ownership' : `Traded per ${buyModal.unit}`}
+                      </span>
+                    )}
                   </div>
                   <button onClick={() => setBuyModal(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
                     <X size={18} />
@@ -326,7 +427,9 @@ const Market = () => {
 
                 <div className="p-4 bg-slate-100/50 dark:bg-slate-950 rounded-2xl mb-4 flex justify-between text-sm">
                   <div>
-                    <p className="text-xs text-light-muted dark:text-dark-muted">Current Price</p>
+                    <p className="text-xs text-light-muted dark:text-dark-muted">
+                      Price{buyModal.unit ? ` / ${buyModal.unit}` : ''}
+                    </p>
                     <p className="font-extrabold text-lg">{formatCurrency(buyModal.price, currency, { maximumFractionDigits: 2 })}</p>
                   </div>
                   <div className="text-right">
@@ -341,13 +444,15 @@ const Market = () => {
                   </div>
                 ) : (
                   <>
-                    <label className="block text-xs font-bold uppercase text-light-muted dark:text-dark-muted mb-1.5">Quantity</label>
+                    <label className="block text-xs font-bold uppercase text-light-muted dark:text-dark-muted mb-1.5">
+                      Quantity{buyModal.unit ? ` (${buyModal.unit}s)` : ''}
+                    </label>
                     <ThemedNumberInput
                       value={buyQuantity}
-                      min={0}
-                      step={1}
+                      min={1}
+                      step={getRealAssetStep(buyModal.unit)}
                       onChange={setBuyQuantity}
-                      placeholder="e.g. 1, 2, 10"
+                      placeholder={getQuantityPlaceholder(buyModal)}
                       className="mb-4"
                       inputMode="numeric"
                     />

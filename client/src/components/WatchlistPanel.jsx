@@ -98,10 +98,23 @@ const WatchlistPanel = ({
                     className={`rounded-lg px-2 py-0.5 text-[10px] font-bold ${
                       item.assetType === 'CRYPTO'
                         ? 'bg-purple-500/10 text-purple-500'
-                        : 'bg-blue-500/10 text-blue-500'
+                        : item.assetType === 'REAL_ASSET'
+                          ? item.live?.category === 'PRECIOUS_METALS'
+                            ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+                            : item.live?.category === 'ENERGY'
+                              ? 'bg-orange-500/10 text-orange-500'
+                              : item.live?.category === 'REAL_ESTATE'
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-amber-500/10 text-amber-600'
+                          : 'bg-blue-500/10 text-blue-500'
                     }`}
                   >
-                    {item.assetType}
+                    {item.assetType === 'REAL_ASSET'
+                      ? item.live?.category === 'PRECIOUS_METALS' ? 'Metals'
+                        : item.live?.category === 'ENERGY' ? 'Energy'
+                        : item.live?.category === 'REAL_ESTATE' ? 'RE'
+                        : 'Real'
+                      : item.assetType}
                   </span>
                   <button
                     onClick={() => handleRemove(item.symbol)}

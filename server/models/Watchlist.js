@@ -15,7 +15,7 @@ const WatchlistSchema = new mongoose.Schema({
   },
   assetType: {
     type: String,
-    enum: ['STOCK', 'CRYPTO'],
+    enum: ['STOCK', 'CRYPTO', 'REAL_ASSET'],
     required: true,
   },
   createdAt: {

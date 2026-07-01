@@ -606,7 +606,7 @@ const WalletPage = () => {
                           required: 'Amount is required',
                           validate: (v) =>
                             (Number.isFinite(Number(v)) && Number(v) > 0) || 'Enter a positive amount',
-                          max: { value: 10000000, message: 'Maximum deposit limit: ₹1,00,00,000 (backend INR limit)' },
+                          max: { value: 10000000, message: 'Maximum ₹1,00,00,000 (INR equivalent)' },
                         })}
                         className={inputCls}
                       />

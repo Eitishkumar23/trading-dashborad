@@ -18,6 +18,11 @@ const TransactionSchema = new mongoose.Schema({
     uppercase: true,
     trim: true,
   },
+  assetType: {
+    type: String,
+    enum: ['STOCK', 'CRYPTO', 'REAL_ASSET'],
+    default: null,
+  },
   quantity: {
     type: Number,
     required: true,

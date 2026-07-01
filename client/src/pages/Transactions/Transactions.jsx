@@ -101,7 +101,10 @@ const Transactions = () => {
                 history.map((tx) => (
                   <tr key={tx._id} className="border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50 dark:hover:bg-slate-800/15 transition-colors">
                     <td className="px-6 py-4 font-bold">
-                      {tx.symbol}
+                      <span className="block">{tx.symbol}</span>
+                      {tx.assetType === 'REAL_ASSET' && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">Real Asset</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center">
