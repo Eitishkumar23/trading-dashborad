@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserProvider, formatEther } from "ethers";
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -33,6 +34,10 @@ const DashboardLayout = () => {
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [ethBalance, setEthBalance] = useState("");
+  const [networkName, setNetworkName] = useState("");
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -68,6 +73,7 @@ const DashboardLayout = () => {
 
   useEffect(() => {
     fetchWallet();
+    checkWalletConnection();
     // Poll wallet balance every 5 seconds
     const interval = setInterval(fetchWallet, 5000);
     return () => clearInterval(interval);
@@ -115,6 +121,61 @@ const DashboardLayout = () => {
     { name: 'Wallet Ledger', path: '/wallet', icon: Wallet },
   ];
 
+  const connectWallet = async () => {
+    try {
+      if (!window.ethereum) {
+        alert("Please install MetaMask.");
+        return;
+      }
+
+      const provider = new BrowserProvider(window.ethereum);
+
+      const accounts = await provider.send("eth_requestAccounts", []);
+
+      setWalletAddress(accounts[0]);
+      setWalletConnected(true);
+
+      // Fetch ETH balance after connecting
+      const rawBalance = await provider.getBalance(accounts[0]);
+      setEthBalance(parseFloat(formatEther(rawBalance)).toFixed(4));
+
+      // Fetch network name after connecting
+      const network = await provider.getNetwork();
+      setNetworkName(network.name);
+
+      console.log("Wallet Connected:", accounts[0]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const checkWalletConnection = async () => {
+    try {
+      if (!window.ethereum) return;
+
+      const provider = new BrowserProvider(window.ethereum);
+
+      const accounts = await provider.send("eth_accounts", []);
+
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        setWalletConnected(true);
+
+        // Fetch ETH balance on auto-reconnect
+        const rawBalance = await provider.getBalance(accounts[0]);
+        setEthBalance(parseFloat(formatEther(rawBalance)).toFixed(4));
+
+        // Fetch network name on auto-reconnect
+        const network = await provider.getNetwork();
+        setNetworkName(network.name);
+
+        console.log("Wallet Auto Connected:", accounts[0]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
@@ -160,11 +221,10 @@ const DashboardLayout = () => {
                 key={link.path}
                 to={link.path}
                 onClick={() => clearSearchOnNavigate(link.path)}
-                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25 scale-[1.02]'
-                    : 'text-light-muted hover:text-light-text dark:text-dark-muted dark:hover:text-dark-text hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
-                }`}
+                className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-medium transition-all duration-200 ${isActive
+                  ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25 scale-[1.02]'
+                  : 'text-light-muted hover:text-light-text dark:text-dark-muted dark:hover:text-dark-text hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+                  }`}
               >
                 <Icon size={20} />
                 <span>{link.name}</span>
@@ -245,11 +305,10 @@ const DashboardLayout = () => {
                         setSidebarOpen(false);
                         clearSearchOnNavigate(link.path);
                       }}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-colors ${
-                        isActive
-                          ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
-                          : 'text-light-muted hover:text-light-text dark:text-dark-muted dark:hover:text-dark-text hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
-                      }`}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-colors ${isActive
+                        ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
+                        : 'text-light-muted hover:text-light-text dark:text-dark-muted dark:hover:text-dark-text hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+                        }`}
                     >
                       <Icon size={18} />
                       <span>{link.name}</span>
@@ -298,7 +357,7 @@ const DashboardLayout = () => {
                 placeholder={isMarketPage ? 'Search assets...' : 'Search stocks or crypto (e.g. AAPL, BTC)...'}
                 className="w-full pl-11 pr-4 py-2.5 bg-slate-100/50 dark:bg-slate-900/30 hover:bg-slate-200/30 dark:hover:bg-slate-900/50 focus:bg-white dark:focus:bg-slate-950/80 rounded-2xl text-sm border border-slate-200/50 dark:border-slate-800/30 focus:border-brand-500 dark:focus:border-brand-500 outline-none transition-all duration-200"
               />
-              
+
               {/* Search results dropdown — hidden on the market page since the table filters directly */}
               <AnimatePresence>
                 {!isMarketPage && showSearchDropdown && searchResults.length > 0 && (
@@ -341,6 +400,30 @@ const DashboardLayout = () => {
               <Wallet size={16} className="group-hover:rotate-12 transition-transform" />
               <span>{formatCurrency(walletBalance, currency, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </Link>
+
+            {/* Connect Wallet Button */}
+            {walletConnected ? (
+              <div className="flex flex-col items-center px-4 py-1.5 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 font-semibold text-xs leading-tight">
+                <span className="font-bold text-indigo-300">
+                  {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                </span>
+                <span className="text-[10px] text-indigo-400/80 mt-0.5">
+                  {ethBalance} ETH
+                </span>
+                {networkName && (
+                  <span className="text-[10px] text-indigo-300/70 mt-0.5 capitalize">
+                    {networkName}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={connectWallet}
+                className="px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition"
+              >
+                Connect Wallet
+              </button>
+            )}
 
             {/* Dark Mode Toggle */}
             <button

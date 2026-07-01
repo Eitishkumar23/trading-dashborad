@@ -57,6 +57,7 @@ import { toggleTheme } from '../redux/themeSlice.js';
 import { adminAPI, authAPI, marketAPI } from '../services/api.js';
 import ThemedNumberInput from '../components/ThemedNumberInput.jsx';
 import { formatCurrency, formatCurrencyChart } from '../utils/currencyUtils.js';
+import { CLASS_COLORS } from '../utils/assetColors.js';
 
 const ADMIN_EMAIL = 'eitishkoundal34@gmail.com';
 const adminTabs = [
@@ -646,10 +647,10 @@ const AdminPanel = () => {
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }}
                     labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
-                    itemStyle={{ color: '#10b981' }}
+                    itemStyle={{ color: CLASS_COLORS['Cryptocurrencies'] }}
                     formatter={(val) => [formatCurrency(val, currency, { maximumFractionDigits: 0 }), 'Volume']}
                   />
-                  <Bar dataKey="volume" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={35} />
+                  <Bar dataKey="volume" fill={CLASS_COLORS['Cryptocurrencies']} radius={[4, 4, 0, 0]} maxBarSize={35} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -670,10 +671,10 @@ const AdminPanel = () => {
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }}
                     labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
-                    itemStyle={{ color: '#3b82f6' }}
+                    itemStyle={{ color: CLASS_COLORS['Stocks'] }}
                     formatter={(val) => [val, 'Signups']}
                   />
-                  <Line type="monotone" dataKey="signups" stroke="#3b82f6" strokeWidth={3} dot={{ fill: '#3b82f6', r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="signups" stroke={CLASS_COLORS['Stocks']} strokeWidth={3} dot={{ fill: CLASS_COLORS['Stocks'], r: 4 }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
