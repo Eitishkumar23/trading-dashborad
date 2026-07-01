@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowDownLeft, Filter } from 'lucide-react';
+import { useSelector } from 'react-redux';
 import { tradeAPI } from '../../services/api.js';
+import { formatCurrency } from '../../utils/currencyUtils.js';
 
 const FILTERS = [
   { label: 'All Time', value: 'all' },
@@ -15,6 +17,7 @@ const Transactions = () => {
   const [filter, setFilter] = useState('all');
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { preferred: currency } = useSelector((state) => state.currency);
 
   const fetchHistory = async () => {
     setLoading(true);
@@ -44,9 +47,9 @@ const Transactions = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total Purchased', value: `₹${totalBuys.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: 'bg-blue-500/10 text-blue-500' },
-          { label: 'Total Sold', value: `₹${totalSells.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: 'bg-purple-500/10 text-purple-500' },
-          { label: 'Realized P&L', value: `${totalProfit >= 0 ? '+' : ''}₹${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: totalProfit >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500' },
+          { label: 'Total Purchased', value: formatCurrency(totalBuys, currency, { maximumFractionDigits: 0 }), color: 'bg-blue-500/10 text-blue-500' },
+          { label: 'Total Sold', value: formatCurrency(totalSells, currency, { maximumFractionDigits: 0 }), color: 'bg-purple-500/10 text-purple-500' },
+          { label: 'Realized P&L', value: `${totalProfit >= 0 ? '+' : ''}${formatCurrency(totalProfit, currency, { maximumFractionDigits: 0 })}`, color: totalProfit >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500' },
         ].map((c) => (
           <div key={c.label} className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border">
             <p className="text-xs font-medium text-light-muted dark:text-dark-muted mb-2">{c.label}</p>
@@ -82,7 +85,7 @@ const Transactions = () => {
                 <th className="px-6 py-4 text-right">Price</th>
                 <th className="px-6 py-4 text-right">Total</th>
                 <th className="px-6 py-4 text-right">Realized P&L</th>
-                <th className="px-6 py-4 text-right">Date & Time</th>
+                <th className="px-6 py-4 text-right">Date &amp; Time</th>
               </tr>
             </thead>
             <tbody>
@@ -109,10 +112,10 @@ const Transactions = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">{tx.quantity}</td>
-                    <td className="px-6 py-4 text-right">₹{tx.price.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-right font-semibold">₹{tx.totalAmount.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-right">{formatCurrency(tx.price, currency, { maximumFractionDigits: 2 })}</td>
+                    <td className="px-6 py-4 text-right font-semibold">{formatCurrency(tx.totalAmount, currency, { maximumFractionDigits: 0 })}</td>
                     <td className={`px-6 py-4 text-right font-bold ${tx.type === 'SELL' ? (tx.profit >= 0 ? 'text-brand-500' : 'text-danger-500') : 'text-light-muted dark:text-dark-muted'}`}>
-                      {tx.type === 'SELL' ? `${tx.profit >= 0 ? '+' : ''}₹${tx.profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}` : '—'}
+                      {tx.type === 'SELL' ? `${tx.profit >= 0 ? '+' : ''}${formatCurrency(tx.profit, currency, { maximumFractionDigits: 0 })}` : '—'}
                     </td>
                     <td className="px-6 py-4 text-right text-xs text-light-muted dark:text-dark-muted">
                       {new Date(tx.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}<br />

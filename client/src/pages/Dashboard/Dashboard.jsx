@@ -20,18 +20,9 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recha
 import { useDashboard, useAlerts } from '../../hooks/useMarketData.js';
 import { marketAPI } from '../../services/api.js';
 import WatchlistPanel from '../../components/WatchlistPanel.jsx';
+import { formatCurrency } from '../../utils/currencyUtils.js';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
-
-const formatCurrency = (value, options = {}) => {
-  const min = options.minimumFractionDigits ?? 0;
-  const max = options.maximumFractionDigits ?? 2;
-
-  return `₹${Number(value || 0).toLocaleString('en-IN', {
-    minimumFractionDigits: Math.min(min, max),
-    maximumFractionDigits: Math.max(min, max),
-  })}`;
-};
 
 const Dashboard = () => {
   const { data, isLoading, error } = useDashboard();
@@ -39,6 +30,7 @@ const Dashboard = () => {
   const [triggeredAlerts, setTriggeredAlerts] = useState([]);
 
   const { mode } = useSelector((state) => state.theme);
+  const { preferred: currency } = useSelector((state) => state.currency);
   const isDark = mode === 'dark';
 
   const tooltipContentStyle = {
@@ -131,7 +123,7 @@ const Dashboard = () => {
   const metricCards = [
     {
       title: 'Wallet Balance',
-      value: formatCurrency(metrics.walletBalance),
+      value: formatCurrency(metrics.walletBalance, currency),
       subtitle: 'Virtual cash funds',
       icon: Wallet,
       color: 'from-blue-500 to-indigo-600 shadow-blue-500/20',
@@ -139,7 +131,7 @@ const Dashboard = () => {
     },
     {
       title: 'Total Investment',
-      value: formatCurrency(metrics.totalInvestment),
+      value: formatCurrency(metrics.totalInvestment, currency),
       subtitle: 'Original cost basis',
       icon: Landmark,
       color: 'from-violet-500 to-fuchsia-600 shadow-violet-500/20',
@@ -147,7 +139,7 @@ const Dashboard = () => {
     },
     {
       title: 'Portfolio Value',
-      value: formatCurrency(metrics.currentPortfolioValue),
+      value: formatCurrency(metrics.currentPortfolioValue, currency),
       subtitle: 'Valued at live prices',
       icon: BriefcaseBusiness,
       color: 'from-emerald-500 to-teal-600 shadow-emerald-500/20',
@@ -155,7 +147,7 @@ const Dashboard = () => {
     },
     {
       title: 'Total Returns',
-      value: formatCurrency(metrics.totalProfitLoss),
+      value: formatCurrency(metrics.totalProfitLoss, currency),
       subtitle: `${metrics.totalReturnPercent >= 0 ? '+' : ''}${metrics.totalReturnPercent.toFixed(2)}%`,
       icon: Percent,
       color: returnsPositive
@@ -170,7 +162,7 @@ const Dashboard = () => {
     {
       title: "Today's P&L",
       icon: Flame,
-      body: formatCurrency(metrics.todayProfitLoss),
+      body: formatCurrency(metrics.todayProfitLoss, currency),
       meta: `${metrics.todayProfitLoss >= 0 ? '+' : ''}${metrics.todayReturnPercent.toFixed(2)}%`,
       positive: metrics.todayProfitLoss >= 0,
     },
@@ -179,7 +171,7 @@ const Dashboard = () => {
       icon: Award,
       body: insights.bestPerforming?.symbol || 'No holdings',
       meta: insights.bestPerforming
-        ? `+${insights.bestPerforming.returnPercent.toFixed(2)}% (${formatCurrency(insights.bestPerforming.profit, { maximumFractionDigits: 0 })})`
+        ? `+${insights.bestPerforming.returnPercent.toFixed(2)}% (${formatCurrency(insights.bestPerforming.profit, currency, { maximumFractionDigits: 0 })})`
         : 'Start building positions',
       positive: true,
     },
@@ -188,7 +180,7 @@ const Dashboard = () => {
       icon: TrendingDown,
       body: insights.worstPerforming?.symbol || 'No holdings',
       meta: insights.worstPerforming
-        ? `${insights.worstPerforming.returnPercent >= 0 ? '+' : ''}${insights.worstPerforming.returnPercent.toFixed(2)}% (${formatCurrency(insights.worstPerforming.profit, { maximumFractionDigits: 0 })})`
+        ? `${insights.worstPerforming.returnPercent >= 0 ? '+' : ''}${insights.worstPerforming.returnPercent.toFixed(2)}% (${formatCurrency(insights.worstPerforming.profit, currency, { maximumFractionDigits: 0 })})`
         : 'No downside yet',
       positive: !insights.worstPerforming || insights.worstPerforming.profit >= 0,
     },
@@ -197,7 +189,7 @@ const Dashboard = () => {
       icon: Layers,
       body: insights.mostInvested?.symbol || 'No holdings',
       meta: insights.mostInvested
-        ? `Invested: ${formatCurrency(insights.mostInvested.investedAmount, { maximumFractionDigits: 0 })}`
+        ? `Invested: ${formatCurrency(insights.mostInvested.investedAmount, currency, { maximumFractionDigits: 0 })}`
         : 'No capital deployed',
       positive: true,
     },
@@ -230,9 +222,9 @@ const Dashboard = () => {
                   <div>
                     <span className="font-bold">{alert.symbol}</span> Price Alert Triggered! Asset price is{' '}
                     <span className="font-bold">
-                      {alert.condition === 'ABOVE' ? 'above' : 'below'} {formatCurrency(alert.value, { maximumFractionDigits: 0 })}
+                      {alert.condition === 'ABOVE' ? 'above' : 'below'} {formatCurrency(alert.value, currency, { maximumFractionDigits: 0 })}
                     </span>{' '}
-                    (Current: {formatCurrency(alert.currentPrice, { maximumFractionDigits: 0 })})
+                    (Current: {formatCurrency(alert.currentPrice, currency, { maximumFractionDigits: 0 })})
                   </div>
                 </div>
                 <button
@@ -321,8 +313,8 @@ const Dashboard = () => {
                         <span className="text-[10px] text-light-muted dark:text-dark-muted font-normal line-clamp-1">{h.name}</span>
                       </td>
                       <td className="py-3.5 pr-3 font-medium">{h.quantity}</td>
-                      <td className="py-3.5 pr-3 text-right">{formatCurrency(h.averageBuyPrice, { maximumFractionDigits: 0 })}</td>
-                      <td className="py-3.5 pr-3 text-right font-semibold">{formatCurrency(h.currentValue, { maximumFractionDigits: 0 })}</td>
+                      <td className="py-3.5 pr-3 text-right">{formatCurrency(h.averageBuyPrice, currency, { maximumFractionDigits: 0 })}</td>
+                      <td className="py-3.5 pr-3 text-right font-semibold">{formatCurrency(h.currentValue, currency, { maximumFractionDigits: 0 })}</td>
                       <td className={`py-3.5 text-right font-bold ${h.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
                         {h.returnPercent >= 0 ? '+' : ''}{h.returnPercent.toFixed(1)}%
                       </td>

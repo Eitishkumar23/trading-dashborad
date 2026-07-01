@@ -24,6 +24,7 @@ import { logout } from '../redux/authSlice.js';
 import { toggleTheme } from '../redux/themeSlice.js';
 import { walletAPI, marketAPI } from '../services/api.js';
 import { useMaintenance } from '../context/MaintenanceContext.jsx';
+import { formatCurrency } from '../utils/currencyUtils.js';
 
 const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -41,6 +42,7 @@ const DashboardLayout = () => {
 
   const { user } = useSelector((state) => state.auth);
   const { mode } = useSelector((state) => state.theme);
+  const { preferred: currency } = useSelector((state) => state.currency);
   const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
 
   // Apply body classes for theme
@@ -317,7 +319,7 @@ const DashboardLayout = () => {
                           <p className="text-xs text-light-muted dark:text-dark-muted">{asset.name}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-semibold">₹{asset.price.toLocaleString()}</p>
+                          <p className="text-sm font-semibold">{formatCurrency(asset.price, currency, { maximumFractionDigits: 2 })}</p>
                           <span className={`text-xs font-semibold ${asset.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
                             {asset.change >= 0 ? '+' : ''}{asset.change}%
                           </span>
@@ -337,7 +339,7 @@ const DashboardLayout = () => {
               className="flex items-center gap-2 pl-3 pr-4 py-2 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 dark:text-brand-500 border border-brand-500/20 rounded-2xl text-sm font-bold transition-all duration-200 group hover:scale-[1.02]"
             >
               <Wallet size={16} className="group-hover:rotate-12 transition-transform" />
-              <span>₹{walletBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span>{formatCurrency(walletBalance, currency, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </Link>
 
             {/* Dark Mode Toggle */}

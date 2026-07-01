@@ -5,8 +5,10 @@ import { useMarkets, useMarketOverview, useWatchlist } from '../../hooks/useMark
 import { marketAPI, tradeAPI, walletAPI } from '../../services/api.js';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
 import { useMaintenance } from '../../context/MaintenanceContext.jsx';
+import { formatCurrency, getCurrencySymbol } from '../../utils/currencyUtils.js';
 
 const Market = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,6 +28,7 @@ const Market = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
+  const { preferred: currency } = useSelector((state) => state.currency);
 
   // Handle URL search param from global search
   useEffect(() => {
@@ -90,7 +93,10 @@ const Market = () => {
     const qty = parseFloat(buyQuantity);
     if (!qty || qty <= 0) { setBuyError('Enter a valid quantity'); return; }
     const total = qty * buyModal.price;
-    if (total > walletBalance) { setBuyError(`Insufficient balance. Need ₹${total.toLocaleString()} but have ₹${walletBalance.toLocaleString()}`); return; }
+    if (total > walletBalance) {
+      setBuyError(`Insufficient balance. Need ${formatCurrency(total, currency)} but have ${formatCurrency(walletBalance, currency)}`);
+      return;
+    }
     setBuyLoading(true);
     setBuyError('');
     try {
@@ -122,7 +128,7 @@ const Market = () => {
         </div>
         <div className="flex items-center gap-2 px-4 py-2 glass-panel rounded-2xl text-sm font-semibold border border-slate-200/50 dark:border-dark-border">
           <span className="w-2 h-2 bg-brand-500 rounded-full animate-pulse" />
-          <span>Wallet: ₹{walletBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+          <span>Wallet: {formatCurrency(walletBalance, currency, { maximumFractionDigits: 2 })}</span>
         </div>
       </div>
 
@@ -175,7 +181,7 @@ const Market = () => {
                   <tr className="border-b border-slate-200/50 dark:border-slate-800/50 text-xs uppercase font-bold text-light-muted dark:text-dark-muted sticky top-0 bg-slate-50/90 dark:bg-[#101423]/90 backdrop-blur-md z-10">
                     <th className="px-4 py-3 lg:px-3 text-left">Asset</th>
                     <th className="px-4 py-3 lg:px-3 text-center">Type</th>
-                    <th className="px-4 py-3 lg:px-3 text-right">Price (₹)</th>
+                    <th className="px-4 py-3 lg:px-3 text-right">Price ({getCurrencySymbol(currency)})</th>
                     <th className="px-4 py-3 lg:px-3 text-right">24h Change</th>
                     <th className="px-4 py-3 lg:px-3 text-right">High</th>
                     <th className="px-4 py-3 lg:px-3 text-right">Low</th>
@@ -213,15 +219,21 @@ const Market = () => {
                             {asset.assetType}
                           </span>
                         </td>
-                        <td className="px-4 py-3 lg:px-3 text-right font-bold tabular-nums">₹{asset.price.toLocaleString()}</td>
+                        <td className="px-4 py-3 lg:px-3 text-right font-bold tabular-nums">
+                          {formatCurrency(asset.price, currency, { maximumFractionDigits: 2 })}
+                        </td>
                         <td className={`px-4 py-3 lg:px-3 text-right font-bold ${asset.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
                           <div className="flex items-center justify-end gap-1">
                             {asset.change >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                             <span>{asset.change >= 0 ? '+' : ''}{asset.change}%</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 lg:px-3 text-right text-xs text-light-muted dark:text-dark-muted">₹{asset.high.toLocaleString()}</td>
-                        <td className="px-4 py-3 lg:px-3 text-right text-xs text-light-muted dark:text-dark-muted">₹{asset.low.toLocaleString()}</td>
+                        <td className="px-4 py-3 lg:px-3 text-right text-xs text-light-muted dark:text-dark-muted">
+                          {formatCurrency(asset.high, currency, { maximumFractionDigits: 0 })}
+                        </td>
+                        <td className="px-4 py-3 lg:px-3 text-right text-xs text-light-muted dark:text-dark-muted">
+                          {formatCurrency(asset.low, currency, { maximumFractionDigits: 0 })}
+                        </td>
                         <td className="px-4 py-3 lg:px-3 text-center">
                           <div className="flex items-center justify-center gap-1.5">
                             <button
@@ -315,11 +327,11 @@ const Market = () => {
                 <div className="p-4 bg-slate-100/50 dark:bg-slate-950 rounded-2xl mb-4 flex justify-between text-sm">
                   <div>
                     <p className="text-xs text-light-muted dark:text-dark-muted">Current Price</p>
-                    <p className="font-extrabold text-lg">₹{buyModal.price.toLocaleString()}</p>
+                    <p className="font-extrabold text-lg">{formatCurrency(buyModal.price, currency, { maximumFractionDigits: 2 })}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-light-muted dark:text-dark-muted">Wallet Balance</p>
-                    <p className="font-bold text-brand-500">₹{walletBalance.toLocaleString()}</p>
+                    <p className="font-bold text-brand-500">{formatCurrency(walletBalance, currency, { maximumFractionDigits: 2 })}</p>
                   </div>
                 </div>
 
@@ -344,7 +356,7 @@ const Market = () => {
                       <div className="flex items-center justify-between text-sm mb-4 p-3 bg-slate-100/50 dark:bg-slate-950/40 rounded-xl border border-slate-200/50 dark:border-slate-800/30">
                         <span className="text-light-muted dark:text-dark-muted">Total Cost</span>
                         <span className={`font-extrabold ${totalCost > walletBalance ? 'text-danger-500' : 'text-light-text dark:text-dark-text'}`}>
-                          ₹{totalCost.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                          {formatCurrency(totalCost, currency, { maximumFractionDigits: 2 })}
                         </span>
                       </div>
                     )}

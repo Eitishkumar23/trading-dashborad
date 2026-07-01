@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { useDashboard } from '../../hooks/useMarketData.js';
 import { TrendingUp, TrendingDown, PieChart as PieIcon, BarChart3, LineChart as LineIcon } from 'lucide-react';
+import { formatCurrency, formatCurrencyChart } from '../../utils/currencyUtils.js';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f43f5e'];
 
@@ -16,6 +17,7 @@ const Analytics = () => {
   const [growthPeriod, setGrowthPeriod] = useState('7D');
 
   const { mode } = useSelector((state) => state.theme);
+  const { preferred: currency } = useSelector((state) => state.currency);
   const isDark = mode === 'dark';
 
   const tooltipContentStyle = {
@@ -62,10 +64,10 @@ const Analytics = () => {
       {/* Summary row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Net Worth', val: `₹${(metrics.netWorth || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, positive: true },
-          { label: 'Portfolio Value', val: `₹${(metrics.currentPortfolioValue || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, positive: true },
+          { label: 'Net Worth', val: formatCurrency(metrics.netWorth || 0, currency, { maximumFractionDigits: 0 }), positive: true },
+          { label: 'Portfolio Value', val: formatCurrency(metrics.currentPortfolioValue || 0, currency, { maximumFractionDigits: 0 }), positive: true },
           { label: 'Total Return', val: `${(metrics.totalReturnPercent || 0) >= 0 ? '+' : ''}${(metrics.totalReturnPercent || 0).toFixed(2)}%`, positive: (metrics.totalReturnPercent || 0) >= 0 },
-          { label: "Today's P&L", val: `${(metrics.todayProfitLoss || 0) >= 0 ? '+' : ''}₹${(metrics.todayProfitLoss || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`, positive: (metrics.todayProfitLoss || 0) >= 0 },
+          { label: "Today's P&L", val: `${(metrics.todayProfitLoss || 0) >= 0 ? '+' : ''}${formatCurrency(metrics.todayProfitLoss || 0, currency, { maximumFractionDigits: 0 })}`, positive: (metrics.todayProfitLoss || 0) >= 0 },
         ].map((c) => (
           <div key={c.label} className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border">
             <p className="text-xs text-light-muted dark:text-dark-muted font-medium mb-2">{c.label}</p>
@@ -127,11 +129,15 @@ const Analytics = () => {
               <LineChart data={growth} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} />
+                <YAxis
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tickFormatter={(v) => formatCurrencyChart(v, currency)}
+                />
                 <Tooltip
                   contentStyle={tooltipContentStyle}
                   labelStyle={tooltipLabelStyle}
                   itemStyle={tooltipItemStyle}
+                  formatter={(v) => [formatCurrency(v, currency, { maximumFractionDigits: 0 }), 'Net Worth']}
                 />
                 <Line type="monotone" dataKey="value" name="Net Worth" stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 3, fill: '#3b82f6' }} activeDot={{ r: 6 }} />
               </LineChart>
@@ -184,12 +190,17 @@ const Analytics = () => {
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={profitByAsset} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `₹${(v / 1000).toFixed(1)}k`} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tickFormatter={(v) => formatCurrencyChart(v, currency)}
+                />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} width={50} />
                 <Tooltip
                   contentStyle={tooltipContentStyle}
                   labelStyle={tooltipLabelStyle}
                   itemStyle={tooltipItemStyle}
+                  formatter={(v) => [formatCurrency(v, currency, { maximumFractionDigits: 0 }), 'P&L']}
                 />
                 <Bar dataKey="profit" name="P&L" radius={[0, 8, 8, 0]}>
                   {profitByAsset.map((entry, i) => <Cell key={i} fill={entry.profit >= 0 ? '#10b981' : '#f43f5e'} />)}

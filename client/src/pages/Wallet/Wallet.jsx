@@ -29,6 +29,12 @@ import {
 } from 'lucide-react';
 import { walletAPI } from '../../services/api.js';
 import { useMaintenance } from '../../context/MaintenanceContext.jsx';
+import { useSelector } from 'react-redux';
+import {
+  formatCurrency,
+  formatCurrencyDecimal,
+  getCurrencySymbol,
+} from '../../utils/currencyUtils.js';
 
 /* ─────────────────────────── Constants ─────────────────────────── */
 
@@ -73,24 +79,6 @@ const MONTH_OPTIONS = [
   { value: '11', label: 'December' },
 ];
 
-/* ─────────────────────────── Formatters ─────────────────────────── */
-
-const fmtINR = new Intl.NumberFormat('en-IN', {
-  style: 'currency',
-  currency: 'INR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-const fmtWhole = new Intl.NumberFormat('en-IN', {
-  style: 'currency',
-  currency: 'INR',
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 0,
-});
-
-const fmt = (n, whole = true) => (whole ? fmtWhole : fmtINR).format(Number(n || 0));
-
 /* ─────────────────────────── Helpers ─────────────────────────── */
 
 const classifyTx = (tx) => {
@@ -108,7 +96,7 @@ const classifyTx = (tx) => {
 };
 
 const exportCSV = (rows) => {
-  const headers = ['Date & Time', 'Type', 'Description', 'Amount (₹)', 'Status'];
+  const headers = ['Date & Time', 'Type', 'Description', 'Amount', 'Status'];
   const csvRows = rows.map((tx) => [
     new Date(tx.createdAt).toLocaleString('en-IN'),
     tx.transactionType,
@@ -289,6 +277,17 @@ const WalletPage = () => {
   const [rightColHeight, setRightColHeight] = useState(null);
 
   const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
+
+  /* ── Currency ── */
+  const { preferred: currency } = useSelector((state) => state.currency);
+  /* Convenience wrappers that always use the currently selected currency */
+  const fmt = useCallback(
+    (n, whole = true) =>
+      whole
+        ? formatCurrency(n, currency, { maximumFractionDigits: 0 })
+        : formatCurrencyDecimal(n, currency),
+    [currency]
+  );
 
   /* ── Forms ── */
   const depositForm = useForm({ defaultValues: { amount: 0, paymentMethod: 'upi', description: '' } });
@@ -495,7 +494,7 @@ const WalletPage = () => {
                 Available Balance
               </p>
               <h2 className="text-4xl font-black tracking-tight leading-none break-all">
-                {fmtINR.format(balance)}
+                {formatCurrencyDecimal(balance, currency)}
               </h2>
               <p className="text-xs text-emerald-100/60 mt-1.5">100% simulated — paper trade account</p>
             </div>
@@ -526,7 +525,7 @@ const WalletPage = () => {
               <MetricCard
                 icon={Clock}
                 label="Pending W/D"
-                value={pendingWithdrawals > 0 ? fmt(pendingWithdrawals) : '₹0'}
+                value={pendingWithdrawals > 0 ? fmt(pendingWithdrawals) : `${getCurrencySymbol(currency)}0`}
                 iconColor="text-amber-300"
                 valueCls={pendingWithdrawals > 0 ? 'text-amber-200' : 'text-white/70'}
               />
@@ -607,7 +606,7 @@ const WalletPage = () => {
                           required: 'Amount is required',
                           validate: (v) =>
                             (Number.isFinite(Number(v)) && Number(v) > 0) || 'Enter a positive amount',
-                          max: { value: 10000000, message: 'Maximum ₹1,00,00,000' },
+                          max: { value: 10000000, message: 'Maximum deposit limit: ₹1,00,00,000 (backend INR limit)' },
                         })}
                         className={inputCls}
                       />
@@ -630,7 +629,7 @@ const WalletPage = () => {
                               : 'bg-slate-100/80 dark:bg-slate-800/50 border-transparent hover:bg-brand-500/10 hover:text-brand-500 hover:border-brand-500/20 text-light-muted dark:text-dark-muted'
                           }`}
                         >
-                          +{fmtWhole.format(amt)}
+                          +{formatCurrency(amt, currency, { maximumFractionDigits: 0 })}
                         </button>
                       ))}
                       <button
@@ -706,7 +705,7 @@ const WalletPage = () => {
                       <span className="text-xs font-semibold text-light-muted dark:text-dark-muted">
                         Available Balance
                       </span>
-                      <span className="text-sm font-extrabold text-brand-500">{fmtINR.format(balance)}</span>
+                      <span className="text-sm font-extrabold text-brand-500">{formatCurrencyDecimal(balance, currency)}</span>
                     </div>
 
                     {/* Amount */}

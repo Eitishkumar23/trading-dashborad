@@ -4,8 +4,10 @@ import { TrendingUp, TrendingDown, X, Loader2, ArrowDownCircle } from 'lucide-re
 import { useHoldings } from '../../hooks/useMarketData.js';
 import { tradeAPI } from '../../services/api.js';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
 import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
 import { useMaintenance } from '../../context/MaintenanceContext.jsx';
+import { formatCurrency } from '../../utils/currencyUtils.js';
 
 const Portfolio = () => {
   const { data: holdings = [], isLoading, refetch } = useHoldings();
@@ -16,6 +18,7 @@ const Portfolio = () => {
   const [sellSuccess, setSellSuccess] = useState('');
   const queryClient = useQueryClient();
   const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
+  const { preferred: currency } = useSelector((state) => state.currency);
 
   const handleSell = async () => {
     if (maintenanceMode) {
@@ -62,9 +65,9 @@ const Portfolio = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Invested', value: `₹${totalInvested.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: 'bg-blue-500/10 text-blue-500' },
-          { label: 'Current Value', value: `₹${totalCurrentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: 'bg-brand-500/10 text-brand-500' },
-          { label: 'Total P&L', value: `${totalPL >= 0 ? '+' : ''}₹${totalPL.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: totalPL >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500' },
+          { label: 'Total Invested', value: formatCurrency(totalInvested, currency, { maximumFractionDigits: 0 }), color: 'bg-blue-500/10 text-blue-500' },
+          { label: 'Current Value', value: formatCurrency(totalCurrentValue, currency, { maximumFractionDigits: 0 }), color: 'bg-brand-500/10 text-brand-500' },
+          { label: 'Total P&L', value: `${totalPL >= 0 ? '+' : ''}${formatCurrency(totalPL, currency, { maximumFractionDigits: 0 })}`, color: totalPL >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500' },
           { label: 'Total Return', value: `${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500' },
         ].map((c) => (
           <div key={c.label} className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border">
@@ -113,17 +116,17 @@ const Portfolio = () => {
                       </div>
                     </td>
                     <td className="px-3 py-4 text-right font-semibold">{h.quantity}</td>
-                    <td className="px-3 py-4 text-right truncate">₹{h.averageBuyPrice.toLocaleString()}</td>
+                    <td className="px-3 py-4 text-right truncate">{formatCurrency(h.averageBuyPrice, currency, { maximumFractionDigits: 2 })}</td>
                     <td className="px-3 py-4 text-right font-semibold">
                       <div className="flex flex-col items-end">
-                        <span className="truncate">₹{h.currentPrice.toLocaleString()}</span>
+                        <span className="truncate">{formatCurrency(h.currentPrice, currency, { maximumFractionDigits: 2 })}</span>
                         <span className={`text-[10px] font-bold ${h.change >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>{h.change >= 0 ? '+' : ''}{h.change}%</span>
                       </div>
                     </td>
-                    <td className="px-3 py-4 text-right truncate">₹{h.investmentAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                    <td className="px-3 py-4 text-right font-semibold truncate">₹{h.currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                    <td className="px-3 py-4 text-right truncate">{formatCurrency(h.investmentAmount, currency, { maximumFractionDigits: 0 })}</td>
+                    <td className="px-3 py-4 text-right font-semibold truncate">{formatCurrency(h.currentValue, currency, { maximumFractionDigits: 0 })}</td>
                     <td className={`px-3 py-4 text-right font-bold truncate ${h.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
-                      {h.profitLoss >= 0 ? '+' : ''}₹{h.profitLoss.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      {h.profitLoss >= 0 ? '+' : ''}{formatCurrency(h.profitLoss, currency, { maximumFractionDigits: 0 })}
                     </td>
                     <td className={`px-3 py-4 text-right font-extrabold ${h.returnPercent >= 0 ? 'text-brand-500' : 'text-danger-500'}`}>
                       {h.returnPercent >= 0 ? '+' : ''}{h.returnPercent.toFixed(2)}%
@@ -162,9 +165,9 @@ const Portfolio = () => {
 
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {[
-                    { label: 'Avg Buy Price', val: `₹${sellModal.averageBuyPrice.toLocaleString()}` },
-                    { label: 'Current Price', val: `₹${sellModal.currentPrice.toLocaleString()}` },
-                    { label: 'Unrealized P&L', val: `${sellModal.profitLoss >= 0 ? '+' : ''}₹${sellModal.profitLoss.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: sellModal.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500' },
+                    { label: 'Avg Buy Price', val: formatCurrency(sellModal.averageBuyPrice, currency, { maximumFractionDigits: 2 }) },
+                    { label: 'Current Price', val: formatCurrency(sellModal.currentPrice, currency, { maximumFractionDigits: 2 }) },
+                    { label: 'Unrealized P&L', val: `${sellModal.profitLoss >= 0 ? '+' : ''}${formatCurrency(sellModal.profitLoss, currency, { maximumFractionDigits: 0 })}`, color: sellModal.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500' },
                     { label: 'Total Holdings', val: sellModal.quantity },
                   ].map((item) => (
                     <div key={item.label} className="p-3 bg-slate-100/50 dark:bg-slate-950 rounded-xl">
@@ -193,7 +196,9 @@ const Portfolio = () => {
                     {sellQty && !Number.isNaN(parseFloat(sellQty)) && (
                       <div className="flex justify-between text-sm mb-4 p-3 bg-slate-100/50 dark:bg-slate-950/40 rounded-xl border border-slate-200/50 dark:border-slate-800/30">
                         <span className="text-light-muted dark:text-dark-muted">Expected Proceeds</span>
-                        <span className="font-extrabold text-brand-500">₹{(parseFloat(sellQty) * sellModal.currentPrice).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                        <span className="font-extrabold text-brand-500">
+                          {formatCurrency(parseFloat(sellQty) * sellModal.currentPrice, currency, { maximumFractionDigits: 2 })}
+                        </span>
                       </div>
                     )}
                     {sellError && <div className="mb-4 p-3 bg-danger-500/10 border border-danger-500/20 rounded-xl text-danger-500 text-xs font-semibold">{sellError}</div>}

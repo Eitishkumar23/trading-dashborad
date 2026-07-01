@@ -6,21 +6,29 @@ import {
   BellOff,
   BellRing,
   Trash2,
-  Loader2
+  Loader2,
+  Globe,
 } from 'lucide-react';
 import { useAlerts } from '../../hooks/useMarketData.js';
-import { marketAPI } from '../../services/api.js';
+import { marketAPI, authAPI } from '../../services/api.js';
 import { useDispatch, useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
 import { updateUserProfileLocal } from '../../redux/authSlice.js';
+import { setPreferredCurrency } from '../../redux/currencySlice.js';
 import AccountPasswordForm from '../../components/AccountPasswordForm.jsx';
 import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
 import WatchlistPanel from '../../components/WatchlistPanel.jsx';
 import { useMaintenance } from '../../context/MaintenanceContext.jsx';
+import {
+  CURRENCY_OPTIONS,
+  getCurrencySymbol,
+  formatCurrency,
+} from '../../utils/currencyUtils.js';
 
 const Profile = () => {
   const { user } = useSelector((s) => s.auth);
+  const { preferred: currency } = useSelector((s) => s.currency);
   const dispatch = useDispatch();
   const { data: alerts = [], refetch: refetchAlerts } = useAlerts();
   const queryClient = useQueryClient();
@@ -64,7 +72,6 @@ const Profile = () => {
 
   const handleDeleteAlert = async (id) => {
     if (maintenanceMode) return;
-
     await marketAPI.deleteAlert(id);
     refetchAlerts();
   };
@@ -80,7 +87,9 @@ const Profile = () => {
         condition: data.condition,
         value: parseFloat(data.value),
       });
-      setAlertSuccess(`Alert created: ${data.symbol.toUpperCase()} ${data.condition} â‚¹${data.value}`);
+      setAlertSuccess(
+        `Alert created: ${data.symbol.toUpperCase()} ${data.condition} ${getCurrencySymbol(currency)}${data.value}`
+      );
       reset();
       setShowAlertForm(false);
       refetchAlerts();
@@ -99,6 +108,7 @@ const Profile = () => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
+        {/* ── Profile Card ── */}
         <section className="glass-panel relative flex h-full min-h-[420px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
           <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-brand-500/8 via-transparent to-emerald-500/8" />
 
@@ -154,8 +164,38 @@ const Profile = () => {
               </div>
             ))}
           </div>
+
+          {/* ── Preferred Currency ── */}
+          <div className="relative mt-6">
+            <div className="rounded-2xl border border-slate-200/50 bg-slate-50/80 p-4 dark:border-slate-800/40 dark:bg-slate-900/35">
+              <div className="flex items-center gap-2 mb-3">
+                <Globe size={15} className="text-brand-500 shrink-0" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">
+                  Preferred Currency
+                </p>
+              </div>
+              <p className="text-xs text-light-muted dark:text-dark-muted mb-3">
+                All monetary values across the app will be displayed in this currency.
+              </p>
+              <select
+                value={currency}
+                onChange={(e) => dispatch(setPreferredCurrency(e.target.value))}
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/15 transition-all dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-brand-500 cursor-pointer"
+              >
+                {CURRENCY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-2 text-[10px] text-light-muted dark:text-dark-muted">
+                Currently: <span className="font-bold text-brand-500">{CURRENCY_OPTIONS.find((o) => o.value === currency)?.label}</span>
+              </p>
+            </div>
+          </div>
         </section>
 
+        {/* ── Account Password Form ── */}
         <div className="flex h-full min-h-[420px] flex-col gap-6">
           <div className="[&>div]:h-full [&>div]:w-full">
             <AccountPasswordForm
@@ -168,6 +208,7 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* ── Price Alerts ── */}
       <div className="grid grid-cols-1">
         <section className="glass-panel flex h-[430px] flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border">
           <div className="flex items-center justify-between gap-3 shrink-0">
@@ -218,7 +259,9 @@ const Profile = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">Target Price (â‚¹)</label>
+                      <label className="text-[10px] font-bold uppercase text-light-muted dark:text-dark-muted">
+                        Target Price ({getCurrencySymbol(currency)})
+                      </label>
                       <input
                         {...register('value', { required: true, min: 0.01 })}
                         type="hidden"
@@ -250,7 +293,7 @@ const Profile = () => {
             <div className="space-y-3">
               {alerts.length === 0 ? (
                 <p className="py-8 text-center text-xs italic text-light-muted dark:text-dark-muted">
-                  No alerts configured. Click "Add Alert" to set a price target.
+                  No alerts configured. Click &quot;Add Alert&quot; to set a price target.
                 </p>
               ) : (
                 alerts.map((alert) => (
@@ -269,9 +312,14 @@ const Profile = () => {
                           </span>
                         </p>
                         <p className="text-xs text-light-muted dark:text-dark-muted">
-                          Target: â‚¹{alert.value.toLocaleString()} | Now: â‚¹{alert.currentPrice?.toLocaleString() || 'â€”'}
+                          Target: {formatCurrency(alert.value, currency, { maximumFractionDigits: 0 })} | Now:{' '}
+                          {alert.currentPrice != null
+                            ? formatCurrency(alert.currentPrice, currency, { maximumFractionDigits: 0 })
+                            : '—'}
                         </p>
-                        {alert.isTriggered && <p className="mt-0.5 text-[10px] font-bold text-amber-500">âš¡ Alert Triggered!</p>}
+                        {alert.isTriggered && (
+                          <p className="mt-0.5 text-[10px] font-bold text-amber-500">⚡ Alert Triggered!</p>
+                        )}
                       </div>
                     </div>
                     <button onClick={() => handleDeleteAlert(alert._id)} className="rounded-lg p-1.5 text-danger-500 transition-colors hover:bg-danger-500/10">
@@ -284,6 +332,8 @@ const Profile = () => {
           </div>
         </section>
       </div>
+
+      <WatchlistPanel />
     </motion.div>
   );
 };

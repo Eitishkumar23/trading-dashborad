@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
 import { Star, Trash2 } from 'lucide-react';
+import { useSelector } from 'react-redux';
 import { useWatchlist } from '../hooks/useMarketData.js';
 import { marketAPI } from '../services/api.js';
+import { formatCurrency } from '../utils/currencyUtils.js';
 
 /**
  * WatchlistPanel — reusable, self-contained watchlist card.
@@ -19,6 +21,7 @@ const WatchlistPanel = ({
   className = '',
 }) => {
   const { data: watchlist = [], refetch: refetchWatchlist } = useWatchlist();
+  const { preferred: currency } = useSelector((state) => state.currency);
 
   const handleRemove = async (symbol) => {
     try {
@@ -75,7 +78,7 @@ const WatchlistPanel = ({
                   {item.live && (
                     <div className="mt-0.5 flex items-center gap-2">
                       <span className="text-xs font-semibold">
-                        ₹{item.live.price.toLocaleString()}
+                        {formatCurrency(item.live.price, currency, { maximumFractionDigits: 2 })}
                       </span>
                       <span
                         className={`text-[10px] font-bold ${
