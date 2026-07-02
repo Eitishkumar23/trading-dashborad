@@ -363,3 +363,328 @@
 
 
 /* (glass-panel, skeleton, scrollbars, and admin overrides are all defined above) */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PORTFOLIO PAGE — Dark Mode Gradient & Vibrant Enhancement
+   All rules live under .dark so Light Mode is completely unaffected.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Summary KPI cards ── */
+.dark .pf-stat-card {
+  background: linear-gradient(145deg, rgba(20,25,50,0.96), rgba(28,15,60,0.96));
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 22px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  position: relative;
+  overflow: hidden;
+}
+.dark .pf-stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, var(--pf-radial, rgba(124,58,237,0.09)) 0%, transparent 65%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+.dark .pf-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* KPI value — per-card accent color applied via inline style, no override needed */
+
+/* ── Holdings table container ── */
+.dark .pf-table-wrap {
+  background: linear-gradient(160deg, rgba(16,20,42,0.98) 0%, rgba(20,14,44,0.98) 100%);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 22px;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.35);
+  overflow: hidden;
+}
+
+/* ── Table header row ── */
+.dark .pf-thead-row {
+  background: linear-gradient(90deg, rgba(26,18,52,0.98) 0%, rgba(20,24,52,0.98) 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ── Table section header bar (Holdings count row) ── */
+.dark .pf-table-header-bar {
+  background: transparent;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+/* ── Table data row ── */
+.dark .pf-data-row {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.dark .pf-data-row:last-child { border-bottom: none; }
+.dark .pf-data-row:hover {
+  background: rgba(124,58,237,0.07);
+  transform: scale(1.001);
+}
+
+/* ── Sell button — enhanced dark variant ── */
+.dark .pf-sell-btn {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.28);
+  color: #f87171;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 5px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: background 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, transform 0.15s ease;
+}
+.dark .pf-sell-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(236,72,153,0.22), rgba(239,68,68,0.20));
+  border-color: rgba(236,72,153,0.50);
+  color: #fb7185;
+  box-shadow: 0 0 16px rgba(236,72,153,0.22);
+  transform: translateY(-1px);
+}
+.dark .pf-sell-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+
+/* ── Sell modal ── */
+.dark .pf-modal-card {
+  background: linear-gradient(160deg, rgba(14,17,36,0.99) 0%, rgba(20,12,44,0.99) 100%);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 26px;
+  box-shadow: 0 28px 70px rgba(0,0,0,0.65), 0 0 0 1px rgba(124,58,237,0.10);
+}
+.dark .pf-modal-info-cell {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+}
+.dark .pf-modal-confirm-btn {
+  background: linear-gradient(135deg, #ec4899 0%, #7c3aed 55%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+  transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+.dark .pf-modal-confirm-btn:hover:not(:disabled) {
+  opacity: 0.90;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(124,58,237,0.48);
+}
+.dark .pf-modal-confirm-btn:active:not(:disabled) { transform: scale(0.98); }
+.dark .pf-modal-confirm-btn:disabled { opacity: 0.44; cursor: not-allowed; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TRANSACTIONS PAGE — Dark Mode Gradient & Vibrant Enhancement
+   All rules scoped under .dark — light mode is completely unaffected.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Summary stat cards ── */
+.dark .tx-stat-card {
+  background: linear-gradient(145deg, rgba(20,25,50,0.96), rgba(28,15,60,0.96));
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 22px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.dark .tx-stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, var(--tx-radial, rgba(59,130,246,0.10)) 0%, transparent 65%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+.dark .tx-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.09);
+}
+
+/* ── Filter pill bar ── */
+.dark .tx-filter-bar {
+  background: linear-gradient(145deg, rgba(20,25,50,0.96), rgba(28,15,60,0.96));
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
+
+/* ── Active filter pill ── */
+.dark .tx-filter-active {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 4px 14px rgba(16,185,129,0.35) !important;
+}
+
+/* ── Inactive filter pill hover ── */
+.dark .tx-filter-inactive:hover {
+  background: rgba(124,58,237,0.15) !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── Table container ── */
+.dark .tx-table-container {
+  background: linear-gradient(160deg, rgba(16,20,42,0.98) 0%, rgba(20,14,44,0.98) 100%);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 10px 32px rgba(0,0,0,0.35);
+}
+
+/* ── Table header ── */
+.dark .tx-thead {
+  background: linear-gradient(90deg, rgba(26,18,52,0.98) 0%, rgba(20,24,52,0.98) 100%) !important;
+}
+
+/* ── Table data rows ── */
+.dark .tx-data-row {
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.dark .tx-data-row:last-child { border-bottom: none !important; }
+.dark .tx-data-row:hover {
+  background: rgba(124,58,237,0.07) !important;
+  transform: scale(1.001);
+}
+
+/* ── BUY / SELL type badges — enhanced ── */
+.dark .tx-badge-buy {
+  background: linear-gradient(135deg, rgba(16,185,129,0.20), rgba(5,150,105,0.15)) !important;
+  border: 1px solid rgba(16,185,129,0.35) !important;
+  color: #34d399 !important;
+  box-shadow: 0 0 10px rgba(16,185,129,0.18);
+}
+.dark .tx-badge-sell {
+  background: linear-gradient(135deg, rgba(239,68,68,0.18), rgba(220,38,38,0.12)) !important;
+  border: 1px solid rgba(239,68,68,0.32) !important;
+  color: #f87171 !important;
+  box-shadow: 0 0 10px rgba(239,68,68,0.16);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANALYTICS PAGE — Dark Mode Gradient & Vibrant Enhancement
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Summary stat cards ── */
+.dark .an-stat-card {
+  background: linear-gradient(145deg, rgba(20,25,50,0.96), rgba(28,15,60,0.96));
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 22px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.dark .an-stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top right, var(--an-radial, rgba(124,58,237,0.09)) 0%, transparent 65%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+.dark .an-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.09);
+}
+
+/* ── Chart containers ── */
+.dark .an-chart-card {
+  background: linear-gradient(145deg, rgba(20,25,50,0.96), rgba(28,15,60,0.96));
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 22px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.dark .an-chart-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at bottom left, rgba(99,102,241,0.06) 0%, transparent 60%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+.dark .an-chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.09);
+}
+
+/* ── Chart icon containers ── */
+.dark .an-icon-wrap {
+  box-shadow: 0 0 12px var(--an-icon-glow, rgba(99,102,241,0.25));
+}
+
+/* ── Period selector buttons ── */
+.dark .an-period-active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  box-shadow: 0 4px 14px rgba(59,130,246,0.35) !important;
+}
+.dark .an-period-inactive:hover {
+  background: rgba(59,130,246,0.15) !important;
+  color: #e2e8f0 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SIDEBAR & NAVBAR — Dark Mode Gradient & Vibrant Enhancement
+   All rules scoped under .dark — light mode completely unaffected.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Desktop sidebar ── */
+.dark .sidebar-dark {
+  background: linear-gradient(180deg, rgba(14,17,36,0.98) 0%, rgba(10,12,28,0.98) 100%);
+  border-right: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 4px 0 24px rgba(0,0,0,0.35);
+}
+
+/* ── Active nav item — vibrant gradient pill ── */
+.dark .nav-item-active {
+  background: linear-gradient(135deg, rgba(16,185,129,0.90), rgba(5,150,105,0.85)) !important;
+  box-shadow: 0 4px 16px rgba(16,185,129,0.35), 0 1px 3px rgba(0,0,0,0.20) !important;
+  color: #ffffff !important;
+}
+
+/* ── Inactive nav item hover ── */
+.dark .nav-item-inactive:hover {
+  background: rgba(124,58,237,0.12) !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── Sidebar user card ── */
+.dark .sidebar-user-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+}
+
+/* ── Top navbar ── */
+.dark .navbar-dark {
+  background: linear-gradient(135deg, rgba(14,17,36,0.96) 0%, rgba(20,12,44,0.96) 100%);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* ── Connect Wallet button — vibrant gradient pill ── */
+.dark .connect-wallet-btn {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9) !important;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.40) !important;
+  border: none !important;
+  transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease !important;
+}
+.dark .connect-wallet-btn:hover {
+  opacity: 0.90 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(124,58,237,0.55) !important;
+}
+
+/* ── Connected wallet pill ── */
+.dark .wallet-connected-pill {
+  background: rgba(124,58,237,0.12) !important;
+  border: 1px solid rgba(124,58,237,0.28) !important;
+}
+.dark .wallet-connected-pill:hover {
+  background: rgba(124,58,237,0.20) !important;
+}

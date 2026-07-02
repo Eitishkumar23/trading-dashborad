@@ -96,26 +96,38 @@ const Transactions = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Total Purchased', value: formatCurrency(totalBuys, currency, { maximumFractionDigits: 0 }), color: 'bg-blue-500/10 text-blue-500' },
-          { label: 'Total Sold', value: formatCurrency(totalSells, currency, { maximumFractionDigits: 0 }), color: 'bg-purple-500/10 text-purple-500' },
-          { label: 'Realized P&L', value: `${totalProfit >= 0 ? '+' : ''}${formatCurrency(totalProfit, currency, { maximumFractionDigits: 0 })}`, color: totalProfit >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500' },
+          { label: 'Total Purchased', value: formatCurrency(totalBuys, currency, { maximumFractionDigits: 0 }), color: 'bg-blue-500/10 text-blue-500', darkAccent: 'text-blue-400', radial: 'rgba(59,130,246,0.12)' },
+          { label: 'Total Sold',      value: formatCurrency(totalSells, currency, { maximumFractionDigits: 0 }), color: 'bg-purple-500/10 text-purple-500', darkAccent: 'text-purple-400', radial: 'rgba(168,85,247,0.12)' },
+          { label: 'Realized P&L',   value: `${totalProfit >= 0 ? '+' : ''}${formatCurrency(totalProfit, currency, { maximumFractionDigits: 0 })}`, color: totalProfit >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500', darkAccent: totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400', radial: totalProfit >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)' },
         ].map((c) => (
-          <div key={c.label} className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border">
-            <p className="text-xs font-medium text-light-muted dark:text-dark-muted mb-2">{c.label}</p>
-            <p className={`text-base font-extrabold px-2.5 py-1 rounded-lg inline-block ${c.color}`}>{c.value}</p>
+          <div
+            key={c.label}
+            className="tx-stat-card glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border"
+            style={{ '--tx-radial': c.radial }}
+          >
+            <p className="dark:hidden text-xs font-medium text-light-muted mb-2">{c.label}</p>
+            <p className={`dark:hidden text-base font-extrabold px-2.5 py-1 rounded-lg inline-block ${c.color}`}>{c.value}</p>
+
+            <div className="hidden dark:flex items-center justify-between mb-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'rgba(148,163,184,0.75)' }}>{c.label}</p>
+            </div>
+            <p className={`hidden dark:block text-xl font-extrabold tracking-tight ${c.darkAccent}`}>{c.value}</p>
           </div>
         ))}
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 glass-panel p-2 rounded-2xl border border-slate-200/50 dark:border-dark-border w-fit">
+      <div className="tx-filter-bar flex items-center gap-2 glass-panel p-2 rounded-2xl border border-slate-200/50 dark:border-dark-border w-fit">
         <Filter size={16} className="ml-2 text-light-muted dark:text-dark-muted" />
         {FILTERS.map((f) => (
           <button
             key={f.value}
             onClick={() => setFilter(f.value)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === f.value ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
-              }`}
+            className={`tx-filter-inactive px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              filter === f.value
+                ? 'tx-filter-active bg-brand-500 text-white shadow-lg shadow-brand-500/20'
+                : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+            }`}
           >
             {f.label}
           </button>
@@ -123,11 +135,11 @@ const Transactions = () => {
       </div>
 
       {/* Transactions Table */}
-      <div className="glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border overflow-hidden">
+      <div className="tx-table-container glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="text-xs uppercase font-bold text-light-muted dark:text-dark-muted bg-slate-50/50 dark:bg-slate-900/20">
+              <tr className="tx-thead text-xs uppercase font-bold text-light-muted dark:text-dark-muted bg-slate-50/50 dark:bg-slate-900/20">
                 <th className="px-6 py-4 text-left">Asset</th>
                 <th className="px-6 py-4 text-center">Type</th>
                 <th className="px-6 py-4 text-right">Qty</th>
@@ -148,7 +160,7 @@ const Transactions = () => {
                 <tr><td colSpan={7} className="py-16 text-center text-sm text-light-muted dark:text-dark-muted italic">No transactions found for the selected period.</td></tr>
               ) : (
                 history.map((tx) => (
-                  <tr key={tx._id} className="border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50 dark:hover:bg-slate-800/15 transition-colors">
+                  <tr key={tx._id} className="tx-data-row border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50 dark:hover:bg-slate-800/15 transition-colors">
                     <td className="px-6 py-4 font-bold">
                       <span className="block">{tx.symbol}</span>
                       <AssetCategoryBadge
@@ -160,7 +172,7 @@ const Transactions = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${tx.type === 'BUY' ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500'}`}>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold ${tx.type === 'BUY' ? 'tx-badge-buy bg-brand-500/10 text-brand-500' : 'tx-badge-sell bg-danger-500/10 text-danger-500'}`}>
                           {tx.type === 'BUY' ? <ArrowUpRight size={12} /> : <ArrowDownLeft size={12} />}
                           {tx.type}
                         </span>

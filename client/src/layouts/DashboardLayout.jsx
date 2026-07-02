@@ -302,7 +302,7 @@ const DashboardLayout = () => {
   return (
     <div className="min-h-screen flex transition-colors duration-300">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex flex-col w-64 glass-panel border-r border-dark-border dark:border-dark-border m-4 rounded-3xl sticky top-4 h-[calc(100vh-2rem)] z-30 overflow-hidden">
+      <aside className="sidebar-dark hidden lg:flex flex-col w-64 glass-panel border-r border-dark-border dark:border-dark-border m-4 rounded-3xl sticky top-4 h-[calc(100vh-2rem)] z-30 overflow-hidden">
         <div className="p-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="bg-gradient-to-tr from-brand-600 to-brand-500 p-2.5 rounded-2xl text-white shadow-lg shadow-brand-500/20">
@@ -324,8 +324,8 @@ const DashboardLayout = () => {
                 to={link.path}
                 onClick={() => clearSearchOnNavigate(link.path)}
                 className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl font-medium transition-all duration-200 ${isActive
-                  ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/25 scale-[1.02]'
-                  : 'text-light-muted hover:text-light-text dark:text-dark-muted dark:hover:text-dark-text hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+                  ? 'nav-item-active bg-brand-500 text-white shadow-lg shadow-brand-500/25 scale-[1.02]'
+                  : 'nav-item-inactive text-light-muted hover:text-light-text dark:text-dark-muted dark:hover:text-dark-text hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
                   }`}
               >
                 <Icon size={20} />
@@ -337,7 +337,7 @@ const DashboardLayout = () => {
 
         {/* User profile section in Sidebar */}
         <div className="w-full min-w-0 px-4 pt-1 pb-2 border-t border-slate-200/50 dark:border-slate-800/50 shrink-0">
-          <div className="flex w-full max-w-full min-w-0 items-center justify-between gap-3 px-2 py-1 rounded-2xl bg-slate-100/55 dark:bg-slate-900/40 border border-slate-200/30 dark:border-slate-800/30 overflow-hidden box-border">
+          <div className="sidebar-user-card flex w-full max-w-full min-w-0 items-center justify-between gap-3 px-2 py-1 rounded-2xl bg-slate-100/55 dark:bg-slate-900/40 border border-slate-200/30 dark:border-slate-800/30 overflow-hidden box-border">
             <div className="flex min-w-0 flex-1 items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-500 flex items-center justify-center font-bold">
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
@@ -378,7 +378,7 @@ const DashboardLayout = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 w-64 glass-panel m-4 rounded-3xl z-50 flex flex-col h-[calc(100vh-2rem)] lg:hidden"
+              className="sidebar-dark fixed inset-y-0 left-0 w-64 glass-panel m-4 rounded-3xl z-50 flex flex-col h-[calc(100vh-2rem)] lg:hidden"
             >
               <div className="p-6 flex items-center justify-between">
                 <Link to="/" className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
@@ -408,8 +408,8 @@ const DashboardLayout = () => {
                         clearSearchOnNavigate(link.path);
                       }}
                       className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-medium transition-colors ${isActive
-                        ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20'
-                        : 'text-light-muted hover:text-light-text dark:text-dark-muted dark:hover:text-dark-text hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
+                        ? 'nav-item-active bg-brand-500 text-white shadow-lg shadow-brand-500/20'
+                        : 'nav-item-inactive text-light-muted hover:text-light-text dark:text-dark-muted dark:hover:text-dark-text hover:bg-slate-200/50 dark:hover:bg-slate-800/40'
                         }`}
                     >
                       <Icon size={18} />
@@ -436,7 +436,7 @@ const DashboardLayout = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col p-4 lg:py-4 lg:px-6 lg:pl-2 lg:h-screen lg:overflow-hidden min-h-screen overflow-x-hidden">
         {/* Top Header Navbar */}
-        <header className="glass-panel rounded-3xl p-4 lg:mb-4 mb-6 flex-shrink-0 flex items-center justify-between z-20 border border-slate-200/50 dark:border-slate-800/50">
+        <header className="navbar-dark glass-panel rounded-3xl p-4 lg:mb-4 mb-6 flex-shrink-0 flex items-center justify-between z-20 border border-slate-200/50 dark:border-slate-800/50">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -507,7 +507,7 @@ const DashboardLayout = () => {
             {walletConnected ? (
               <div
                 onClick={() => setShowWalletModal(true)}
-                className="flex flex-col items-center px-4 py-1.5 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 font-semibold text-xs leading-tight cursor-pointer hover:bg-indigo-600/20 transition-all duration-200"
+                className="wallet-connected-pill flex flex-col items-center px-4 py-1.5 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 font-semibold text-xs leading-tight cursor-pointer hover:bg-indigo-600/20 transition-all duration-200"
               >
                 <span className="font-bold text-indigo-300">
                   {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}

@@ -63,23 +63,30 @@ const Analytics = () => {
       {/* Summary row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Net Worth', val: formatCurrency(metrics.netWorth || 0, currency, { maximumFractionDigits: 0 }), positive: true },
-          { label: 'Portfolio Value', val: formatCurrency(metrics.currentPortfolioValue || 0, currency, { maximumFractionDigits: 0 }), positive: true },
-          { label: 'Total Return', val: `${(metrics.totalReturnPercent || 0) >= 0 ? '+' : ''}${(metrics.totalReturnPercent || 0).toFixed(2)}%`, positive: (metrics.totalReturnPercent || 0) >= 0 },
-          { label: "Today's P&L", val: `${(metrics.todayProfitLoss || 0) >= 0 ? '+' : ''}${formatCurrency(metrics.todayProfitLoss || 0, currency, { maximumFractionDigits: 0 })}`, positive: (metrics.todayProfitLoss || 0) >= 0 },
+          { label: 'Net Worth',      val: formatCurrency(metrics.netWorth || 0, currency, { maximumFractionDigits: 0 }),                                                                                      positive: true,                                darkAccent: 'text-blue-400',    radial: 'rgba(59,130,246,0.12)'    },
+          { label: 'Portfolio Value',val: formatCurrency(metrics.currentPortfolioValue || 0, currency, { maximumFractionDigits: 0 }),                                                                         positive: true,                                darkAccent: 'text-emerald-400', radial: 'rgba(16,185,129,0.12)'   },
+          { label: 'Total Return',   val: `${(metrics.totalReturnPercent || 0) >= 0 ? '+' : ''}${(metrics.totalReturnPercent || 0).toFixed(2)}%`,                                                             positive: (metrics.totalReturnPercent || 0) >= 0, darkAccent: (metrics.totalReturnPercent || 0) >= 0 ? 'text-cyan-400' : 'text-rose-400', radial: (metrics.totalReturnPercent || 0) >= 0 ? 'rgba(6,182,212,0.12)' : 'rgba(239,68,68,0.12)' },
+          { label: "Today's P&L",   val: `${(metrics.todayProfitLoss || 0) >= 0 ? '+' : ''}${formatCurrency(metrics.todayProfitLoss || 0, currency, { maximumFractionDigits: 0 })}`,                         positive: (metrics.todayProfitLoss || 0) >= 0,    darkAccent: (metrics.todayProfitLoss || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400', radial: (metrics.todayProfitLoss || 0) >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)' },
         ].map((c) => (
-          <div key={c.label} className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border">
-            <p className="text-xs text-light-muted dark:text-dark-muted font-medium mb-2">{c.label}</p>
-            <p className={`font-extrabold text-sm ${c.positive ? 'text-brand-500' : 'text-danger-500'}`}>{c.val}</p>
+          <div
+            key={c.label}
+            className="an-stat-card glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border"
+            style={{ '--an-radial': c.radial }}
+          >
+            <p className="dark:hidden text-xs text-light-muted font-medium mb-2">{c.label}</p>
+            <p className={`dark:hidden font-extrabold text-sm ${c.positive ? 'text-brand-500' : 'text-danger-500'}`}>{c.val}</p>
+
+            <p className="hidden dark:block text-[10px] font-semibold uppercase tracking-[0.1em] mb-2" style={{ color: 'rgba(148,163,184,0.75)' }}>{c.label}</p>
+            <p className={`hidden dark:block text-xl font-extrabold tracking-tight ${c.darkAccent}`}>{c.val}</p>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Portfolio Distribution Pie Chart — colored by asset name */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
+        <div className="an-chart-card glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
           <div className="flex items-center gap-2 mb-5">
-            <div className="p-2 bg-brand-500/10 text-brand-500 rounded-xl"><PieIcon size={18} /></div>
+            <div className="an-icon-wrap p-2 bg-brand-500/10 text-brand-500 rounded-xl" style={{ '--an-icon-glow': 'rgba(16,185,129,0.25)' }}><PieIcon size={18} /></div>
             <div>
               <h2 className="font-bold text-base">Portfolio Distribution</h2>
               <p className="text-xs text-light-muted dark:text-dark-muted">Allocation % by asset</p>
@@ -107,10 +114,10 @@ const Analytics = () => {
         </div>
 
         {/* Portfolio Growth Line Chart */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
+        <div className="an-chart-card glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-blue-500/10 text-blue-500 rounded-xl"><LineIcon size={18} /></div>
+              <div className="an-icon-wrap p-2 bg-blue-500/10 text-blue-500 rounded-xl" style={{ '--an-icon-glow': 'rgba(59,130,246,0.25)' }}><LineIcon size={18} /></div>
               <div>
                 <h2 className="font-bold text-base">Net Worth Growth</h2>
                 <p className="text-xs text-light-muted dark:text-dark-muted">Portfolio + Wallet over time</p>
@@ -119,7 +126,7 @@ const Analytics = () => {
             <div className="flex gap-1">
               {['7D', '1M', '1Y'].map(p => (
                 <button key={p} onClick={() => setGrowthPeriod(p)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${growthPeriod === p ? 'bg-blue-500 text-white' : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/50 dark:hover:bg-slate-800/40'}`}>
+                  className={`an-period-inactive px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${growthPeriod === p ? 'an-period-active bg-blue-500 text-white' : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/50 dark:hover:bg-slate-800/40'}`}>
                   {p}
                 </button>
               ))}
@@ -149,9 +156,9 @@ const Analytics = () => {
         </div>
 
         {/* Asset Class Allocation Bar — colored by class */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
+        <div className="an-chart-card glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
           <div className="flex items-center gap-2 mb-5">
-            <div className="p-2 bg-amber-500/10 text-amber-500 rounded-xl"><BarChart3 size={18} /></div>
+            <div className="an-icon-wrap p-2 bg-amber-500/10 text-amber-500 rounded-xl" style={{ '--an-icon-glow': 'rgba(245,158,11,0.25)' }}><BarChart3 size={18} /></div>
             <div>
               <h2 className="font-bold text-base">Asset Class Allocation</h2>
               <p className="text-xs text-light-muted dark:text-dark-muted">Stocks vs Crypto vs Real Assets</p>
@@ -181,9 +188,9 @@ const Analytics = () => {
         </div>
 
         {/* Unrealized P&L by Asset — colored by symbol, profit/loss tint on opacity */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
+        <div className="an-chart-card glass-panel p-6 rounded-3xl border border-slate-200/50 dark:border-dark-border">
           <div className="flex items-center gap-2 mb-5">
-            <div className="p-2 bg-purple-500/10 text-purple-500 rounded-xl"><BarChart3 size={18} /></div>
+            <div className="an-icon-wrap p-2 bg-purple-500/10 text-purple-500 rounded-xl" style={{ '--an-icon-glow': 'rgba(168,85,247,0.25)' }}><BarChart3 size={18} /></div>
             <div>
               <h2 className="font-bold text-base">Unrealized P&amp;L by Asset</h2>
               <p className="text-xs text-light-muted dark:text-dark-muted">Solid = profit, faded = loss</p>

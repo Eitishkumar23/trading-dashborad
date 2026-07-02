@@ -93,26 +93,70 @@ const Portfolio = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Invested', value: formatCurrency(totalInvested, currency, { maximumFractionDigits: 0 }), color: 'bg-blue-500/10 text-blue-500' },
-          { label: 'Current Value', value: formatCurrency(totalCurrentValue, currency, { maximumFractionDigits: 0 }), color: 'bg-brand-500/10 text-brand-500' },
-          { label: 'Total P&L', value: `${totalPL >= 0 ? '+' : ''}${formatCurrency(totalPL, currency, { maximumFractionDigits: 0 })}`, color: totalPL >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500' },
-          { label: 'Total Return', value: `${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%`, color: totalReturn >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500' },
+          {
+            label: 'Total Invested',
+            value: formatCurrency(totalInvested, currency, { maximumFractionDigits: 0 }),
+            lightColor: 'bg-blue-500/10 text-blue-500',
+            darkAccent: 'text-blue-400',
+            gradient: 'from-blue-500 to-indigo-600',
+            glow: 'shadow-blue-500/30',
+            radial: 'rgba(59,130,246,0.12)',
+          },
+          {
+            label: 'Current Value',
+            value: formatCurrency(totalCurrentValue, currency, { maximumFractionDigits: 0 }),
+            lightColor: 'bg-brand-500/10 text-brand-500',
+            darkAccent: 'text-emerald-400',
+            gradient: 'from-emerald-500 to-teal-500',
+            glow: 'shadow-emerald-500/30',
+            radial: 'rgba(16,185,129,0.12)',
+          },
+          {
+            label: 'Total P&L',
+            value: `${totalPL >= 0 ? '+' : ''}${formatCurrency(totalPL, currency, { maximumFractionDigits: 0 })}`,
+            lightColor: totalPL >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500',
+            darkAccent: totalPL >= 0 ? 'text-emerald-400' : 'text-rose-400',
+            gradient: totalPL >= 0 ? 'from-emerald-500 to-green-500' : 'from-rose-500 to-red-600',
+            glow: totalPL >= 0 ? 'shadow-emerald-500/25' : 'shadow-rose-500/25',
+            radial: totalPL >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+          },
+          {
+            label: 'Total Return',
+            value: `${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%`,
+            lightColor: totalReturn >= 0 ? 'bg-brand-500/10 text-brand-500' : 'bg-danger-500/10 text-danger-500',
+            darkAccent: totalReturn >= 0 ? 'text-cyan-400' : 'text-rose-400',
+            gradient: totalReturn >= 0 ? 'from-cyan-500 to-blue-500' : 'from-rose-500 to-red-600',
+            glow: totalReturn >= 0 ? 'shadow-cyan-500/25' : 'shadow-rose-500/25',
+            radial: totalReturn >= 0 ? 'rgba(6,182,212,0.12)' : 'rgba(239,68,68,0.12)',
+          },
         ].map((c) => (
-          <div key={c.label} className="glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border">
-            <p className="text-xs text-light-muted dark:text-dark-muted font-medium mb-2">{c.label}</p>
-            <p className={`text-base font-extrabold px-2.5 py-1 rounded-lg inline-block ${c.color}`}>{c.value}</p>
+          <div
+            key={c.label}
+            className="pf-stat-card glass-panel p-5 rounded-3xl border border-slate-200/50 dark:border-dark-border"
+            style={{ '--pf-radial': c.radial }}
+          >
+            {/* Dark mode: gradient icon chip */}
+            <div className="hidden dark:flex items-center justify-between mb-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-secondary">{c.label}</p>
+              <div className={`p-2 rounded-xl bg-gradient-to-br ${c.gradient} shadow-lg ${c.glow} shrink-0`} />
+            </div>
+            {/* Light mode label */}
+            <p className="dark:hidden text-xs text-light-muted font-medium mb-2">{c.label}</p>
+
+            <p className={`text-base font-extrabold dark:hidden px-2.5 py-1 rounded-lg inline-block ${c.lightColor}`}>{c.value}</p>
+            <p className={`hidden dark:block text-xl font-extrabold tracking-tight ${c.darkAccent}`}>{c.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border overflow-hidden">
-        <div className="p-5 border-b border-slate-200/50 dark:border-slate-800/50">
+      <div className="pf-table-wrap glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border overflow-hidden">
+        <div className="pf-table-header-bar p-5 border-b border-slate-200/50 dark:border-slate-800/50">
           <h2 className="text-lg font-bold">Holdings ({holdings.length})</h2>
         </div>
         <div className="overflow-x-hidden">
           <table className="w-full table-fixed text-sm border-collapse">
             <thead>
-              <tr className="text-xs uppercase font-bold text-light-muted dark:text-dark-muted bg-slate-50/50 dark:bg-slate-900/20">
+              <tr className="pf-thead-row text-xs uppercase font-bold text-light-muted dark:text-dark-muted bg-slate-50/50 dark:bg-slate-900/20">
                 <th className="px-4 py-4 text-left w-[17%]">Asset</th>
                 <th className="px-3 py-4 text-right w-[7%]">Qty</th>
                 <th className="px-3 py-4 text-right w-[12%]">Avg Buy Price</th>
@@ -135,7 +179,7 @@ const Portfolio = () => {
                 <tr><td colSpan={9} className="py-16 text-center text-sm text-light-muted dark:text-dark-muted italic">No holdings yet. Buy assets from the Market page.</td></tr>
               ) : (
                 holdings.map((h) => (
-                  <tr key={h._id} className="border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50 dark:hover:bg-slate-800/15 transition-colors">
+                  <tr key={h._id} className="pf-data-row border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50 dark:hover:bg-slate-800/15 transition-colors">
                     <td className="px-4 py-4">
                       <div className="min-w-0">
                         <p className="font-bold truncate">{h.symbol}</p>
@@ -169,7 +213,7 @@ const Portfolio = () => {
                         onClick={() => { setSellModal(h); setSellQty('1'); setSellError(''); setSellSuccess(''); }}
                         disabled={maintenanceMode}
                         title={maintenanceMode ? maintenanceMessage : undefined}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-500 rounded-xl text-xs font-bold border border-danger-500/20 hover:border-danger-500 transition-all duration-200 mx-auto whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-danger-500/10 disabled:hover:text-danger-500"
+                        className="pf-sell-btn flex items-center gap-1 px-3 py-1.5 bg-danger-500/10 hover:bg-danger-500 hover:text-white text-danger-500 rounded-xl text-xs font-bold border border-danger-500/20 hover:border-danger-500 transition-all duration-200 mx-auto whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-danger-500/10 disabled:hover:text-danger-500"
                       >
                         <ArrowDownCircle size={12} /><span>Sell</span>
                       </button>
@@ -187,7 +231,7 @@ const Portfolio = () => {
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black z-40" onClick={() => setSellModal(null)} />
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6">
+              <div className="pf-modal-card w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6">
                 <div className="flex items-center justify-between mb-5">
                   <div>
                     <h3 className="text-lg font-extrabold text-danger-500">Sell {sellModal.symbol}</h3>
@@ -203,7 +247,7 @@ const Portfolio = () => {
                     { label: 'Unrealized P&L', val: `${sellModal.profitLoss >= 0 ? '+' : ''}${formatCurrency(sellModal.profitLoss, currency, { maximumFractionDigits: 0 })}`, color: sellModal.profitLoss >= 0 ? 'text-brand-500' : 'text-danger-500' },
                     { label: 'Total Holdings', val: sellModal.quantity },
                   ].map((item) => (
-                    <div key={item.label} className="p-3 bg-slate-100/50 dark:bg-slate-950 rounded-xl">
+                    <div key={item.label} className="pf-modal-info-cell p-3 bg-slate-100/50 dark:bg-slate-950 rounded-xl">
                       <p className="text-xs text-light-muted dark:text-dark-muted">{item.label}</p>
                       <p className={`font-bold mt-0.5 ${item.color || ''}`}>{item.val}</p>
                     </div>
@@ -239,7 +283,7 @@ const Portfolio = () => {
                       onClick={handleSell}
                       disabled={maintenanceMode || sellLoading || !sellQty}
                       title={maintenanceMode ? maintenanceMessage : undefined}
-                      className="w-full py-3 bg-danger-500 hover:bg-danger-600 disabled:opacity-60 text-white rounded-2xl font-extrabold transition-all flex items-center justify-center gap-2"
+                      className="pf-modal-confirm-btn w-full py-3 bg-danger-500 hover:bg-danger-600 disabled:opacity-60 text-white rounded-2xl font-extrabold transition-all flex items-center justify-center gap-2"
                     >
                       {maintenanceMode ? <span>Selling Unavailable</span> : sellLoading ? <Loader2 size={18} className="animate-spin" /> : <><ArrowDownCircle size={16} /><span>Confirm Sell</span></>}
                     </button>
