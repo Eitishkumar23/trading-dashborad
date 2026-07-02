@@ -122,6 +122,11 @@
   /* bg-token — border color as background (for pixel-height dividers) */
   .bg-token { background-color: var(--color-border); }
 
+  /* Named opacity helpers used by Market page interactive elements */
+  .bg-accent\/12  { background-color: rgba(16,185,129,0.12); }
+  .bg-loss\/8     { background-color: rgba(239,68,68,0.08);  }
+  .bg-profit\/10  { background-color: rgba(22,197,94,0.10);  }
+
   /* Token-aware shadows */
   .shadow-card  { box-shadow: var(--shadow-card); }
   .hover\:shadow-card-hover:hover { box-shadow: var(--shadow-hover); }

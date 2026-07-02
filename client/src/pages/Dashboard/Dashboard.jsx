@@ -279,9 +279,9 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                {/* Value — primary card gets larger type */}
-                <h3 className={`relative font-bold tracking-tight break-words leading-none ${
-                  isPrimary ? 'text-[1.7rem]' : 'text-[1.35rem]'
+                {/* Value — primary card gets larger type, always single line */}
+                <h3 className={`relative font-bold tracking-tight whitespace-nowrap overflow-hidden text-ellipsis leading-none ${
+                  isPrimary ? 'text-[1.5rem]' : 'text-[1.3rem]'
                 } ${
                   card.isReturn
                     ? (returnsPositive ? 'text-profit' : 'text-loss')
