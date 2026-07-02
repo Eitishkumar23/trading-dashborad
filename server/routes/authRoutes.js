@@ -6,6 +6,8 @@ import {
   googleAuth,
   setApplicationPassword,
   updateEmail,
+  saveWalletAddress,
+  verifyWallet,
 } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { requireWritablePlatform } from '../middleware/maintenanceMiddleware.js';
@@ -18,5 +20,7 @@ router.post('/google', googleAuth);
 router.get('/profile', protect, getUserProfile);
 router.put('/password', protect, requireWritablePlatform, setApplicationPassword);
 router.put('/email', protect, requireWritablePlatform, updateEmail);
+router.put('/wallet-address', protect, saveWalletAddress);
+router.post('/verify-wallet', protect, verifyWallet);
 
 export default router;

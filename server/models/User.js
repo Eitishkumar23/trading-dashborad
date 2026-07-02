@@ -43,6 +43,19 @@ const UserSchema = new mongoose.Schema({
     enum: ['active', 'suspended', 'banned'],
     default: 'active',
   },
+  walletAddress: {
+    type: String,
+    default: null,
+    trim: true,
+  },
+  walletVerified: {
+    type: Boolean,
+    default: false,
+  },
+  walletVerifiedAt: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

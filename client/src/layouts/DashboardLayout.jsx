@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { logout } from '../redux/authSlice.js';
 import { toggleTheme } from '../redux/themeSlice.js';
-import { walletAPI, marketAPI } from '../services/api.js';
+import { walletAPI, marketAPI, authAPI } from '../services/api.js';
 import { useMaintenance } from '../context/MaintenanceContext.jsx';
 import { formatCurrency } from '../utils/currencyUtils.js';
 
@@ -38,6 +38,11 @@ const DashboardLayout = () => {
   const [walletConnected, setWalletConnected] = useState(false);
   const [ethBalance, setEthBalance] = useState("");
   const [networkName, setNetworkName] = useState("");
+  const [walletVerified, setWalletVerified] = useState(false);
+  const [txHash, setTxHash] = useState("");
+  const [txPending, setTxPending] = useState(false);
+  const [txSuccess, setTxSuccess] = useState(false);
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -121,6 +126,59 @@ const DashboardLayout = () => {
     { name: 'Wallet Ledger', path: '/wallet', icon: Wallet },
   ];
 
+  // The exact message MetaMask signs — must match what the backend verifies.
+  const VERIFY_MESSAGE = "Verify ownership of this wallet for AI QUANT.";
+
+  /**
+   * Ask MetaMask to sign VERIFY_MESSAGE, then send the signature to the
+   * backend.  Isolated so connectWallet and checkWalletConnection share it.
+   */
+  const signAndVerifyWallet = async (provider, address) => {
+    try {
+      const signer = await provider.getSigner();
+      const signedMessage = await signer.signMessage(VERIFY_MESSAGE);
+
+      const { data } = await authAPI.verifyWallet({
+        walletAddress: address,
+        signedMessage,
+        originalMessage: VERIFY_MESSAGE,
+      });
+
+      setWalletVerified(data.walletVerified === true);
+      console.log("Wallet verified:", data.walletVerified);
+    } catch (verifyErr) {
+      // User rejected the signing prompt — stay connected but unverified
+      console.warn("Wallet verification skipped or failed:", verifyErr.message ?? verifyErr);
+      setWalletVerified(false);
+    }
+  };
+
+  const sendTestTransaction = async () => {
+    try {
+      setTxPending(true);
+      setTxSuccess(false);
+      setTxHash("");
+
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const tx = await signer.sendTransaction({
+        to: walletAddress,
+        value: 0,
+      });
+
+      const receipt = await tx.wait();
+
+      setTxHash(receipt.hash);
+      setTxSuccess(true);
+      console.log("Transaction confirmed:", receipt.hash);
+    } catch (txErr) {
+      console.error("Transaction failed:", txErr.message ?? txErr);
+    } finally {
+      setTxPending(false);
+    }
+  };
+
   const connectWallet = async () => {
     try {
       if (!window.ethereum) {
@@ -143,6 +201,19 @@ const DashboardLayout = () => {
       const network = await provider.getNetwork();
       setNetworkName(network.name);
 
+      // Persist wallet address to the logged-in user's profile
+      try {
+        await authAPI.saveWalletAddress(accounts[0]);
+      } catch (saveErr) {
+        console.error("Failed to save wallet address:", saveErr);
+      }
+
+      // Sign and verify ownership
+      await signAndVerifyWallet(provider, accounts[0]);
+
+      // User intentionally connected again
+      localStorage.removeItem("walletDisconnected");
+
       console.log("Wallet Connected:", accounts[0]);
     } catch (err) {
       console.error(err);
@@ -152,6 +223,11 @@ const DashboardLayout = () => {
   const checkWalletConnection = async () => {
     try {
       if (!window.ethereum) return;
+
+      const wasDisconnected =
+        localStorage.getItem("walletDisconnected") === "true";
+
+      if (wasDisconnected) return;
 
       const provider = new BrowserProvider(window.ethereum);
 
@@ -169,11 +245,37 @@ const DashboardLayout = () => {
         const network = await provider.getNetwork();
         setNetworkName(network.name);
 
+        // Persist wallet address to the logged-in user's profile
+        try {
+          await authAPI.saveWalletAddress(accounts[0]);
+        } catch (saveErr) {
+          console.error("Failed to save wallet address:", saveErr);
+        }
+
+        // Sign and verify ownership on auto-reconnect
+        await signAndVerifyWallet(provider, accounts[0]);
+
         console.log("Wallet Auto Connected:", accounts[0]);
       }
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const disconnectWallet = () => {
+    localStorage.setItem("walletDisconnected", "true");
+
+    setWalletConnected(false);
+    setWalletAddress("");
+    setEthBalance("");
+    setNetworkName("");
+    setWalletVerified(false);
+    setTxHash("");
+    setTxPending(false);
+    setTxSuccess(false);
+    setShowWalletModal(false);
+
+    console.log("Wallet disconnected from application.");
   };
 
   const handleLogout = () => {
@@ -403,7 +505,10 @@ const DashboardLayout = () => {
 
             {/* Connect Wallet Button */}
             {walletConnected ? (
-              <div className="flex flex-col items-center px-4 py-1.5 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 font-semibold text-xs leading-tight">
+              <div
+                onClick={() => setShowWalletModal(true)}
+                className="flex flex-col items-center px-4 py-1.5 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 font-semibold text-xs leading-tight cursor-pointer hover:bg-indigo-600/20 transition-all duration-200"
+              >
                 <span className="font-bold text-indigo-300">
                   {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
                 </span>
@@ -415,6 +520,10 @@ const DashboardLayout = () => {
                     {networkName}
                   </span>
                 )}
+                <span className={`text-[10px] font-bold mt-0.5 ${walletVerified ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {walletVerified ? '✓ Verified' : '⚠ Unverified'}
+                </span>
+
               </div>
             ) : (
               <button
@@ -494,6 +603,139 @@ const DashboardLayout = () => {
         <main className="flex-1 lg:overflow-y-auto min-h-0">
           <Outlet />
         </main>
+
+        {/* Wallet Details Modal */}
+        <AnimatePresence>
+          {showWalletModal && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowWalletModal(false)}
+                className="fixed inset-0 bg-black z-40"
+              />
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="fixed inset-0 flex items-center justify-center z-50 p-4"
+              >
+                <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-2xl">
+
+                  <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700">
+                    <h2 className="text-lg font-bold">
+                      Wallet Details
+                    </h2>
+
+                    <button
+                      onClick={() => setShowWalletModal(false)}
+                      className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div className="p-6 space-y-5">
+
+                    <div>
+                      <p className="text-xs text-slate-400 mb-1">
+                        Wallet Address
+                      </p>
+
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="break-all font-mono text-sm">
+                          {walletAddress}
+                        </p>
+
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(walletAddress);
+                            alert("Wallet address copied!");
+                          }}
+                          className="rounded-lg border border-slate-700 px-3 py-1 text-xs hover:bg-slate-800"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">
+                        Network
+                      </span>
+
+                      <span className="font-semibold capitalize">
+                        {networkName}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">
+                        ETH Balance
+                      </span>
+
+                      <span className="font-semibold">
+                        {ethBalance} ETH
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">
+                        Status
+                      </span>
+
+                      <span
+                        className={`font-bold ${walletVerified
+                          ? "text-emerald-400"
+                          : "text-amber-400"
+                          }`}
+                      >
+                        {walletVerified ? "Verified" : "Unverified"}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={sendTestTransaction}
+                      disabled={txPending}
+                      className="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-900 disabled:cursor-not-allowed text-white font-semibold transition"
+                    >
+                      {txPending ? "Sending Transaction..." : "Send Test Transaction"}
+                    </button>
+
+                    {txSuccess && txHash && (
+                      <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4">
+
+                        <p className="font-bold text-emerald-400">
+                          Transaction Successful
+                        </p>
+
+                        <a
+                          href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs mt-2 break-all text-blue-400 hover:text-blue-300 underline block"
+                        >
+                          {txHash}
+                        </a>
+
+                      </div>
+                    )}
+                    <button
+                      onClick={disconnectWallet}
+                      className="w-full py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-semibold transition"
+                    >
+                      Disconnect Wallet
+                    </button>
+
+                  </div>
+
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

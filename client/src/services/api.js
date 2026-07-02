@@ -45,6 +45,8 @@ export const authAPI = {
   getProfile: () => API.get('/auth/profile'),
   setPassword: (data) => API.put('/auth/password', data),
   updateEmail: (data) => API.put('/auth/email', data),
+  saveWalletAddress: (walletAddress) => API.put('/auth/wallet-address', { walletAddress }),
+  verifyWallet: (data) => API.post('/auth/verify-wallet', data),
   seedData: () => API.post('/seed'),// Seed bypass
 };
 

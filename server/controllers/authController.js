@@ -288,6 +288,96 @@ export const updateEmail = async (req, res) => {
   }
 };
 
+// @desc    Save MetaMask wallet address to the logged-in user's profile
+// @route   PUT /api/auth/wallet-address
+// @access  Private
+export const saveWalletAddress = async (req, res) => {
+  try {
+    const { walletAddress } = req.body;
+
+    if (!walletAddress || typeof walletAddress !== 'string') {
+      return res.status(400).json({ message: 'walletAddress is required' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        walletAddress: walletAddress.toLowerCase().trim(),
+        // Reset verification whenever a new address is saved
+        walletVerified: false,
+        walletVerifiedAt: null,
+      },
+      { new: true, runValidators: false }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const profile = buildAuthResponse(user);
+    delete profile.token;
+    res.json({ message: 'Wallet address saved', user: profile });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Verify wallet ownership via signed message
+// @route   POST /api/auth/verify-wallet
+// @access  Private
+export const verifyWallet = async (req, res) => {
+  try {
+    const { walletAddress, signedMessage, originalMessage } = req.body;
+
+    if (!walletAddress || !signedMessage || !originalMessage) {
+      return res.status(400).json({
+        message: 'walletAddress, signedMessage, and originalMessage are all required',
+      });
+    }
+
+    // Dynamically import ethers so the ESM build works cleanly
+    const { verifyMessage } = await import('ethers');
+
+    // Recover the address that produced the signature
+    const recoveredAddress = verifyMessage(originalMessage, signedMessage);
+
+    // Compare case-insensitively (Ethereum addresses are case-insensitive)
+    if (recoveredAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+      return res.status(401).json({ message: 'Signature verification failed: address mismatch' });
+    }
+
+    // Mark the wallet as verified and record the timestamp
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        walletAddress: walletAddress.toLowerCase().trim(),
+        walletVerified: true,
+        walletVerifiedAt: new Date(),
+      },
+      { new: true, runValidators: false }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const profile = buildAuthResponse(user);
+    delete profile.token;
+    res.json({
+      message: 'Wallet verified successfully',
+      walletVerified: true,
+      walletVerifiedAt: user.walletVerifiedAt,
+      user: profile,
+    });
+  } catch (error) {
+    // ethers throws if the signature is malformed
+    if (error.code === 'INVALID_ARGUMENT' || error.message?.includes('invalid')) {
+      return res.status(401).json({ message: 'Invalid signature format' });
+    }
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Google OAuth: verify Google token, find or create user, return JWT
 // @route   POST /api/auth/google
 // @access  Public
