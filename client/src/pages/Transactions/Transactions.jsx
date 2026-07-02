@@ -4,6 +4,53 @@ import { ArrowUpRight, ArrowDownLeft, Filter } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { tradeAPI } from '../../services/api.js';
 import { formatCurrency } from '../../utils/currencyUtils.js';
+import { resolveAssetType } from '../../utils/symbolTypeMap.js';
+
+// ── Asset category badge ─────────────────────────────────────────────────
+// Three categories only: STOCK · CRYPTO · REAL_ASSET
+// Styled to match the existing "Real Asset" amber badge, just with
+// per-category colors. Compact and left-aligned under the symbol name.
+const CATEGORY_STYLE = {
+  STOCK:     { label: 'Stock',      bg: 'rgba(59,130,246,0.12)',  color: '#60a5fa',  border: 'rgba(59,130,246,0.28)'  },
+  CRYPTO:    { label: 'Crypto',     bg: 'rgba(168,85,247,0.12)',  color: '#c084fc',  border: 'rgba(168,85,247,0.28)'  },
+  REAL_ASSET:{ label: 'Real Asset', bg: 'rgba(245,158,11,0.12)',  color: '#fbbf24',  border: 'rgba(245,158,11,0.28)'  },
+};
+
+// Light-mode overrides so badges remain readable on white backgrounds
+const CATEGORY_STYLE_LIGHT = {
+  STOCK:     { color: '#1d4ed8', bg: 'rgba(59,130,246,0.10)',  border: 'rgba(59,130,246,0.22)'  },
+  CRYPTO:    { color: '#7c3aed', bg: 'rgba(124,58,237,0.10)',  border: 'rgba(124,58,237,0.22)'  },
+  REAL_ASSET:{ color: '#92400e', bg: 'rgba(245,158,11,0.10)',  border: 'rgba(245,158,11,0.22)'  },
+};
+
+const AssetCategoryBadge = ({ symbol, assetType, category, isDark }) => {
+  const { assetType: resolvedType } = resolveAssetType(symbol, assetType, category);
+  const styles = isDark ? CATEGORY_STYLE : CATEGORY_STYLE_LIGHT;
+  const cfg = styles[resolvedType] ?? styles.STOCK;
+  const label = CATEGORY_STYLE[resolvedType]?.label ?? 'Stock';
+
+  return (
+    <span
+      style={{
+        display:        'inline-flex',
+        alignItems:     'center',
+        marginTop:      '3px',
+        padding:        '1px 7px',
+        borderRadius:   '5px',
+        fontSize:       '9px',
+        fontWeight:     700,
+        letterSpacing:  '0.05em',
+        textTransform:  'uppercase',
+        background:     cfg.bg,
+        color:          cfg.color,
+        border:         `1px solid ${cfg.border}`,
+        lineHeight:     '1.6',
+      }}
+    >
+      {label}
+    </span>
+  );
+};
 
 const FILTERS = [
   { label: 'All Time', value: 'all' },
@@ -18,6 +65,8 @@ const Transactions = () => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const { preferred: currency } = useSelector((state) => state.currency);
+  const { mode } = useSelector((state) => state.theme);
+  const isDark = mode === 'dark';
 
   const fetchHistory = async () => {
     setLoading(true);
@@ -102,9 +151,12 @@ const Transactions = () => {
                   <tr key={tx._id} className="border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50 dark:hover:bg-slate-800/15 transition-colors">
                     <td className="px-6 py-4 font-bold">
                       <span className="block">{tx.symbol}</span>
-                      {tx.assetType === 'REAL_ASSET' && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">Real Asset</span>
-                      )}
+                      <AssetCategoryBadge
+                        symbol={tx.symbol}
+                        assetType={tx.assetType}
+                        category={tx.category}
+                        isDark={isDark}
+                      />
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center">

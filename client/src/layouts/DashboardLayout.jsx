@@ -309,7 +309,7 @@ const DashboardLayout = () => {
               <TrendingUp size={22} className="animate-pulse" />
             </div>
             <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-brand-500 to-emerald-400 bg-clip-text text-transparent">
-              AI QUANT
+              AUREX
             </span>
           </Link>
         </div>
