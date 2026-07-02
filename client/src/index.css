@@ -2,6 +2,219 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Google Fonts ─────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   All visual values live here. Tailwind theme entries reference these vars.
+   Components use semantic class names (bg-surface, text-primary, etc.)
+   so switching .dark on <html> flips every color automatically.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Light theme (default) ─────────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --color-bg:        #F2F4F7;
+  --color-surface:   #FAFBFC;
+  --color-card:      #FFFFFF;
+  --color-sidebar:   #FFFFFF;
+
+  /* Borders */
+  --color-border:       #E4E7EC;
+  --color-border-hover: #CBD2DA;
+
+  /* Typography */
+  --color-text-primary:   #101828;
+  --color-text-secondary: #667085;
+
+  /* Accents */
+  --color-accent:       #10B981;
+  --color-accent-hover: #059669;
+  --color-profit:       #027A48;
+  --color-loss:         #B42318;
+
+  /* Elevation — Apple-style soft shadows */
+  --shadow-card:    0 1px 2px rgba(16,24,40,0.05), 0 1px 3px rgba(16,24,40,0.06);
+  --shadow-hover:   0 4px 16px rgba(16,24,40,0.08), 0 2px 6px rgba(16,24,40,0.05);
+  --shadow-tooltip: 0 8px 24px rgba(16,24,40,0.12), 0 2px 6px rgba(16,24,40,0.08);
+
+  /* Divider / subtle row stripe */
+  --color-divider:   rgba(16,24,40,0.07);
+  --color-row-hover: rgba(16,24,40,0.025);
+
+  /* Glass panel (used by .glass-panel utility) */
+  --glass-bg:     rgba(255,255,255,0.82);
+  --glass-border: rgba(0,0,0,0.06);
+  --glass-shadow: 0 8px 32px rgba(15,23,42,0.04);
+}
+
+/* ── Dark theme ─────────────────────────────────────────────────────────── */
+.dark {
+  /* Backgrounds */
+  --color-bg:        #0F1115;
+  --color-surface:   #161A20;
+  --color-card:      #1B2129;
+  --color-sidebar:   #14181E;
+
+  /* Borders */
+  --color-border:       #2A313C;
+  --color-border-hover: #3D4757;
+
+  /* Typography */
+  --color-text-primary:   #F1F5F9;
+  --color-text-secondary: #8B9AB0;
+
+  /* Accents */
+  --color-accent:       #10B981;
+  --color-accent-hover: #34D399;
+  --color-profit:       #22C55E;
+  --color-loss:         #F87171;
+
+  /* Elevation — layered depth, not flat black */
+  --shadow-card:    0 1px 2px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.03);
+  --shadow-hover:   0 8px 24px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.05);
+  --shadow-tooltip: 0 16px 48px rgba(0,0,0,0.70), 0 4px 12px rgba(0,0,0,0.40);
+
+  /* Divider / row stripe */
+  --color-divider:   rgba(255,255,255,0.06);
+  --color-row-hover: rgba(255,255,255,0.03);
+
+  /* Glass panel */
+  --glass-bg:     rgba(15,20,35,0.65);
+  --glass-border: rgba(255,255,255,0.07);
+  --glass-shadow: 0 8px 32px rgba(0,0,0,0.40);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEMANTIC UTILITY CLASSES
+   Map tokens onto concrete class names used throughout components.
+   All colours come only from the variables above — zero hardcoded hex here.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@layer utilities {
+  /* Backgrounds */
+  .bg-page      { background-color: var(--color-bg); }
+  .bg-surface   { background-color: var(--color-surface); }
+  .bg-card      { background-color: var(--color-card); }
+  .bg-sidebar   { background-color: var(--color-sidebar); }
+
+  /* Hover backgrounds */
+  .hover\:bg-card-hover:hover  { background-color: var(--color-border); }
+  .hover\:bg-row-hover:hover   { background-color: var(--color-row-hover); }
+
+  /* Borders */
+  .border-token          { border-color: var(--color-border); }
+  .hover\:border-token-hover:hover { border-color: var(--color-border-hover); }
+  .border-divider        { border-color: var(--color-divider); }
+
+  /* Typography */
+  .text-primary   { color: var(--color-text-primary); }
+  .text-secondary { color: var(--color-text-secondary); }
+  .text-accent    { color: var(--color-accent); }
+  .hover\:text-accent-hover:hover { color: var(--color-accent-hover); }
+  .text-profit    { color: var(--color-profit); }
+  .text-loss      { color: var(--color-loss); }
+
+  /* Divider line helper */
+  .divider { background-color: var(--color-divider); }
+
+  /* bg-token — border color as background (for pixel-height dividers) */
+  .bg-token { background-color: var(--color-border); }
+
+  /* Token-aware shadows */
+  .shadow-card  { box-shadow: var(--shadow-card); }
+  .hover\:shadow-card-hover:hover { box-shadow: var(--shadow-hover); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENT UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Glass-morphic surface */
+.glass-panel {
+  @apply backdrop-blur-md transition-all duration-300;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Dashboard card — the main reusable block */
+.dash-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  border-radius: 20px;
+  transition:
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    background-color 0.22s ease,
+    transform 0.22s ease;
+}
+.dash-card:hover {
+  box-shadow: var(--shadow-hover);
+  border-color: var(--color-border-hover);
+  transform: translateY(-1px);
+}
+
+/* Thin horizontal rule using the token */
+.token-divider {
+  height: 1px;
+  background-color: var(--color-border);
+  opacity: 0.7;
+}
+
+/* Metric card — the four KPI cards at the top.
+   Slightly more padding, cursor pointer, no transform on the primary card */
+.metric-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  border-radius: 20px;
+  transition:
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    transform 0.22s ease;
+}
+.metric-card:hover {
+  box-shadow: var(--shadow-hover);
+  border-color: var(--color-border-hover);
+  transform: translateY(-2px);
+}
+
+/* Primary metric card — Portfolio Value.
+   Slightly more prominent accent border, stronger shadow. */
+.metric-card-primary {
+  background-color: var(--color-card);
+  border: 1px solid rgba(16,185,129,0.22);
+  box-shadow: var(--shadow-card), 0 0 0 1px rgba(16,185,129,0.05);
+  border-radius: 20px;
+  transition:
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    transform 0.22s ease;
+}
+.metric-card-primary:hover {
+  border-color: rgba(16,185,129,0.38);
+  box-shadow: var(--shadow-hover), 0 0 0 1px rgba(16,185,129,0.12);
+  transform: translateY(-2px);
+}
+
+/* Watchlist item row */
+.watchlist-row {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.dark .watchlist-row {
+  background-color: rgba(255,255,255,0.025);
+}
+.watchlist-row:hover {
+  background-color: var(--color-row-hover);
+  border-color: var(--color-border-hover);
+}
+
 @layer base {
   html, body {
     margin: 0;
@@ -10,8 +223,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   body {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
     @apply transition-colors duration-300;
   }
 
@@ -27,152 +242,79 @@
   }
 }
 
-/* Glassmorphic elements */
-.glass-panel {
-  @apply backdrop-blur-md transition-all duration-300;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
+/* ═══════════════════════════════════════════════════════════════════════════
+   SKELETON / SHIMMER
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-:root {
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.04);
-}
-
-.dark {
-  --glass-bg: rgba(15, 20, 35, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.07);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-}
-
-/* Shimmer/skeleton effect */
 @keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
 }
 
 .skeleton {
-  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 25%,
+    var(--color-border-hover) 50%,
+    var(--color-border) 75%
+  );
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 1.6s infinite;
 }
 
-.dark .skeleton {
-  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
+/* ═══════════════════════════════════════════════════════════════════════════
+   CUSTOM SCROLLBARS
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
+::-webkit-scrollbar          { width: 5px; height: 5px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: rgba(100,116,139,0.2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.4); }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+.dark ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.15); }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.2);
-  border-radius: 99px;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.15);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.4);
-}
-
-/* Hover-only scrollbars for dense dashboard tables */
+/* Hover-only scrollbars */
 .scrollbar-on-hover {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
   scrollbar-gutter: stable;
 }
-
-.scrollbar-on-hover::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-.scrollbar-on-hover:hover {
-  scrollbar-width: thin;
-  scrollbar-gutter: stable;
-}
-
-.scrollbar-on-hover:hover::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
+.scrollbar-on-hover::-webkit-scrollbar { width: 0; height: 0; }
+.scrollbar-on-hover:hover { scrollbar-width: thin; }
+.scrollbar-on-hover:hover::-webkit-scrollbar { width: 6px; height: 6px; }
 .scrollbar-on-hover:hover::-webkit-scrollbar-track {
-  background: rgba(226, 232, 240, 0.85);
+  background: var(--color-border);
   border-radius: 999px;
 }
-
 .scrollbar-on-hover:hover::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.72);
+  background: var(--color-text-secondary);
+  opacity: 0.4;
   border-radius: 999px;
-  border: 1px solid rgba(248, 250, 252, 0.9);
-  background-clip: content-box;
 }
 
-.scrollbar-on-hover:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.86);
-}
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN PANEL — scoped light overrides (unchanged)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-.dark .scrollbar-on-hover:hover::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.7);
-}
-
-.dark .scrollbar-on-hover:hover::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.32);
-  border-color: rgba(15, 23, 42, 0.55);
-}
-
-.dark .scrollbar-on-hover:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.48);
-}
-
-/* Scoped Admin light theme overrides. Dark mode keeps the original Admin classes. */
-.admin-theme-light {
-  color: #0f172a;
-}
+.admin-theme-light { color: #0f172a; }
 
 .admin-theme-light.bg-slate-950,
 .admin-theme-light .bg-slate-950,
 .admin-theme-light header.bg-slate-950,
 .admin-theme-light aside.bg-slate-950,
-.admin-theme-light [class~="bg-slate-950/45"] {
-  background-color: #f8fafc;
-}
+.admin-theme-light [class~="bg-slate-950/45"] { background-color: #f8fafc; }
 
 .admin-theme-light [class~="bg-slate-900/60"],
 .admin-theme-light [class~="bg-slate-900/40"],
-.admin-theme-light .bg-slate-900 {
-  background-color: rgba(255, 255, 255, 0.88);
-}
+.admin-theme-light .bg-slate-900 { background-color: rgba(255,255,255,0.88); }
 
 .admin-theme-light .bg-slate-800,
 .admin-theme-light [class~="bg-slate-800/40"],
-.admin-theme-light [class~="hover:bg-slate-800/40"]:hover {
-  background-color: rgba(226, 232, 240, 0.82);
-}
+.admin-theme-light [class~="hover:bg-slate-800/40"]:hover { background-color: rgba(226,232,240,0.82); }
 
 .admin-theme-light .hover\:bg-slate-900:hover,
 .admin-theme-light [class~="hover:bg-slate-900/10"]:hover,
-.admin-theme-light [class~="hover:bg-slate-900/20"]:hover {
-  background-color: rgba(241, 245, 249, 0.92);
-}
+.admin-theme-light [class~="hover:bg-slate-900/20"]:hover { background-color: rgba(241,245,249,0.92); }
 
 .admin-theme-light .border-slate-900,
 .admin-theme-light .border-slate-850,
@@ -180,96 +322,39 @@
 .admin-theme-light [class~="border-slate-850/40"],
 .admin-theme-light [class~="border-slate-800/80"],
 .admin-theme-light [class~="border-slate-800/40"],
-.admin-theme-light [class~="border-slate-800/20"] {
-  border-color: rgba(203, 213, 225, 0.86);
-}
+.admin-theme-light [class~="border-slate-800/20"] { border-color: rgba(203,213,225,0.86); }
 
 .admin-theme-light .text-slate-100,
 .admin-theme-light .text-slate-200,
 .admin-theme-light .text-slate-300,
-.admin-theme-light .text-white:not(.bg-brand-500):not(.bg-brand-600):not(.bg-blue-600):not(.bg-blue-700):not(.bg-rose-600):not(.bg-rose-700):not(.bg-gradient-to-tr) {
-  color: #0f172a;
-}
+.admin-theme-light .text-white:not(.bg-brand-500):not(.bg-brand-600):not(.bg-blue-600):not(.bg-blue-700):not(.bg-rose-600):not(.bg-rose-700):not(.bg-gradient-to-tr) { color: #0f172a; }
 
 .admin-theme-light .text-slate-400,
-.admin-theme-light .text-slate-500 {
-  color: #64748b;
-}
+.admin-theme-light .text-slate-500 { color: #64748b; }
 
 .admin-theme-light input.bg-slate-950,
 .admin-theme-light select.bg-slate-950,
-.admin-theme-light textarea.bg-slate-950 {
-  background-color: rgba(255, 255, 255, 0.95);
-  color: #0f172a;
-}
+.admin-theme-light textarea.bg-slate-950 { background-color: rgba(255,255,255,0.95); color: #0f172a; }
 
 .admin-theme-light input::placeholder,
-.admin-theme-light textarea::placeholder {
-  color: #94a3b8;
-}
+.admin-theme-light textarea::placeholder { color: #94a3b8; }
 
-.admin-theme-light .themed-number-input {
-  border-color: rgba(203, 213, 225, 0.92);
-  background-color: rgba(255, 255, 255, 0.96);
-  color: #0f172a;
-}
+.admin-theme-light .themed-number-input  { border-color: rgba(203,213,225,0.92); background-color: rgba(255,255,255,0.96); color: #0f172a; }
+.admin-theme-light .themed-number-control { border-color: rgba(203,213,225,0.92); background-color: rgba(248,250,252,0.96); color: #475569; }
+.admin-theme-light .themed-number-control:hover:not(:disabled) { background-color: #ffffff; color: #0f172a; border-color: rgba(148,163,184,0.95); }
+.admin-theme-light .themed-number-control:active:not(:disabled) { background-color: #e2e8f0; }
 
-.admin-theme-light .themed-number-control {
-  border-color: rgba(203, 213, 225, 0.92);
-  background-color: rgba(248, 250, 252, 0.96);
-  color: #475569;
-}
-
-.admin-theme-light .themed-number-control:hover:not(:disabled) {
-  background-color: #ffffff;
-  color: #0f172a;
-  border-color: rgba(148, 163, 184, 0.95);
-}
-
-.admin-theme-light .themed-number-control:active:not(:disabled) {
-  background-color: #e2e8f0;
-}
-
-.admin-theme-light .admin-dropdown-menu {
-  border-color: rgba(203, 213, 225, 0.92);
-  background-color: #ffffff;
-  box-shadow: 0 18px 45px -28px rgba(15, 23, 42, 0.45);
-}
-
-.admin-theme-light .admin-dropdown-option {
-  color: #334155;
-}
-
-.admin-theme-light .admin-dropdown-option:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
-}
-
-.admin-theme-light .admin-dropdown-option:hover .text-slate-500 {
-  color: #475569;
-}
-
-.admin-theme-light .admin-dropdown-option-selected {
-  background-color: #0ea5e9;
-  color: #ffffff;
-}
-
+.admin-theme-light .admin-dropdown-menu  { border-color: rgba(203,213,225,0.92); background-color: #ffffff; box-shadow: 0 18px 45px -28px rgba(15,23,42,0.45); }
+.admin-theme-light .admin-dropdown-option { color: #334155; }
+.admin-theme-light .admin-dropdown-option:hover { background-color: #f1f5f9; color: #0f172a; }
+.admin-theme-light .admin-dropdown-option:hover .text-slate-500 { color: #475569; }
+.admin-theme-light .admin-dropdown-option-selected { background-color: #0ea5e9; color: #ffffff; }
 .admin-theme-light .admin-dropdown-option-selected .text-white\/80,
-.admin-theme-light .admin-dropdown-option-selected .text-slate-500 {
-  color: rgba(255, 255, 255, 0.86);
-}
+.admin-theme-light .admin-dropdown-option-selected .text-slate-500 { color: rgba(255,255,255,0.86); }
 
-.admin-theme-light select option {
-  background-color: #ffffff;
-  color: #0f172a;
-}
+.admin-theme-light select option          { background-color: #ffffff; color: #0f172a; }
+.admin-theme-light select option:checked  { background-color: #0ea5e9; color: #ffffff; }
+.admin-theme-light select option:hover    { background-color: #f1f5f9; color: #0f172a; }
 
-.admin-theme-light select option:checked {
-  background-color: #0ea5e9;
-  color: #ffffff;
-}
 
-.admin-theme-light select option:hover {
-  background-color: #f1f5f9;
-  color: #0f172a;
-}
+/* (glass-panel, skeleton, scrollbars, and admin overrides are all defined above) */

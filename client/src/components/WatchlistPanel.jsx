@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Star, Trash2 } from 'lucide-react';
+import { Star, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { useWatchlist } from '../hooks/useMarketData.js';
 import { marketAPI } from '../services/api.js';
@@ -32,102 +32,114 @@ const WatchlistPanel = ({
     }
   };
 
+  const getAssetBadge = (item) => {
+    if (item.assetType === 'CRYPTO')      return { label: 'Crypto',      cls: 'bg-purple-500/10 text-purple-500' };
+    if (item.assetType === 'REAL_ASSET') {
+      if (item.live?.category === 'PRECIOUS_METALS') return { label: 'Metals',      cls: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' };
+      if (item.live?.category === 'ENERGY')          return { label: 'Energy',      cls: 'bg-orange-500/10 text-orange-500' };
+      if (item.live?.category === 'REAL_ESTATE')     return { label: 'Real Estate', cls: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' };
+      return { label: 'Real Asset', cls: 'bg-amber-500/10 text-amber-500' };
+    }
+    return { label: 'Stock', cls: 'bg-blue-500/10 text-blue-500' };
+  };
+
   return (
     <section
       style={{ height }}
-      className={`glass-panel flex flex-col overflow-hidden rounded-3xl border border-slate-200/50 p-6 dark:border-dark-border ${className}`}
+      className={`dash-card flex flex-col overflow-hidden ${className}`}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-2">
-          <Star size={18} className="text-amber-500" />
+      {/* ── Header ── */}
+      <div className="flex items-center justify-between gap-3 px-6 pt-5 pb-4 shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+            <Star size={13} className="text-amber-500" fill="currentColor" strokeWidth={0} />
+          </div>
           <div>
-            <h2 className="font-bold text-base">{header}</h2>
+            <h2 className="text-[15px] font-semibold text-primary tracking-[-0.01em] leading-tight">{header}</h2>
             {showCount && (
-              <p className="text-xs text-light-muted dark:text-dark-muted">
-                {watchlist.length} tracked symbols
+              <p className="text-[11px] text-secondary mt-0.5 leading-tight">
+                {watchlist.length} tracked symbol{watchlist.length !== 1 ? 's' : ''}
               </p>
             )}
           </div>
         </div>
-        <span className="text-[10px] font-bold uppercase tracking-wider text-light-muted dark:text-dark-muted">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-secondary">
           Live Tickers
         </span>
       </div>
 
-      {/* Scrollable body */}
-      <div className="mt-5 flex-1 overflow-y-auto scrollbar-on-hover pr-1 min-h-0">
-        <div className="space-y-3">
-          {watchlist.length === 0 ? (
-            <p className="py-8 text-center text-xs italic text-light-muted dark:text-dark-muted">
-              No symbols in watchlist. Star assets from the Market page.
-            </p>
-          ) : (
-            watchlist.map((item) => (
-              <motion.div
-                key={item.symbol}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ type: 'spring', stiffness: 140, damping: 18 }}
-                className="flex items-center justify-between rounded-2xl border border-slate-200/30 bg-slate-100/50 p-3.5 dark:border-slate-800/30 dark:bg-slate-900/30"
-              >
-                {/* Left: symbol + live price */}
-                <div>
-                  <p className="text-sm font-bold">{item.symbol}</p>
-                  {item.live && (
-                    <div className="mt-0.5 flex items-center gap-2">
-                      <span className="text-xs font-semibold">
-                        {formatCurrency(item.live.price, currency, { maximumFractionDigits: 2 })}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold ${
-                          item.live.change >= 0 ? 'text-brand-500' : 'text-danger-500'
-                        }`}
-                      >
-                        {item.live.change >= 0 ? '+' : ''}
-                        {item.live.change}%
-                      </span>
-                    </div>
-                  )}
-                </div>
+      <div className="token-divider mx-6 shrink-0" />
 
-                {/* Right: asset type badge + remove */}
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`rounded-lg px-2 py-0.5 text-[10px] font-bold ${
-                      item.assetType === 'CRYPTO'
-                        ? 'bg-purple-500/10 text-purple-500'
-                        : item.assetType === 'REAL_ASSET'
-                          ? item.live?.category === 'PRECIOUS_METALS'
-                            ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
-                            : item.live?.category === 'ENERGY'
-                              ? 'bg-orange-500/10 text-orange-500'
-                              : item.live?.category === 'REAL_ESTATE'
-                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                                : 'bg-amber-500/10 text-amber-600'
-                          : 'bg-blue-500/10 text-blue-500'
-                    }`}
-                  >
-                    {item.assetType === 'REAL_ASSET'
-                      ? item.live?.category === 'PRECIOUS_METALS' ? 'Metals'
-                        : item.live?.category === 'ENERGY' ? 'Energy'
-                        : item.live?.category === 'REAL_ESTATE' ? 'RE'
-                        : 'Real'
-                      : item.assetType}
-                  </span>
-                  <button
-                    onClick={() => handleRemove(item.symbol)}
-                    aria-label={`Remove ${item.symbol} from watchlist`}
-                    className="rounded-lg p-1.5 text-danger-500 transition-colors hover:bg-danger-500/10"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </motion.div>
-            ))
-          )}
-        </div>
+      {/* ── Scrollable list ── */}
+      <div className="flex-1 overflow-y-auto scrollbar-on-hover px-4 py-3 min-h-0">
+        {watchlist.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center gap-3 py-8">
+            <div className="w-10 h-10 rounded-2xl border border-dashed border-token flex items-center justify-center opacity-50">
+              <Star size={16} className="text-secondary" />
+            </div>
+            <p className="text-xs text-secondary text-center max-w-[180px] leading-relaxed">
+              No symbols yet. Star assets from the Market page to track them here.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {watchlist.map((item) => {
+              const badge = getAssetBadge(item);
+              const isUp  = item.live?.change >= 0;
+
+              return (
+                <motion.div
+                  key={item.symbol}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ type: 'spring', stiffness: 160, damping: 20 }}
+                  className="watchlist-row flex items-center justify-between gap-3 px-4 py-3 group"
+                >
+                  {/* Left: symbol + price */}
+                  <div className="flex items-center gap-3 min-w-0">
+                    {/* Color dot keyed by asset type */}
+                    <div className={`w-1.5 h-8 rounded-full shrink-0 ${badge.cls.includes('purple') ? 'bg-purple-500' : badge.cls.includes('blue') ? 'bg-blue-500' : badge.cls.includes('yellow') ? 'bg-yellow-500' : badge.cls.includes('orange') ? 'bg-orange-500' : badge.cls.includes('emerald') ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-primary leading-tight">{item.symbol}</p>
+                      {item.live ? (
+                        <p className="text-[11px] text-secondary mt-0.5 tabular-nums leading-tight">
+                          {formatCurrency(item.live.price, currency, { maximumFractionDigits: 2 })}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-secondary/50 mt-0.5">Loading…</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right: change % + badge + remove */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    {item.live && (
+                      <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold ${
+                        isUp ? 'bg-profit/10 text-profit' : 'bg-loss/10 text-loss'
+                      }`}>
+                        {isUp
+                          ? <TrendingUp size={10} strokeWidth={2.5} />
+                          : <TrendingDown size={10} strokeWidth={2.5} />}
+                        {isUp ? '+' : ''}{item.live.change}%
+                      </div>
+                    )}
+                    <span className={`hidden sm:inline-flex rounded-lg px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${badge.cls}`}>
+                      {badge.label}
+                    </span>
+                    <button
+                      onClick={() => handleRemove(item.symbol)}
+                      aria-label={`Remove ${item.symbol} from watchlist`}
+                      className="w-6 h-6 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 text-secondary hover:text-danger-500 hover:bg-danger-500/10 transition-all duration-200"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
