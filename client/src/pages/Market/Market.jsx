@@ -52,6 +52,8 @@ const Market = () => {
   const [buySuccess, setBuySuccess] = useState('');
   const [walletBalance, setWalletBalance] = useState(0);
   const [blockchainMsg, setBlockchainMsg] = useState('');
+  const [buyMode, setBuyMode] = useState('quantity'); // 'quantity' | 'amount'
+  const [buyAmount, setBuyAmount] = useState('');
   const [searchParams] = useSearchParams();
 
   const { data: markets = [], isLoading } = useMarkets();
@@ -109,6 +111,8 @@ const Market = () => {
     if (maintenanceMode) return;
     setBuyModal(asset);
     setBuyQuantity(asset.assetType === 'REAL_ASSET' ? '1' : '');
+    setBuyMode('quantity');
+    setBuyAmount('');
     setBuyError('');
     setBuySuccess('');
     setBlockchainMsg('');
@@ -116,13 +120,28 @@ const Market = () => {
 
   const handleBuy = async () => {
     if (maintenanceMode) { setBuyError(maintenanceMessage); return; }
-    const qty = parseFloat(buyQuantity);
-    if (!qty || qty <= 0) { setBuyError('Enter a valid quantity'); return; }
-    const total = qty * buyModal.price;
-    if (total > walletBalance) {
-      setBuyError(`Insufficient balance. Need ${formatCurrency(total, currency)} but have ${formatCurrency(walletBalance, currency)}`);
-      return;
+
+    let qty, total;
+
+    if (buyMode === 'amount') {
+      const amt = parseFloat(buyAmount);
+      if (!amt || amt <= 0) { setBuyError('Enter a valid amount'); return; }
+      if (amt > walletBalance) {
+        setBuyError(`Insufficient balance. Entered ${formatCurrency(amt, currency)} but have ${formatCurrency(walletBalance, currency)}`);
+        return;
+      }
+      qty = amt / buyModal.price;
+      total = amt;
+    } else {
+      qty = parseFloat(buyQuantity);
+      if (!qty || qty <= 0) { setBuyError('Enter a valid quantity'); return; }
+      total = qty * buyModal.price;
+      if (total > walletBalance) {
+        setBuyError(`Insufficient balance. Need ${formatCurrency(total, currency)} but have ${formatCurrency(walletBalance, currency)}`);
+        return;
+      }
     }
+
     setBuyLoading(true);
     setBuyError('');
     setBlockchainMsg('');
@@ -173,6 +192,10 @@ const Market = () => {
   };
 
   const totalCost = parseFloat(buyQuantity) * (buyModal?.price || 0);
+
+  // Computed quantity when buying by amount
+  const buyAmountValue = buyAmount && !isNaN(parseFloat(buyAmount)) ? parseFloat(buyAmount) : null;
+  const calculatedQty = buyAmountValue != null && buyModal?.price ? buyAmountValue / buyModal.price : null;
 
   // ── Asset type badge ─────────────────────────────────────────────────────
   const renderAssetTypeBadge = (asset) => {
@@ -520,29 +543,91 @@ const Market = () => {
                   </div>
                 ) : (
                   <>
-                    <label className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-secondary mb-2">
-                      Quantity{buyModal.unit ? ` (${buyModal.unit}s)` : ''}
-                    </label>
-                    <ThemedNumberInput
-                      value={buyQuantity}
-                      min={1}
-                      step={getRealAssetStep(buyModal.unit)}
-                      onChange={setBuyQuantity}
-                      placeholder={getQuantityPlaceholder(buyModal)}
-                      className="mb-4"
-                      inputMode="numeric"
-                    />
+                    {/* Mode toggle */}
+                    <div className="flex gap-1 p-1 rounded-xl mb-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                      <button
+                        type="button"
+                        onClick={() => { setBuyMode('quantity'); setBuyError(''); }}
+                        className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${
+                          buyMode === 'quantity'
+                            ? 'bg-[#10B981] text-white shadow-sm'
+                            : 'text-secondary hover:text-primary'
+                        }`}
+                      >Buy by Quantity</button>
+                      <button
+                        type="button"
+                        onClick={() => { setBuyMode('amount'); setBuyError(''); }}
+                        className={`flex-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 ${
+                          buyMode === 'amount'
+                            ? 'bg-[#10B981] text-white shadow-sm'
+                            : 'text-secondary hover:text-primary'
+                        }`}
+                      >Buy by Amount</button>
+                    </div>
 
-                    {buyQuantity && !isNaN(parseFloat(buyQuantity)) && (
-                      <div
-                        className="flex items-center justify-between text-sm mb-4 px-4 py-3 rounded-xl"
-                        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
-                      >
-                        <span className="text-[12px] text-secondary">Total Cost</span>
-                        <span className={`text-[13px] font-bold tabular-nums ${totalCost > walletBalance ? 'text-loss' : 'text-primary'}`}>
-                          {formatCurrency(totalCost, currency, { maximumFractionDigits: 2 })}
-                        </span>
-                      </div>
+                    {buyMode === 'quantity' ? (
+                      <>
+                        <label className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-secondary mb-2">
+                          Quantity{buyModal.unit ? ` (${buyModal.unit}s)` : ''}
+                        </label>
+                        <input
+                          type="number"
+                          value={buyQuantity}
+                          min={0.000001}
+                          step="any"
+                          inputMode="decimal"
+                          placeholder={getQuantityPlaceholder(buyModal)}
+                          onChange={(e) => setBuyQuantity(e.target.value)}
+                          onKeyDown={(e) => ['e', 'E', '+'].includes(e.key) && e.preventDefault()}
+                          className="no-spinner mb-4 w-full rounded-2xl border py-3 pl-4 pr-4 text-sm font-semibold outline-none transition-all duration-200
+                            border-slate-200/80 bg-white/90 text-slate-900 placeholder:text-slate-400 hover:border-slate-300 focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/10
+                            dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-700 dark:focus:border-[#10B981]"
+                        />
+
+                        {buyQuantity && !isNaN(parseFloat(buyQuantity)) && (
+                          <div
+                            className="flex items-center justify-between text-sm mb-4 px-4 py-3 rounded-xl"
+                            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                          >
+                            <span className="text-[12px] text-secondary">Total Cost</span>
+                            <span className={`text-[13px] font-bold tabular-nums ${totalCost > walletBalance ? 'text-loss' : 'text-primary'}`}>
+                              {formatCurrency(totalCost, currency, { maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <label className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-secondary mb-2">
+                          Amount to Invest ({getCurrencySymbol(currency)})
+                        </label>
+                        <input
+                          type="number"
+                          value={buyAmount}
+                          min={0.000001}
+                          max={walletBalance}
+                          step="any"
+                          inputMode="decimal"
+                          placeholder="e.g. 100, 500, 1000"
+                          onChange={(e) => setBuyAmount(e.target.value)}
+                          onKeyDown={(e) => ['e', 'E', '+'].includes(e.key) && e.preventDefault()}
+                          className="no-spinner mb-4 w-full rounded-2xl border py-3 pl-4 pr-4 text-sm font-semibold outline-none transition-all duration-200
+                            border-slate-200/80 bg-white/90 text-slate-900 placeholder:text-slate-400 hover:border-slate-300 focus:border-[#10B981] focus:ring-4 focus:ring-[#10B981]/10
+                            dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-100 dark:placeholder:text-slate-500 dark:hover:border-slate-700 dark:focus:border-[#10B981]"
+                        />
+
+                        {buyAmount && calculatedQty != null && (
+                          <div
+                            className="flex items-center justify-between text-sm mb-4 px-4 py-3 rounded-xl"
+                            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                          >
+                            <span className="text-[12px] text-secondary">You will receive</span>
+                            <span className={`text-[13px] font-bold tabular-nums ${buyAmountValue > walletBalance ? 'text-loss' : 'text-primary'}`}>
+                              {calculatedQty.toFixed(8).replace(/\.?0+$/, '')} {buyModal.symbol}
+                            </span>
+                          </div>
+                        )}
+                      </>
                     )}
 
                     {buyError && (
@@ -553,7 +638,7 @@ const Market = () => {
 
                     <button
                       onClick={handleBuy}
-                      disabled={maintenanceMode || buyLoading || !buyQuantity}
+                      disabled={maintenanceMode || buyLoading || (buyMode === 'quantity' ? !buyQuantity : !buyAmount)}
                       title={maintenanceMode ? maintenanceMessage : undefined}
                       className="w-full py-3.5 rounded-xl text-[13px] font-semibold text-white bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 flex items-center justify-center gap-2"
                     >

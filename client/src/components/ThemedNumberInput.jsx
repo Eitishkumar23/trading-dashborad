@@ -71,7 +71,10 @@ const ThemedNumberInput = ({
 }) => {
   const styles = themeClasses[theme] || themeClasses.default;
   const numericValue = Number(value);
-  const canDecrement = !disabled && (value === '' || !Number.isFinite(numericValue) || typeof min !== 'number' || numericValue > min);
+  // A valid, decrementable value must exist — empty/invalid input must NOT
+  // allow decrement (and must NOT auto-insert a fallback like min).
+  const hasValidValue = value !== '' && Number.isFinite(numericValue) && numericValue > 0;
+  const canDecrement = !disabled && hasValidValue && (typeof min !== 'number' || numericValue > min);
   const canIncrement = !disabled && (value === '' || !Number.isFinite(numericValue) || typeof max !== 'number' || numericValue < max);
 
   const emitValue = (nextValue) => {
@@ -92,6 +95,13 @@ const ThemedNumberInput = ({
     }
 
     const stepValue = typeof step === 'number' && Number.isFinite(step) ? step : 1;
+
+    // Decrement requires a valid existing value — never fall back to `min`
+    // (that would auto-insert the minimum into an empty input).
+    if (direction < 0 && !hasValidValue) {
+      return;
+    }
+
     const baseValue = Number.isFinite(numericValue) ? numericValue : typeof min === 'number' ? min : 0;
     const steppedValue = clampValue(baseValue + direction * stepValue, min, max);
     emitValue(formatSteppedValue(steppedValue, stepValue));

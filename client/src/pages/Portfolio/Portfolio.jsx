@@ -35,8 +35,8 @@ const getAssetTypeLabel = (assetType, category) => {
   return assetType;
 };
 
-// Step size for sell modal input — whole integers for all asset types
-const getSellStep = () => 1;
+// Step size for sell modal input — allow decimal increments
+const getSellStep = () => 0.01;
 
 const Portfolio = () => {
   const { data: holdings = [], isLoading, refetch } = useHoldings();
@@ -289,16 +289,22 @@ const Portfolio = () => {
                 ) : (
                   <>
                     <label className="block text-xs font-bold uppercase text-light-muted dark:text-dark-muted mb-1.5">Quantity to Sell (Max: {sellModal.quantity}{sellModal.unit ? ' ' + sellModal.unit + 's' : ''})</label>
-                    <ThemedNumberInput
+                    <input
+                      type="number"
                       value={sellQty}
-                      min={1}
+                      min={0.000001}
                       max={sellModal.quantity}
-                      step={getSellStep()}
-                      inputMode="numeric"
-                      onChange={setSellQty}
-                      placeholder={`1 - ${sellModal.quantity}${sellModal.unit ? ' ' + sellModal.unit + 's' : ''}`}
-                      className="mb-4"
-                      inputClassName="focus:border-danger-500 focus:ring-danger-500/10 focus:shadow-[0_0_0_1px_rgba(239,68,68,0.2),0_0_0_6px_rgba(239,68,68,0.08)] dark:focus:border-danger-500"
+                      step="any"
+                      inputMode="decimal"
+                      placeholder={`0.01 - ${sellModal.quantity}${sellModal.unit ? ' ' + sellModal.unit + 's' : ''}`}
+                      onChange={(e) => setSellQty(e.target.value)}
+                      onKeyDown={(e) => ['e', 'E', '+'].includes(e.key) && e.preventDefault()}
+                      className="no-spinner mb-4 w-full rounded-2xl border py-3 pl-4 pr-4 text-sm font-semibold outline-none transition-all duration-200
+                        border-slate-200/80 bg-white/90 text-slate-900 placeholder:text-slate-400 hover:border-slate-300
+                        focus:border-danger-500 focus:ring-4 focus:ring-danger-500/10
+                        focus:shadow-[0_0_0_1px_rgba(239,68,68,0.2),0_0_0_6px_rgba(239,68,68,0.08)]
+                        dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-100 dark:placeholder:text-slate-500
+                        dark:hover:border-slate-700 dark:focus:border-danger-500"
                     />
                     {sellQty && !Number.isNaN(parseFloat(sellQty)) && (
                       <div className="flex justify-between text-sm mb-4 p-3 bg-slate-100/50 dark:bg-slate-950/40 rounded-xl border border-slate-200/50 dark:border-slate-800/30">
