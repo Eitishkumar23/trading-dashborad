@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserProvider, formatEther } from "ethers";
+import { formatEther } from "ethers";
+import { getSigner } from "../blockchain/utils/signer";
+
+import { getProvider } from "../blockchain/utils/provider";
+import {
+  connectWallet as connectWalletService,
+  getWalletInfo,
+} from "../blockchain/services/walletService";
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -159,8 +166,7 @@ const DashboardLayout = () => {
       setTxSuccess(false);
       setTxHash("");
 
-      const provider = new BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      const signer = await getSigner();
 
       const tx = await signer.sendTransaction({
         to: walletAddress,
@@ -171,9 +177,10 @@ const DashboardLayout = () => {
 
       setTxHash(receipt.hash);
       setTxSuccess(true);
+
       console.log("Transaction confirmed:", receipt.hash);
     } catch (txErr) {
-      console.error("Transaction failed:", txErr.message ?? txErr);
+      console.error("Transaction failed:", txErr);
     } finally {
       setTxPending(false);
     }
@@ -186,41 +193,36 @@ const DashboardLayout = () => {
         return;
       }
 
-      const provider = new BrowserProvider(window.ethereum);
+      const provider = getProvider();
 
-      const accounts = await provider.send("eth_requestAccounts", []);
+      const wallet = await connectWalletService();
 
-      setWalletAddress(accounts[0]);
+      setWalletAddress(wallet.address);
       setWalletConnected(true);
-
-      // Fetch ETH balance after connecting
-      const rawBalance = await provider.getBalance(accounts[0]);
-      setEthBalance(parseFloat(formatEther(rawBalance)).toFixed(4));
-
-      // Fetch network name after connecting
-      const network = await provider.getNetwork();
-      setNetworkName(network.name);
+      setEthBalance(wallet.balance);
+      setNetworkName(wallet.networkName);
 
       // Persist wallet address to the logged-in user's profile
       try {
-        await authAPI.saveWalletAddress(accounts[0]);
+        await authAPI.saveWalletAddress(wallet.address);
       } catch (saveErr) {
         console.error("Failed to save wallet address:", saveErr);
       }
 
       // Sign and verify ownership
-      await signAndVerifyWallet(provider, accounts[0]);
+      await signAndVerifyWallet(provider, wallet.address);
 
       // User intentionally connected again
       localStorage.removeItem("walletDisconnected");
 
-      console.log("Wallet Connected:", accounts[0]);
+      console.log("Wallet Connected:", wallet.address);
     } catch (err) {
       console.error(err);
     }
   };
 
   const checkWalletConnection = async () => {
+
     try {
       if (!window.ethereum) return;
 
@@ -229,33 +231,27 @@ const DashboardLayout = () => {
 
       if (wasDisconnected) return;
 
-      const provider = new BrowserProvider(window.ethereum);
+      const provider = getProvider();
 
-      const accounts = await provider.send("eth_accounts", []);
+      const wallet = await getWalletInfo();
 
-      if (accounts.length > 0) {
-        setWalletAddress(accounts[0]);
+      if (wallet) {
+        setWalletAddress(wallet.address);
         setWalletConnected(true);
-
-        // Fetch ETH balance on auto-reconnect
-        const rawBalance = await provider.getBalance(accounts[0]);
-        setEthBalance(parseFloat(formatEther(rawBalance)).toFixed(4));
-
-        // Fetch network name on auto-reconnect
-        const network = await provider.getNetwork();
-        setNetworkName(network.name);
+        setEthBalance(wallet.balance);
+        setNetworkName(wallet.networkName);
 
         // Persist wallet address to the logged-in user's profile
         try {
-          await authAPI.saveWalletAddress(accounts[0]);
+          await authAPI.saveWalletAddress(wallet.address);
         } catch (saveErr) {
           console.error("Failed to save wallet address:", saveErr);
         }
 
         // Sign and verify ownership on auto-reconnect
-        await signAndVerifyWallet(provider, accounts[0]);
+        await signAndVerifyWallet(provider, wallet.address);
 
-        console.log("Wallet Auto Connected:", accounts[0]);
+        console.log("Wallet Auto Connected:", wallet.address);
       }
     } catch (err) {
       console.error(err);
