@@ -8,6 +8,7 @@ import { useSelector } from 'react-redux';
 import ThemedNumberInput from '../../components/ThemedNumberInput.jsx';
 import { useMaintenance } from '../../context/MaintenanceContext.jsx';
 import { formatCurrency } from '../../utils/currencyUtils.js';
+import { sellAssetOnChain } from '../../blockchain/services/blockchainService';
 
 // Badge config for all asset types
 const getAssetTypeBadge = (assetType, category) => {
@@ -44,6 +45,7 @@ const Portfolio = () => {
   const [sellLoading, setSellLoading] = useState(false);
   const [sellError, setSellError] = useState('');
   const [sellSuccess, setSellSuccess] = useState('');
+  const [blockchainMsg, setBlockchainMsg] = useState('');
   const queryClient = useQueryClient();
   const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
   const { preferred: currency } = useSelector((state) => state.currency);
@@ -65,12 +67,35 @@ const Portfolio = () => {
     }
     setSellLoading(true);
     setSellError('');
+    setBlockchainMsg('');
     try {
+      // ── Step 1: Web2 trade (source of truth — must succeed) ──────────
       await tradeAPI.sellAsset({ symbol: sellModal.symbol, quantity: qty, price: sellModal.currentPrice });
+
+      // ── Step 2: Show success immediately (Web2 done) ─────────────────
       setSellSuccess(`Successfully sold ${qty} ${sellModal.symbol}!`);
       queryClient.invalidateQueries(['dashboard']);
       queryClient.invalidateQueries(['holdings']);
       refetch();
+
+      // ── Step 3: Blockchain (best-effort, only if wallet connected) ───
+      const wasDisconnected = localStorage.getItem("walletDisconnected") === "true";
+
+      if (!wasDisconnected) {
+        const chainResult = await sellAssetOnChain(
+          sellModal.symbol,
+          qty,
+          sellModal.currentPrice
+        );
+
+        if (chainResult.success) {
+          setBlockchainMsg(`⛓️ On-chain recorded! Tx: ${chainResult.txHash.slice(0, 18)}...`);
+        } else {
+          setBlockchainMsg(`⚠️ On-chain skipped: ${chainResult.error}`);
+        }
+      }
+      // walletDisconnected = true → blockchain silently skipped, no popup
+
       setTimeout(() => setSellModal(null), 1800);
     } catch (err) {
       setSellError(err.response?.data?.message || 'Sale failed.');
@@ -255,7 +280,12 @@ const Portfolio = () => {
                 </div>
 
                 {sellSuccess ? (
-                  <div className="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl text-brand-500 font-bold text-sm text-center">{sellSuccess}</div>
+                  <div className="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl text-brand-500 font-bold text-sm text-center">
+                    {sellSuccess}
+                    {blockchainMsg && (
+                      <p className="mt-2 text-xs font-medium text-light-muted dark:text-dark-muted">{blockchainMsg}</p>
+                    )}
+                  </div>
                 ) : (
                   <>
                     <label className="block text-xs font-bold uppercase text-light-muted dark:text-dark-muted mb-1.5">Quantity to Sell (Max: {sellModal.quantity}{sellModal.unit ? ' ' + sellModal.unit + 's' : ''})</label>

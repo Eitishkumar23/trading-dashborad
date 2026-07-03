@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, Flame, X, ShoppingCart, Star, Loader2, Gem, Zap, Building } from 'lucide-react';
 import { useMarkets, useMarketOverview, useWatchlist } from '../../hooks/useMarketData.js';
 import { marketAPI, tradeAPI, walletAPI } from '../../services/api.js';
+import { buyAssetOnChain } from '../../blockchain/services/blockchainService.js';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -13,10 +14,10 @@ import { formatCurrency, getCurrencySymbol } from '../../utils/currencyUtils.js'
 // ── Helpers (logic unchanged) ────────────────────────────────────────────────
 const getRealAssetCategoryBadge = (category) => {
   switch (category) {
-    case 'PRECIOUS_METALS': return { label: 'Precious Metals', icon: Gem,      color: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' };
-    case 'ENERGY':          return { label: 'Energy',          icon: Zap,      color: 'bg-orange-500/10 text-orange-500' };
-    case 'REAL_ESTATE':     return { label: 'Real Estate',     icon: Building, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' };
-    default:                return { label: 'Real Asset',      icon: Gem,      color: 'bg-amber-500/10 text-amber-600' };
+    case 'PRECIOUS_METALS': return { label: 'Precious Metals', icon: Gem, color: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' };
+    case 'ENERGY': return { label: 'Energy', icon: Zap, color: 'bg-orange-500/10 text-orange-500' };
+    case 'REAL_ESTATE': return { label: 'Real Estate', icon: Building, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' };
+    default: return { label: 'Real Asset', icon: Gem, color: 'bg-amber-500/10 text-amber-600' };
   }
 };
 
@@ -25,38 +26,39 @@ const getRealAssetStep = () => 1;
 const getQuantityPlaceholder = (asset) => {
   if (asset?.assetType !== 'REAL_ASSET') return 'e.g. 1, 2, 10';
   switch (asset?.unit) {
-    case 'gram':   return 'e.g. 10, 50, 100';
+    case 'gram': return 'e.g. 10, 50, 100';
     case 'barrel': return 'e.g. 1, 5, 10';
-    case 'MMBtu':  return 'e.g. 10, 50';
-    case 'unit':   return 'e.g. 1, 2, 5';
-    default:       return 'e.g. 1, 5, 10';
+    case 'MMBtu': return 'e.g. 10, 50';
+    case 'unit': return 'e.g. 1, 2, 5';
+    default: return 'e.g. 1, 5, 10';
   }
 };
 
 const TABS = [
-  { value: 'all',         label: 'All Assets' },
-  { value: 'stocks',      label: 'Stocks'     },
-  { value: 'crypto',      label: 'Crypto'     },
-  { value: 'real_assets', label: 'Real Assets'},
+  { value: 'all', label: 'All Assets' },
+  { value: 'stocks', label: 'Stocks' },
+  { value: 'crypto', label: 'Crypto' },
+  { value: 'real_assets', label: 'Real Assets' },
 ];
 
 const Market = () => {
-  const [searchQuery,   setSearchQuery]   = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [activeTab,     setActiveTab]     = useState('all');
-  const [buyModal,      setBuyModal]      = useState(null);
-  const [buyQuantity,   setBuyQuantity]   = useState('');
-  const [buyLoading,    setBuyLoading]    = useState(false);
-  const [buyError,      setBuyError]      = useState('');
-  const [buySuccess,    setBuySuccess]    = useState('');
+  const [activeTab, setActiveTab] = useState('all');
+  const [buyModal, setBuyModal] = useState(null);
+  const [buyQuantity, setBuyQuantity] = useState('');
+  const [buyLoading, setBuyLoading] = useState(false);
+  const [buyError, setBuyError] = useState('');
+  const [buySuccess, setBuySuccess] = useState('');
   const [walletBalance, setWalletBalance] = useState(0);
-  const [searchParams]  = useSearchParams();
+  const [blockchainMsg, setBlockchainMsg] = useState('');
+  const [searchParams] = useSearchParams();
 
   const { data: markets = [], isLoading } = useMarkets();
-  const { data: overview }                = useMarketOverview();
+  const { data: overview } = useMarketOverview();
   const { data: watchlist = [], refetch: refetchWatchlist } = useWatchlist();
-  const queryClient  = useQueryClient();
-  const navigate     = useNavigate();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { maintenanceMode, message: maintenanceMessage } = useMaintenance();
   const { preferred: currency } = useSelector((state) => state.currency);
 
@@ -66,7 +68,7 @@ const Market = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    walletAPI.getDetails().then(({ data }) => setWalletBalance(data.balance)).catch(() => {});
+    walletAPI.getDetails().then(({ data }) => setWalletBalance(data.balance)).catch(() => { });
   }, [buySuccess]);
 
   useEffect(() => {
@@ -85,13 +87,13 @@ const Market = () => {
 
   const filteredMarkets = searchQuery
     ? searchResults
-    : activeTab === 'stocks'        ? markets.filter((m) => m.assetType === 'STOCK')
-    : activeTab === 'crypto'        ? markets.filter((m) => m.assetType === 'CRYPTO')
-    : activeTab === 'real_assets'   ? markets.filter((m) => m.assetType === 'REAL_ASSET')
-    : activeTab === 'precious_metals' ? markets.filter((m) => m.assetType === 'REAL_ASSET' && m.category === 'PRECIOUS_METALS')
-    : activeTab === 'energy'        ? markets.filter((m) => m.assetType === 'REAL_ASSET' && m.category === 'ENERGY')
-    : activeTab === 'real_estate'   ? markets.filter((m) => m.assetType === 'REAL_ASSET' && m.category === 'REAL_ESTATE')
-    : markets;
+    : activeTab === 'stocks' ? markets.filter((m) => m.assetType === 'STOCK')
+      : activeTab === 'crypto' ? markets.filter((m) => m.assetType === 'CRYPTO')
+        : activeTab === 'real_assets' ? markets.filter((m) => m.assetType === 'REAL_ASSET')
+          : activeTab === 'precious_metals' ? markets.filter((m) => m.assetType === 'REAL_ASSET' && m.category === 'PRECIOUS_METALS')
+            : activeTab === 'energy' ? markets.filter((m) => m.assetType === 'REAL_ASSET' && m.category === 'ENERGY')
+              : activeTab === 'real_estate' ? markets.filter((m) => m.assetType === 'REAL_ASSET' && m.category === 'REAL_ESTATE')
+                : markets;
 
   const handleToggleWatchlist = async (symbol, assetType) => {
     if (maintenanceMode) return;
@@ -109,6 +111,7 @@ const Market = () => {
     setBuyQuantity(asset.assetType === 'REAL_ASSET' ? '1' : '');
     setBuyError('');
     setBuySuccess('');
+    setBlockchainMsg('');
   };
 
   const handleBuy = async () => {
@@ -122,15 +125,47 @@ const Market = () => {
     }
     setBuyLoading(true);
     setBuyError('');
+    setBlockchainMsg('');
     try {
-      await tradeAPI.buyAsset({ symbol: buyModal.symbol, assetType: buyModal.assetType, quantity: qty, price: buyModal.price });
+      // ── Step 1: Web2 trade (source of truth — must succeed) ──────────
+      await tradeAPI.buyAsset({
+        symbol: buyModal.symbol,
+        assetType: buyModal.assetType,
+        quantity: qty,
+        price: buyModal.price,
+      });
+
+      // ── Step 2: Show success immediately (Web2 done) ─────────────────
       const unitLabel = buyModal.unit ? buyModal.unit : '';
       setBuySuccess(`Successfully bought ${qty}${unitLabel ? ' ' + unitLabel + ' of' : ''} ${buyModal.symbol}!`);
       setWalletBalance((prev) => prev - total);
       queryClient.invalidateQueries(['dashboard']);
       queryClient.invalidateQueries(['holdings']);
-      setTimeout(() => setBuyModal(null), 1800);
+
+      // ── Step 3: Blockchain (best-effort, non-blocking) ────────────────
+      // ── Step 3: Blockchain (only if wallet connected) ─────────────────
+      // ── Step 3: Blockchain (only if wallet intentionally connected) ────
+      const wasDisconnected = localStorage.getItem("walletDisconnected") === "true";
+
+      if (!wasDisconnected) {
+        const chainResult = await buyAssetOnChain(
+          buyModal.symbol,
+          qty,
+          buyModal.price
+        );
+
+        if (chainResult.success) {
+          setBlockchainMsg(`⛓️ On-chain recorded! Tx: ${chainResult.txHash.slice(0, 18)}...`);
+        } else {
+          setBlockchainMsg(`⚠️ On-chain skipped: ${chainResult.error}`);
+        }
+      }
+      // walletDisconnected = true → blockchain silently skipped, no popup
+
+      setTimeout(() => setBuyModal(null), 3000);
+
     } catch (err) {
+      // Only Web2 errors reach here — blockchain never throws
       setBuyError(err.response?.data?.message || 'Purchase failed.');
     } finally {
       setBuyLoading(false);
@@ -150,16 +185,15 @@ const Market = () => {
       );
     }
     return (
-      <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-[10px] font-semibold tracking-wide ${
-        asset.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'
-      }`}>
+      <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-[10px] font-semibold tracking-wide ${asset.assetType === 'CRYPTO' ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'
+        }`}>
         {asset.assetType === 'CRYPTO' ? 'Crypto' : 'Stock'}
       </span>
     );
   };
 
   // ── Tab active-state helpers ─────────────────────────────────────────────
-  const isRealAssetFamily = ['precious_metals','energy','real_estate'].includes(activeTab);
+  const isRealAssetFamily = ['precious_metals', 'energy', 'real_estate'].includes(activeTab);
   const tabIsActive = (val) =>
     activeTab === val || (val === 'real_assets' && isRealAssetFamily);
 
@@ -195,13 +229,12 @@ const Market = () => {
                     setActiveTab(tab.value);
                     if (searchQuery) { setSearchQuery(''); navigate('/market', { replace: true }); }
                   }}
-                  className={`px-4 py-2 rounded-xl text-[12px] font-semibold transition-all duration-200 ${
-                    tabIsActive(tab.value)
-                      ? (tab.value === 'real_assets' || isRealAssetFamily)
-                        ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25'
-                        : 'bg-[#10B981] text-white shadow-md shadow-emerald-500/25'
-                      : 'text-secondary hover:text-primary hover:bg-black/5 dark:hover:bg-white/8'
-                  }`}
+                  className={`px-4 py-2 rounded-xl text-[12px] font-semibold transition-all duration-200 ${tabIsActive(tab.value)
+                    ? (tab.value === 'real_assets' || isRealAssetFamily)
+                      ? 'bg-amber-500 text-white shadow-md shadow-amber-500/25'
+                      : 'bg-[#10B981] text-white shadow-md shadow-emerald-500/25'
+                    : 'text-secondary hover:text-primary hover:bg-black/5 dark:hover:bg-white/8'
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -230,19 +263,18 @@ const Market = () => {
                 className="flex-shrink-0 flex flex-wrap gap-2"
               >
                 {[
-                  { value: 'real_assets',     label: 'All Real Assets',          icon: Gem,      color: 'border-amber-500/25 bg-amber-500/8 text-amber-600 dark:text-amber-400',         activeColor: 'bg-amber-500 text-white border-amber-500 shadow-amber-500/20' },
-                  { value: 'precious_metals', label: 'Precious Metals',          icon: Gem,      color: 'border-yellow-500/25 bg-yellow-500/8 text-yellow-600 dark:text-yellow-400',     activeColor: 'bg-yellow-500 text-white border-yellow-500 shadow-yellow-500/20' },
-                  { value: 'energy',          label: 'Energy',                   icon: Zap,      color: 'border-orange-500/25 bg-orange-500/8 text-orange-500',                          activeColor: 'bg-orange-500 text-white border-orange-500 shadow-orange-500/20' },
-                  { value: 'real_estate',     label: 'Real Estate (Fractional)', icon: Building, color: 'border-emerald-500/25 bg-emerald-500/8 text-emerald-600 dark:text-emerald-400', activeColor: 'bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/20' },
+                  { value: 'real_assets', label: 'All Real Assets', icon: Gem, color: 'border-amber-500/25 bg-amber-500/8 text-amber-600 dark:text-amber-400', activeColor: 'bg-amber-500 text-white border-amber-500 shadow-amber-500/20' },
+                  { value: 'precious_metals', label: 'Precious Metals', icon: Gem, color: 'border-yellow-500/25 bg-yellow-500/8 text-yellow-600 dark:text-yellow-400', activeColor: 'bg-yellow-500 text-white border-yellow-500 shadow-yellow-500/20' },
+                  { value: 'energy', label: 'Energy', icon: Zap, color: 'border-orange-500/25 bg-orange-500/8 text-orange-500', activeColor: 'bg-orange-500 text-white border-orange-500 shadow-orange-500/20' },
+                  { value: 'real_estate', label: 'Real Estate (Fractional)', icon: Building, color: 'border-emerald-500/25 bg-emerald-500/8 text-emerald-600 dark:text-emerald-400', activeColor: 'bg-emerald-500 text-white border-emerald-500 shadow-emerald-500/20' },
                 ].map(({ value, label, icon: Icon, color, activeColor }) => {
                   const isActive = activeTab === value;
                   return (
                     <button
                       key={value}
                       onClick={() => setActiveTab(value)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold border transition-all duration-200 ${
-                        isActive ? `${activeColor} shadow-md` : `${color} hover:opacity-90`
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold border transition-all duration-200 ${isActive ? `${activeColor} shadow-md` : `${color} hover:opacity-90`
+                        }`}
                     >
                       <Icon size={10} strokeWidth={2.5} />
                       {label}
@@ -341,11 +373,10 @@ const Market = () => {
                               onClick={() => handleToggleWatchlist(asset.symbol, asset.assetType)}
                               disabled={maintenanceMode}
                               title={maintenanceMode ? maintenanceMessage : 'Add to watchlist'}
-                              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${
-                                watchlistSymbols.includes(asset.symbol)
-                                  ? 'text-amber-500 bg-amber-500/12'
-                                  : 'text-secondary hover:text-amber-500 hover:bg-amber-500/10 opacity-0 group-hover:opacity-100'
-                              }`}
+                              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 ${watchlistSymbols.includes(asset.symbol)
+                                ? 'text-amber-500 bg-amber-500/12'
+                                : 'text-secondary hover:text-amber-500 hover:bg-amber-500/10 opacity-0 group-hover:opacity-100'
+                                }`}
                             >
                               <Star
                                 size={13}
@@ -379,9 +410,9 @@ const Market = () => {
         {/* ── Right column: market widgets ──────────────────────────────── */}
         <div className="w-full lg:w-52 xl:w-60 flex flex-col gap-3.5 lg:shrink-0 lg:overflow-y-auto lg:overflow-x-hidden min-h-0">
           {overview && [
-            { label: 'Top Gainers', data: overview.gainers?.slice(0, 3),  accent: 'text-profit',    iconBg: 'bg-profit/10',    icon: TrendingUp   },
-            { label: 'Trending',    data: overview.trending?.slice(0, 3), accent: 'text-amber-500', iconBg: 'bg-amber-500/10', icon: Flame        },
-            { label: 'Top Losers',  data: overview.losers?.slice(0, 3),   accent: 'text-loss',      iconBg: 'bg-loss/10',      icon: TrendingDown },
+            { label: 'Top Gainers', data: overview.gainers?.slice(0, 3), accent: 'text-profit', iconBg: 'bg-profit/10', icon: TrendingUp },
+            { label: 'Trending', data: overview.trending?.slice(0, 3), accent: 'text-amber-500', iconBg: 'bg-amber-500/10', icon: Flame },
+            { label: 'Top Losers', data: overview.losers?.slice(0, 3), accent: 'text-loss', iconBg: 'bg-loss/10', icon: TrendingDown },
           ].map(({ label, data, accent, iconBg, icon: Icon }) => (
             <div key={label} className="dash-card flex-shrink-0 px-4 py-4">
               {/* Widget header */}
@@ -399,9 +430,8 @@ const Market = () => {
                 {data?.map((a, i) => (
                   <div
                     key={a.symbol}
-                    className={`flex items-center justify-between gap-3 py-2.5 min-w-0 ${
-                      i < (data.length - 1) ? 'border-b border-token' : ''
-                    }`}
+                    className={`flex items-center justify-between gap-3 py-2.5 min-w-0 ${i < (data.length - 1) ? 'border-b border-token' : ''
+                      }`}
                     style={{ borderBottomColor: i < (data.length - 1) ? 'var(--color-border)' : undefined }}
                   >
                     <span className="text-[13px] font-semibold text-primary leading-none truncate min-w-0 flex-1">
@@ -482,8 +512,11 @@ const Market = () => {
                 </div>
 
                 {buySuccess ? (
-                  <div className="py-5 px-4 rounded-2xl border border-accent/25 bg-accent/[0.07] text-center">
+                  <div className="py-5 px-4 rounded-2xl border border-accent/25 bg-accent/[0.07] text-center space-y-2">
                     <p className="text-[13px] font-semibold text-accent">{buySuccess}</p>
+                    {blockchainMsg && (
+                      <p className="text-[11px] text-secondary">{blockchainMsg}</p>
+                    )}
                   </div>
                 ) : (
                   <>
@@ -527,8 +560,8 @@ const Market = () => {
                       {maintenanceMode
                         ? 'Buying Unavailable'
                         : buyLoading
-                        ? <><Loader2 size={16} className="animate-spin" /> Processing…</>
-                        : <><ShoppingCart size={15} strokeWidth={2.2} /> Confirm Buy — {buyModal.symbol}</>
+                          ? <><Loader2 size={16} className="animate-spin" /> Processing…</>
+                          : <><ShoppingCart size={15} strokeWidth={2.2} /> Confirm Buy — {buyModal.symbol}</>
                       }
                     </button>
                   </>

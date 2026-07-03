@@ -718,6 +718,16 @@ const DashboardLayout = () => {
 
                       </div>
                     )}
+                    {/* View on Etherscan */}
+                    <a
+                      href={`https://sepolia.etherscan.io/address/${walletAddress}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 rounded-2xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 font-semibold transition flex items-center justify-center gap-2"
+                    >
+                      <ArrowUpRight size={16} />
+                      View Transaction History on Etherscan
+                    </a>
                     <button
                       onClick={disconnectWallet}
                       className="w-full py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-semibold transition"

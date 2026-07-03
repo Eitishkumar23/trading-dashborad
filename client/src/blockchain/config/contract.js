@@ -2,7 +2,8 @@
 import deployment from "../../../../blockchain/deployment.json";
 
 // Import Smart Contract ABI
-import AIQuantTradingArtifact from "../../../../blockchain/artifacts/contracts/AIQuantTrading.sol/AIQuantTrading.json";
+// Import Smart Contract ABI
+import AIQuantTradingArtifact from "../abi/AIQuantTrading.json";
 
 // =====================================================
 // Smart Contract Configuration
