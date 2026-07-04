@@ -688,3 +688,196 @@
 .dark .wallet-connected-pill:hover {
   background: rgba(124,58,237,0.20) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WALLET LEDGER — Dark Mode Gradient & Vibrant Theme
+   All rules scoped under .dark — Light Mode is completely unaffected.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Refresh button ── */
+.dark .wl-refresh-btn {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  color: rgba(148,163,184,0.75) !important;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+}
+.dark .wl-refresh-btn:hover:not(:disabled) {
+  background: rgba(16,185,129,0.10) !important;
+  border-color: rgba(16,185,129,0.30) !important;
+  color: #34d399 !important;
+}
+
+/* ── Virtual Wallet balance card ── */
+.dark .wl-balance-card {
+  background: linear-gradient(135deg, #065f46 0%, #047857 28%, #0d9488 55%, #10b981 80%, #34d399 100%) !important;
+  box-shadow: 0 12px 40px rgba(16,185,129,0.38), 0 0 60px rgba(16,185,129,0.10) inset !important;
+}
+
+/* ── Funds Actions card ── */
+.dark .wl-actions-card {
+  background: linear-gradient(160deg, rgba(16,20,42,0.98) 0%, rgba(20,14,44,0.98) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.40) !important;
+}
+
+/* ── Active tab ── */
+.dark .wl-tab-active {
+  border-bottom-color: #10b981 !important;
+  color: #34d399 !important;
+  background: rgba(16,185,129,0.07) !important;
+}
+
+/* ── Inactive tab hover ── */
+.dark .wl-tab-inactive:hover {
+  color: #e2e8f0 !important;
+  background: rgba(124,58,237,0.09) !important;
+}
+
+/* ── Deposit submit button ── */
+.dark .wl-deposit-btn:not(:disabled) {
+  background: linear-gradient(135deg, #065f46, #047857, #10b981) !important;
+  box-shadow: 0 4px 18px rgba(16,185,129,0.40) !important;
+}
+.dark .wl-deposit-btn:not(:disabled):hover {
+  opacity: 0.88 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 24px rgba(16,185,129,0.52) !important;
+}
+
+/* ── Withdraw submit button ── */
+.dark .wl-withdraw-btn:not(:disabled) {
+  background: linear-gradient(135deg, #ec4899, #7c3aed) !important;
+  box-shadow: 0 4px 18px rgba(124,58,237,0.40) !important;
+}
+.dark .wl-withdraw-btn:not(:disabled):hover {
+  opacity: 0.88 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 24px rgba(124,58,237,0.52) !important;
+}
+
+/* ── Balance badge (withdraw form) ── */
+.dark .wl-balance-badge {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+}
+
+/* ── Quick amount buttons ── */
+.dark .wl-quick-amt {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: rgba(148,163,184,0.80) !important;
+}
+.dark .wl-quick-amt:hover:not(:disabled) {
+  background: rgba(16,185,129,0.12) !important;
+  border-color: rgba(16,185,129,0.35) !important;
+  color: #34d399 !important;
+}
+.dark .wl-quick-amt-active {
+  background: rgba(16,185,129,0.15) !important;
+  border-color: rgba(16,185,129,0.40) !important;
+  color: #34d399 !important;
+}
+
+/* ── Security note bar ── */
+.dark .wl-security-note {
+  background: rgba(255,255,255,0.03) !important;
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+/* ── Pending notice bar ── */
+.dark .wl-pending-notice {
+  background: rgba(245,158,11,0.07) !important;
+  border-color: rgba(245,158,11,0.20) !important;
+}
+
+/* ── Maintenance banner ── */
+.dark .wl-maintenance {
+  background: rgba(245,158,11,0.09) !important;
+  border-color: rgba(245,158,11,0.25) !important;
+}
+
+/* ── Transaction History panel ── */
+.dark .wl-history-panel {
+  background: linear-gradient(160deg, rgba(16,20,42,0.98) 0%, rgba(20,14,44,0.98) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.40) !important;
+}
+
+/* ── History header ── */
+.dark .wl-history-header {
+  border-bottom-color: rgba(255,255,255,0.06) !important;
+}
+
+/* ── Export CSV button ── */
+.dark .wl-export-btn {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: rgba(148,163,184,0.75) !important;
+}
+.dark .wl-export-btn:hover {
+  background: rgba(16,185,129,0.10) !important;
+  border-color: rgba(16,185,129,0.30) !important;
+  color: #34d399 !important;
+  box-shadow: 0 0 12px rgba(16,185,129,0.16) !important;
+}
+
+/* ── Type filter active pill ── */
+.dark .wl-type-active {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 4px 12px rgba(16,185,129,0.35) !important;
+  color: #fff !important;
+}
+
+/* ── Type filter inactive pill hover ── */
+.dark .wl-type-inactive:hover {
+  background: rgba(124,58,237,0.12) !important;
+  color: #e2e8f0 !important;
+}
+
+/* ── Search input ── */
+.dark .wl-search-input {
+  background: rgba(10,12,28,0.85) !important;
+  border-color: rgba(255,255,255,0.09) !important;
+  color: #f1f5f9 !important;
+}
+.dark .wl-search-input:focus {
+  border-color: rgba(16,185,129,0.50) !important;
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.10) !important;
+}
+
+/* ── Month select ── */
+.dark .wl-month-select {
+  background: rgba(10,12,28,0.85) !important;
+  border-color: rgba(255,255,255,0.09) !important;
+  color: #f1f5f9 !important;
+}
+
+/* ── Transaction row ── */
+.dark .wl-tx-row {
+  border-bottom-color: rgba(255,255,255,0.04) !important;
+  transition: background 0.2s ease, transform 0.2s ease !important;
+}
+.dark .wl-tx-row:hover {
+  background: rgba(124,58,237,0.07) !important;
+  transform: scale(1.001) !important;
+}
+.dark .wl-tx-row:last-child { border-bottom: none !important; }
+
+/* ── CREDIT badge ── */
+.dark .wl-badge-credit {
+  background: linear-gradient(135deg, rgba(16,185,129,0.18), rgba(5,150,105,0.14)) !important;
+  border: 1px solid rgba(16,185,129,0.32) !important;
+  box-shadow: 0 0 8px rgba(16,185,129,0.18) !important;
+}
+
+/* ── DEBIT badge ── */
+.dark .wl-badge-debit {
+  background: linear-gradient(135deg, rgba(239,68,68,0.16), rgba(220,38,38,0.12)) !important;
+  border: 1px solid rgba(239,68,68,0.28) !important;
+  box-shadow: 0 0 8px rgba(239,68,68,0.16) !important;
+}
+
+/* ── Status badges ── */
+.dark .wl-status-completed { box-shadow: 0 0 8px rgba(16,185,129,0.22) !important; }
+.dark .wl-status-pending   { box-shadow: 0 0 8px rgba(245,158,11,0.22) !important; }
+.dark .wl-status-rejected  { box-shadow: 0 0 8px rgba(239,68,68,0.20) !important; }

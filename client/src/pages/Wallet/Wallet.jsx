@@ -454,7 +454,7 @@ const WalletPage = () => {
         <button
           onClick={fetchWallet}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold glass-panel border border-slate-200/50 dark:border-dark-border hover:border-brand-500/40 text-light-muted dark:text-dark-muted hover:text-brand-500 transition-all"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold glass-panel border border-slate-200/50 dark:border-dark-border hover:border-brand-500/40 text-light-muted dark:text-dark-muted hover:text-brand-500 transition-all wl-refresh-btn"
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           Refresh
@@ -468,7 +468,7 @@ const WalletPage = () => {
         <div ref={leftColRef} className="space-y-4">
 
           {/* ── Wallet Balance Card ── */}
-          <div className="relative p-5 bg-gradient-to-br from-brand-600 via-brand-500 to-emerald-500 rounded-3xl text-white shadow-2xl shadow-brand-500/20 overflow-hidden">
+          <div className="wl-balance-card relative p-5 bg-gradient-to-br from-brand-600 via-brand-500 to-emerald-500 rounded-3xl text-white shadow-2xl shadow-brand-500/20 overflow-hidden">
             {/* Decorative blobs */}
             <div className="absolute -top-8 -right-8 w-36 h-36 bg-white/5 rounded-full pointer-events-none" />
             <div className="absolute -bottom-6 -left-6 w-28 h-28 bg-white/5 rounded-full pointer-events-none" />
@@ -533,14 +533,14 @@ const WalletPage = () => {
           </div>
 
           {/* ── Funds Actions Card ── */}
-          <div className="glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border overflow-hidden">
+          <div className="wl-actions-card glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border overflow-hidden">
             {/* Tab bar */}
             <div className="flex border-b border-slate-200/50 dark:border-dark-border">
               <button
                 onClick={() => setActiveTab('deposit')}
-                className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-bold transition-all ${
+                className={`wl-tab-inactive flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-bold transition-all ${
                   activeTab === 'deposit'
-                    ? 'text-brand-500 border-b-2 border-brand-500 bg-brand-500/5'
+                    ? 'wl-tab-active text-brand-500 border-b-2 border-brand-500 bg-brand-500/5'
                     : 'text-light-muted dark:text-dark-muted hover:text-light-text dark:hover:text-dark-text'
                 }`}
               >
@@ -549,9 +549,9 @@ const WalletPage = () => {
               </button>
               <button
                 onClick={() => setActiveTab('withdraw')}
-                className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-bold transition-all ${
+                className={`wl-tab-inactive flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-bold transition-all ${
                   activeTab === 'withdraw'
-                    ? 'text-rose-500 border-b-2 border-rose-500 bg-rose-500/5'
+                    ? 'wl-tab-active text-rose-500 border-b-2 border-rose-500 bg-rose-500/5'
                     : 'text-light-muted dark:text-dark-muted hover:text-light-text dark:hover:text-dark-text'
                 }`}
               >
@@ -566,7 +566,7 @@ const WalletPage = () => {
 
               {/* Maintenance banner */}
               {maintenanceMode && activeTab === 'deposit' && (
-                <div className="mb-4 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-3 text-xs font-semibold text-amber-600 dark:text-amber-300">
+                <div className="wl-maintenance mb-4 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-3 text-xs font-semibold text-amber-600 dark:text-amber-300">
                   {maintenanceMessage}
                 </div>
               )}
@@ -625,8 +625,8 @@ const WalletPage = () => {
                           onClick={() => handleQuickAmount(amt)}
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-150 active:scale-95 ${
                             activeQuickAmount === amt
-                              ? 'bg-brand-500/15 text-brand-500 border-brand-500/30'
-                              : 'bg-slate-100/80 dark:bg-slate-800/50 border-transparent hover:bg-brand-500/10 hover:text-brand-500 hover:border-brand-500/20 text-light-muted dark:text-dark-muted'
+                              ? 'wl-quick-amt-active bg-brand-500/15 text-brand-500 border-brand-500/30'
+                              : 'wl-quick-amt bg-slate-100/80 dark:bg-slate-800/50 border-transparent hover:bg-brand-500/10 hover:text-brand-500 hover:border-brand-500/20 text-light-muted dark:text-dark-muted'
                           }`}
                         >
                           +{formatCurrency(amt, currency, { maximumFractionDigits: 0 })}
@@ -676,7 +676,7 @@ const WalletPage = () => {
                     <button
                       type="submit"
                       disabled={isDepositDisabled}
-                      className="w-full py-3 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 disabled:from-slate-500 disabled:to-slate-600 disabled:cursor-not-allowed text-white rounded-2xl font-extrabold text-sm transition-all shadow-lg shadow-brand-500/20 hover:shadow-brand-500/30 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+                      className="wl-deposit-btn w-full py-3 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 disabled:from-slate-500 disabled:to-slate-600 disabled:cursor-not-allowed text-white rounded-2xl font-extrabold text-sm transition-all shadow-lg shadow-brand-500/20 hover:shadow-brand-500/30 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
                     >
                       {maintenanceMode ? (
                         <><XCircle size={15} /> Deposits Unavailable</>
@@ -701,7 +701,7 @@ const WalletPage = () => {
                     className="space-y-4"
                   >
                     {/* Balance badge */}
-                    <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60">
+                    <div className="wl-balance-badge flex items-center justify-between px-4 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800/60">
                       <span className="text-xs font-semibold text-light-muted dark:text-dark-muted">
                         Available Balance
                       </span>
@@ -778,7 +778,7 @@ const WalletPage = () => {
                     </div>
 
                     {/* Pending notice */}
-                    <div className="flex items-start gap-2 px-3.5 py-2.5 rounded-2xl bg-amber-500/8 border border-amber-500/20 dark:border-amber-500/15">
+                    <div className="wl-pending-notice flex items-start gap-2 px-3.5 py-2.5 rounded-2xl bg-amber-500/8 border border-amber-500/20 dark:border-amber-500/15">
                       <Clock size={13} className="text-amber-500 shrink-0 mt-0.5" />
                       <p className="text-[11px] text-amber-700 dark:text-amber-300 leading-relaxed font-medium">
                         Withdrawal requests are reviewed by admin. Amount is reserved immediately and refunded if rejected.
@@ -789,7 +789,7 @@ const WalletPage = () => {
                     <button
                       type="submit"
                       disabled={isWithdrawDisabled}
-                      className="w-full py-3 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 disabled:from-slate-500 disabled:to-slate-600 disabled:cursor-not-allowed text-white rounded-2xl font-extrabold text-sm transition-all shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+                      className="wl-withdraw-btn w-full py-3 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 disabled:from-slate-500 disabled:to-slate-600 disabled:cursor-not-allowed text-white rounded-2xl font-extrabold text-sm transition-all shadow-lg shadow-rose-500/20 hover:shadow-rose-500/30 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
                     >
                       {submitLoading ? (
                         <><RefreshCw size={15} className="animate-spin" /> Processing…</>
@@ -802,7 +802,7 @@ const WalletPage = () => {
               </AnimatePresence>
 
               {/* Security note */}
-              <div className="mt-4 flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-slate-100/60 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800/40">
+              <div className="wl-security-note mt-4 flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-slate-100/60 dark:bg-slate-900/40 border border-slate-200/40 dark:border-slate-800/40">
                 <Shield size={13} className="text-brand-500 shrink-0" />
                 <p className="text-[10px] text-light-muted dark:text-dark-muted leading-relaxed">
                   All transactions are SSL-encrypted and secured with bank-grade 256-bit encryption. This is a simulated paper trading environment.
@@ -815,11 +815,11 @@ const WalletPage = () => {
 
         {/* ═══════════════ RIGHT COLUMN ═══════════════ */}
         <div
-          className="glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col overflow-hidden"
+          className="wl-history-panel glass-panel rounded-3xl border border-slate-200/50 dark:border-dark-border flex flex-col overflow-hidden"
           style={rightColHeight ? { height: `${rightColHeight}px` } : { minHeight: '560px' }}
         >
           {/* Header */}
-          <div className="p-5 border-b border-slate-200/50 dark:border-dark-border shrink-0">
+          <div className="wl-history-header p-5 border-b border-slate-200/50 dark:border-dark-border shrink-0">
             <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
               <h3 className="text-base font-extrabold flex items-center gap-2">
                 <Activity size={17} className="text-brand-500" />
@@ -830,7 +830,7 @@ const WalletPage = () => {
               </h3>
               <button
                 onClick={() => exportCSV(filteredHistory)}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200/70 dark:border-slate-700 text-light-muted dark:text-dark-muted hover:text-brand-500 hover:border-brand-500/40 hover:bg-brand-500/5 transition-all"
+                className="wl-export-btn flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-slate-200/70 dark:border-slate-700 text-light-muted dark:text-dark-muted hover:text-brand-500 hover:border-brand-500/40 hover:bg-brand-500/5 transition-all"
               >
                 <Download size={13} />
                 Export CSV
@@ -843,9 +843,9 @@ const WalletPage = () => {
                 <button
                   key={f.value}
                   onClick={() => setTypeFilter(f.value)}
-                  className={`flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`wl-type-inactive flex-shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     typeFilter === f.value
-                      ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20'
+                      ? 'wl-type-active bg-brand-500 text-white shadow-md shadow-brand-500/20'
                       : 'text-light-muted dark:text-dark-muted hover:bg-slate-200/60 dark:hover:bg-slate-800/50'
                   }`}
                 >
@@ -864,7 +864,7 @@ const WalletPage = () => {
                   placeholder="Search transactions…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-xs font-medium rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/50 text-light-text dark:text-dark-text placeholder:text-light-muted dark:placeholder:text-dark-muted focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/10 transition-all"
+                  className="wl-search-input w-full pl-8 pr-3 py-2 text-xs font-medium rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/50 text-light-text dark:text-dark-text placeholder:text-light-muted dark:placeholder:text-dark-muted focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/10 transition-all"
                 />
               </div>
 
@@ -874,7 +874,7 @@ const WalletPage = () => {
                 <select
                   value={monthFilter}
                   onChange={(e) => setMonthFilter(e.target.value)}
-                  className="pl-7 pr-8 py-2 text-xs font-medium rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/50 text-light-text dark:text-dark-text focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/10 transition-all cursor-pointer appearance-none"
+                  className="wl-month-select pl-7 pr-8 py-2 text-xs font-medium rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/50 text-light-text dark:text-dark-text focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/10 transition-all cursor-pointer appearance-none"
                 >
                   {MONTH_OPTIONS.map((m) => (
                     <option key={m.value} value={m.value}>
@@ -950,15 +950,15 @@ const WalletPage = () => {
                         initial={{ opacity: 0, y: 4 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: Math.min(idx * 0.02, 0.3), duration: 0.2 }}
-                        className="border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50/60 dark:hover:bg-slate-800/15 transition-colors group"
+                        className="wl-tx-row border-b border-slate-100/50 dark:border-slate-800/15 hover:bg-slate-50/60 dark:hover:bg-slate-800/15 transition-colors group"
                       >
                         {/* Type */}
                         <td className="px-5 py-3.5">
                           <span
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-extrabold ${
                               isCredit
-                                ? 'bg-brand-500/10 text-brand-500'
-                                : 'bg-rose-500/10 text-rose-500'
+                                ? 'wl-badge-credit bg-brand-500/10 text-brand-500'
+                                : 'wl-badge-debit bg-rose-500/10 text-rose-500'
                             }`}
                           >
                             {isCredit ? <ArrowDownLeft size={11} /> : <ArrowUpRight size={11} />}
@@ -975,7 +975,11 @@ const WalletPage = () => {
 
                         {/* Status */}
                         <td className="px-5 py-3.5 text-center">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${s.cls}`}>
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${s.cls} ${
+                            status === 'approved' ? 'wl-status-completed' :
+                            status === 'pending'  ? 'wl-status-pending'   :
+                            status === 'rejected' ? 'wl-status-rejected'  : ''
+                          }`}>
                             {s.label}
                           </span>
                         </td>
