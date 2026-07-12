@@ -1,4 +1,105 @@
 import Alert from '../models/Alert.js';
+import axios from 'axios';
+
+const COINGECKO_MAP = {
+  'bitcoin': 'BTC',
+  'ethereum': 'ETH',
+  'solana': 'SOL',
+  'dogecoin': 'DOGE',
+  'cardano': 'ADA',
+  'chainlink': 'LINK',
+  'polygon-ecosystem-token': 'POL'
+};
+
+const fetchLiveCryptoPrices = async () => {
+  try {
+    const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+      params: {
+        ids: Object.keys(COINGECKO_MAP).join(','),
+        vs_currencies: 'inr',
+        include_24hr_change: 'true'
+      },
+      timeout: 5000
+    });
+
+    if (!response || response.status !== 200 || !response.data || typeof response.data !== 'object') {
+      return null;
+    }
+
+    const data = response.data;
+    const result = {};
+    for (const [id, symbol] of Object.entries(COINGECKO_MAP)) {
+      if (!data[id] || typeof data[id].inr !== 'number' || typeof data[id].inr_24h_change !== 'number') {
+        return null;
+      }
+      result[symbol] = {
+        price: data[id].inr,
+        change: data[id].inr_24h_change
+      };
+    }
+    return result;
+  } catch (error) {
+    console.error('[market] Crypto fetch error detail:', error.response?.status, error.message);
+    return null;
+  }
+};
+
+// Approximate fixed USD to INR conversion rate (may drift over time)
+const USD_TO_INR = 87;
+
+const STOCK_SYMBOLS = ['AAPL', 'TSLA', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'META', 'NFLX'];
+
+export const fetchLiveStockPrices = async () => {
+  const token = process.env.FINNHUB_API_KEY;
+  if (!token) {
+    return null;
+  }
+
+  const results = {};
+  let successCount = 0;
+
+  const fetchPromises = STOCK_SYMBOLS.map(async (symbol) => {
+    try {
+      const response = await axios.get('https://finnhub.io/api/v1/quote', {
+        params: {
+          symbol: symbol,
+          token: token
+        },
+        timeout: 5000
+      });
+
+      if (response && response.status === 200 && response.data) {
+        const { c, pc } = response.data;
+        if (typeof c === 'number' && c > 0 && typeof pc === 'number' && pc > 0) {
+          const priceInINR = parseFloat((c * USD_TO_INR).toFixed(2));
+          const changePercent = parseFloat((((c - pc) / pc) * 100).toFixed(2));
+          return { symbol, price: priceInINR, change: changePercent };
+        }
+      }
+    } catch (err) {
+      // Avoid failing the entire batch, skip just this stock
+    }
+    return null;
+  });
+
+  try {
+    const settled = await Promise.allSettled(fetchPromises);
+    for (const item of settled) {
+      if (item.status === 'fulfilled' && item.value) {
+        const { symbol, price, change } = item.value;
+        results[symbol] = { price, change };
+        successCount++;
+      }
+    }
+  } catch (err) {
+    return null;
+  }
+
+  if (successCount === 0) {
+    return null;
+  }
+  return results;
+};
 
 // Base prices in INR
 const INITIAL_ASSETS = [
@@ -9,7 +110,7 @@ const INITIAL_ASSETS = [
   { symbol: 'DOGE', name: 'Dogecoin', assetType: 'CRYPTO', price: 11.2, change: -2.15, high: 11.8, low: 10.9, volume: 450000000 },
   { symbol: 'ADA', name: 'Cardano', assetType: 'CRYPTO', price: 38.5, change: 0.85, high: 39.2, low: 37.8, volume: 150000000 },
   { symbol: 'LINK', name: 'Chainlink', assetType: 'CRYPTO', price: 1250, change: 3.12, high: 1280, low: 1190, volume: 220000000 },
-  { symbol: 'MATIC', name: 'Polygon', assetType: 'CRYPTO', price: 52.4, change: -1.8, high: 54.1, low: 51.2, volume: 180000000 },
+  { symbol: 'POL', name: 'Polygon Ecosystem Token', assetType: 'CRYPTO', price: 7.57, change: -0.8, high: 7.8, low: 7.3, volume: 180000000 },
 
   // Stocks
   { symbol: 'AAPL', name: 'Apple Inc.', assetType: 'STOCK', price: 15350, change: 0.85, high: 15500, low: 15200, volume: 65000000 },
@@ -35,25 +136,242 @@ const INITIAL_ASSETS = [
   { symbol: 'CMPROP', name: 'Commercial Property', assetType: 'REAL_ASSET', category: 'REAL_ESTATE', unit: 'unit', price: 22000000, change: 0.25, high: 22100000, low: 21900000, volume: 8000000 },
 ];
 
-// In-memory cache for live prices
+// In-memory cache for market prices
 let activeAssets = [...INITIAL_ASSETS];
 
-// Volatility simulation running in background
+// Tracks the most recent known-good price per symbol, used as the baseline for
+// % change calculations when a tick falls back to simulation. Starts at each
+// asset's original simulated price, and updates to the real price whenever
+// live data is successfully applied — this prevents % change from being
+// computed against a stale fake baseline once real prices arrive.
+const referencePrice = {};
+INITIAL_ASSETS.forEach((a) => {
+  referencePrice[a.symbol] = a.price;
+});
+
+// Tracks whether live data has been applied at least once per symbol, so we
+// know when to reset high/low from the old simulated range to the real range.
+const liveAppliedOnce = {};
+
+// Metadata controlling market behaviour
+const ASSET_METADATA = {
+  BTC: { type: "CRYPTO", volatility: 0.40, limit: 35 },
+  ETH: { type: "CRYPTO", volatility: 0.55, limit: 35 },
+  SOL: { type: "CRYPTO", volatility: 0.80, limit: 35 },
+  DOGE: { type: "CRYPTO", volatility: 1.20, limit: 35 },
+  ADA: { type: "CRYPTO", volatility: 0.90, limit: 35 },
+  LINK: { type: "CRYPTO", volatility: 0.75, limit: 35 },
+  POL: { type: "CRYPTO", volatility: 1.00, limit: 35 },
+
+  AAPL: { type: "STOCK", volatility: 0.15, limit: 15, tech: true },
+  TSLA: { type: "STOCK", volatility: 0.45, limit: 15 },
+  MSFT: { type: "STOCK", volatility: 0.15, limit: 15, tech: true },
+  NVDA: { type: "STOCK", volatility: 0.60, limit: 15, tech: true },
+  AMZN: { type: "STOCK", volatility: 0.25, limit: 15 },
+  GOOGL: { type: "STOCK", volatility: 0.15, limit: 15, tech: true },
+  META: { type: "STOCK", volatility: 0.15, limit: 15, tech: true },
+  NFLX: { type: "STOCK", volatility: 0.40, limit: 15 },
+
+  GOLD: { type: "METAL", volatility: 0.05, limit: 8 },
+  SILVER: { type: "METAL", volatility: 0.10, limit: 8 },
+  PLAT: { type: "METAL", volatility: 0.18, limit: 8 },
+
+  CRUDEOIL: { type: "ENERGY", volatility: 0.35, limit: 20 },
+  NATGAS: { type: "ENERGY", volatility: 0.70, limit: 20 },
+
+  RSDNPROP: { type: "REALESTATE", volatility: 0.01, limit: 5 },
+  CMPROP: { type: "REALESTATE", volatility: 0.01, limit: 5 },
+};
+
+const randomBetween = (min, max) =>
+  Math.random() * (max - min) + min;
+
+const getOriginalPrice = (symbol) =>
+  INITIAL_ASSETS.find(a => a.symbol === symbol).price;
+
+const clampPrice = (price, symbol) => {
+  const meta = ASSET_METADATA[symbol];
+  const original = getOriginalPrice(symbol);
+
+  const min = original * (1 - meta.limit / 100);
+  const max = original * (1 + meta.limit / 100);
+
+  return Math.min(max, Math.max(min, price));
+};
+
+const cryptoTrend = () => {
+  if (Math.random() > 0.20) return 0;
+  return Math.random() > 0.5 ? 1 : -1;
+};
+
+const techTrend = () => {
+  if (Math.random() > 0.20) return 0;
+  return Math.random() > 0.5 ? 1 : -1;
+};
+
+const hasSpike = () => Math.random() < 0.025;
+
+const calculateMovement = (
+  asset,
+  cryptoBias,
+  techBias,
+  averageStockChange,
+  tick
+) => {
+
+  const meta = ASSET_METADATA[asset.symbol];
+
+  if (!meta) return 0;
+
+  let min = -meta.volatility;
+  let max = meta.volatility;
+
+  switch (meta.type) {
+
+    case "CRYPTO":
+
+      if (cryptoBias > 0)
+        min /= 4;
+
+      if (cryptoBias < 0)
+        max /= 4;
+
+      if (hasSpike())
+        return (Math.random() > 0.5 ? 1 : -1) * randomBetween(2, 5);
+
+      break;
+
+    case "STOCK":
+
+      if (meta.tech && techBias > 0)
+        min /= 4;
+
+      if (meta.tech && techBias < 0)
+        max /= 4;
+
+      break;
+
+    case "METAL":
+
+      if (asset.symbol === "GOLD" && averageStockChange < 0) {
+
+        if (Math.random() < 0.7) {
+
+          return randomBetween(0.01, meta.volatility);
+
+        }
+
+      }
+
+      break;
+
+    case "ENERGY":
+
+      if (hasSpike()) {
+
+        return (Math.random() > 0.5 ? 1 : -1) * randomBetween(1.5, 3.5);
+
+      }
+
+      break;
+
+    case "REALESTATE":
+
+      if (tick % 12 !== 0) {
+
+        return 0;
+
+      }
+
+      break;
+
+  }
+
+  return randomBetween(min, max);
+
+};
+
+let lastStockFetchTime = 0;
+let lastCryptoFetchTime = 0;
+const CRYPTO_FETCH_INTERVAL_MS = 30000; // CoinGecko free tier rate limits — fetch every 30s, not every tick
+
+// Volatility simulation running in background, with live crypto prices where available
 const startMarketSimulation = () => {
-  setInterval(() => {
+  setInterval(async () => {
+    const cryptoNow = Date.now();
+    let liveCryptoPrices = null;
+    if (cryptoNow - lastCryptoFetchTime >= CRYPTO_FETCH_INTERVAL_MS) {
+      lastCryptoFetchTime = cryptoNow;
+      liveCryptoPrices = await fetchLiveCryptoPrices();
+      if (!liveCryptoPrices) {
+        console.warn('[market] Live crypto fetch failed this tick — using simulation fallback for crypto.');
+      } else {
+        console.log('[market] Live crypto fetch succeeded.');
+      }
+    }
+
+    const now = Date.now();
+    let liveStockPrices = null;
+    if (now - lastStockFetchTime >= 15000) {
+      lastStockFetchTime = now;
+      liveStockPrices = await fetchLiveStockPrices();
+      if (!liveStockPrices) {
+        console.warn('[market] Live stock fetch failed or skipped this tick — using simulation fallback for stocks.');
+      } else {
+        console.log('[market] Live stock fetch succeeded.');
+      }
+    }
+
     activeAssets = activeAssets.map((asset) => {
-      // Simulate fluctuation of -0.4% to +0.4%
-      const percentage = (Math.random() * 0.8 - 0.4) / 100;
-      const priceChange = asset.price * percentage;
-      const newPrice = Math.max(0.01, parseFloat((asset.price + priceChange).toFixed(2)));
+      const meta = ASSET_METADATA[asset.symbol];
+      const isCrypto = meta && meta.type === 'CRYPTO';
+      const isStock = meta && meta.type === 'STOCK';
 
-      // Cumulative change logic
-      const originalPrice = INITIAL_ASSETS.find((a) => a.symbol === asset.symbol).price;
-      const changeFromStart = ((newPrice - originalPrice) / originalPrice) * 100;
+      let newPrice;
+      let changeFromStart;
+      let usedLive = false;
 
-      // High/Low tracking
-      const high = Math.max(asset.high, newPrice);
-      const low = Math.min(asset.low, newPrice);
+      if (isCrypto && liveCryptoPrices && liveCryptoPrices[asset.symbol]) {
+        // Use real CoinGecko price and 24h change
+        newPrice = liveCryptoPrices[asset.symbol].price;
+        changeFromStart = liveCryptoPrices[asset.symbol].change;
+        usedLive = true;
+      } else if (isStock && liveStockPrices && liveStockPrices[asset.symbol]) {
+        // Use real Finnhub price and 24h change
+        newPrice = liveStockPrices[asset.symbol].price;
+        changeFromStart = liveStockPrices[asset.symbol].change;
+        usedLive = true;
+      } else {
+        // Simulate fluctuation of -0.4% to +0.4% (unchanged fallback logic)
+        const percentage = (Math.random() * 0.8 - 0.4) / 100;
+        const priceChange = asset.price * percentage;
+        newPrice = Math.max(0.01, parseFloat((asset.price + priceChange).toFixed(2)));
+
+        // Compare against the most recent known-good reference price, not the
+        // original fake simulated starting price — prevents % change from
+        // ballooning once live data has replaced the old baseline.
+        const basePrice = referencePrice[asset.symbol];
+        changeFromStart = ((newPrice - basePrice) / basePrice) * 100;
+      }
+
+      let high;
+      let low;
+
+      if (usedLive && !liveAppliedOnce[asset.symbol]) {
+        // First time live data replaces the old fake baseline for this asset —
+        // reset high/low to the real price instead of carrying forward the
+        // stale simulated range.
+        high = newPrice;
+        low = newPrice;
+        liveAppliedOnce[asset.symbol] = true;
+      } else {
+        high = Math.max(asset.high, newPrice);
+        low = Math.min(asset.low, newPrice);
+      }
+
+      if (usedLive) {
+        referencePrice[asset.symbol] = newPrice;
+      }
 
       return {
         ...asset,
@@ -63,6 +381,7 @@ const startMarketSimulation = () => {
         low: parseFloat(low.toFixed(2)),
       };
     });
+
 
     // Check custom user price alerts
     checkAllAlerts();
