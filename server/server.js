@@ -1,3 +1,4 @@
+import './config/loadEnv.js';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -23,7 +24,7 @@ import { DEMO_EMAIL } from './config/authConstants.js';
 import { ensureAdminAccount } from './services/authBootstrap.js';
 
 dotenv.config();
-console.log(process.env.MONGO_URI);
+// console.log(process.env.MONGO_URI);
 
 const app = express();
 

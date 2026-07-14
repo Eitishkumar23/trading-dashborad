@@ -1,4 +1,5 @@
 import Alert from '../models/Alert.js';
+import redis from '../config/redis.js';
 import axios from 'axios';
 
 const COINGECKO_MAP = {
@@ -291,17 +292,16 @@ const calculateMovement = (
 
 };
 
-let lastStockFetchTime = 0;
-let lastCryptoFetchTime = 0;
-const CRYPTO_FETCH_INTERVAL_MS = 30000; // CoinGecko free tier rate limits — fetch every 30s, not every tick
+const CRYPTO_FETCH_INTERVAL_SECONDS = 30; // CoinGecko free tier rate limits — fetch every 30s, not every tick
+const STOCK_FETCH_INTERVAL_SECONDS = 15;
 
 // Volatility simulation running in background, with live crypto prices where available
 const startMarketSimulation = () => {
   setInterval(async () => {
-    const cryptoNow = Date.now();
     let liveCryptoPrices = null;
-    if (cryptoNow - lastCryptoFetchTime >= CRYPTO_FETCH_INTERVAL_MS) {
-      lastCryptoFetchTime = cryptoNow;
+    const cryptoThrottled = await redis.exists('cryptoFetchLock');
+    if (!cryptoThrottled) {
+      await redis.set('cryptoFetchLock', '1', 'EX', CRYPTO_FETCH_INTERVAL_SECONDS);
       liveCryptoPrices = await fetchLiveCryptoPrices();
       if (!liveCryptoPrices) {
         console.warn('[market] Live crypto fetch failed this tick — using simulation fallback for crypto.');
@@ -310,10 +310,10 @@ const startMarketSimulation = () => {
       }
     }
 
-    const now = Date.now();
     let liveStockPrices = null;
-    if (now - lastStockFetchTime >= 15000) {
-      lastStockFetchTime = now;
+    const stockThrottled = await redis.exists('stockFetchLock');
+    if (!stockThrottled) {
+      await redis.set('stockFetchLock', '1', 'EX', STOCK_FETCH_INTERVAL_SECONDS);
       liveStockPrices = await fetchLiveStockPrices();
       if (!liveStockPrices) {
         console.warn('[market] Live stock fetch failed or skipped this tick — using simulation fallback for stocks.');
