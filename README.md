@@ -1,1 +1,1 @@
-Trading Platform
+A Trading Platform Application
