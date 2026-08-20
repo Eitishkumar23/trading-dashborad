@@ -1,1 +1,1 @@
-This is Trading Platform Application
+Trading Platform
