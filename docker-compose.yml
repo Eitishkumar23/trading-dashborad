@@ -1,18 +1,70 @@
+#services means which cotainers you want to run together
 services:
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-      - "6379:6379"
 
-  backend:
+#first container --> you can give  name prsent in env file 
+  redis-container:
+
+#if image has to be download from dockerhub then mention image name for this container 
+    image: "redis:7-alpine"
+
+#add the docker volume also to bind the redis container to host system
+    volumes:
+     - redis-data:/data 
+    
+    networks:
+     - trading-network
+
+    restart: unless-stopped
+
+    healthcheck:
+     test: ["CMD","redis-cli","ping"]
+     interval: 5s
+     timeout: 3s
+     retries: 3
+
+
+
+#second container ---> again you can give any name to second container like trading-app
+  trading-app:
+
+# if image needs to be  build manually so mention its location 
     build: ./server
-    container_name: backend
+    image: "eitishkumar23/trading-platform-backend-image:latest"
+    
+#now mention the port mapping
     ports:
-      - "5000:5000"
+     - 5000:5000
+
+#mention the custom network if you made for these container
+    networks:
+     - trading-network
+
+#also env-file is required to reads values 
+    env_file: 
+     - ./server/.env
+
     depends_on:
-      - redis
-    environment:
-      - REDIS_URL=redis://redis:6379
-    env_file:
-      - ./server/.env
+     redis-container:
+      condition: service_healthy
+
+    restart: unless-stopped
+
+  frontend:
+    build:
+     context: .
+     dockerfile: Dockerfile.frontend
+    image: eitishkumar23/trading-platform-frontend-image:latest
+    ports:
+     - "80:80"
+    networks:
+     - trading-network
+    depends_on:
+     - trading-app
+    restart: unless-stopped
+     
+
+networks:
+   trading-network:
+
+volumes:
+   redis-data:
