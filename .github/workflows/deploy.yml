@@ -56,7 +56,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Frontend image
-        run: docker build --build-arg VITE_API_URL=${{ secrets.VITE_API_URL }} -t ${{ env.FRONTEND_IMAGE }} -f Dockerfile.frontend .
+        run: docker build --build-arg VITE_API_URL="${{ secrets.VITE_API_URL }}" -t ${{ env.FRONTEND_IMAGE }} -f Dockerfile.frontend .
 
       - name: Push Frontend image to Dockerhub
         run: docker push ${{ env.FRONTEND_IMAGE }}
