@@ -1,0 +1,33 @@
+name: PR-based-ci
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs: 
+  test-before-merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Nodejs
+        uses: actions/setup-node@v4
+        with: 
+         node-version: 20
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ./server
+
+      - name: Testing the code
+        run: npm test
+        working-directory: ./server
+
+      - name: Build image test
+        run: docker build --build-arg VITE_API_URL=${{ secrets.VITE_API_URL }} --build-arg VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }} -f Dockerfile.frontend .
+
+
+      
