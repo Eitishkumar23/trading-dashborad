@@ -29,7 +29,8 @@ services:
 
 # if image needs to be  build manually so mention its location 
     build: ./server
-    image: "eitishkumar23/trading-platform-backend-image:latest"
+    image: "752388616527.dkr.ecr.ap-south-1.amazonaws.com/trading-platform-backend:latest"
+
     
 #now mention the port mapping
     ports:
@@ -53,7 +54,8 @@ services:
     build:
      context: .
      dockerfile: Dockerfile.frontend
-    image: eitishkumar23/trading-platform-frontend-image:latest
+    image: "752388616527.dkr.ecr.ap-south-1.amazonaws.com/trading-platform-frontend:latest"
+
     ports:
      - "80:80"
     networks:
