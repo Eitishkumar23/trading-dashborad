@@ -1,0 +1,11 @@
+# Local development only - overrides docker-compose.yml with build configs
+# This file is automatically picked up by docker compose locally
+# Do NOT copy this to EC2
+services:
+  trading-app:
+    build: ./server
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend

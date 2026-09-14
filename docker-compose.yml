@@ -26,9 +26,6 @@ services:
 
 #second container ---> again you can give any name to second container like trading-app
   trading-app:
-
-# if image needs to be  build manually so mention its location 
-    build: ./server
     image: "752388616527.dkr.ecr.ap-south-1.amazonaws.com/trading-platform-backend:latest"
 
     
@@ -51,9 +48,6 @@ services:
     restart: unless-stopped
 
   frontend:
-    build:
-     context: .
-     dockerfile: Dockerfile.frontend
     image: "752388616527.dkr.ecr.ap-south-1.amazonaws.com/trading-platform-frontend:latest"
 
     ports:
