@@ -28,11 +28,6 @@ services:
   trading-app:
     image: "752388616527.dkr.ecr.ap-south-1.amazonaws.com/trading-platform-backend:latest"
 
-    
-#now mention the port mapping
-    ports:
-     - 5000:5000
-
 #mention the custom network if you made for these container
     networks:
      - trading-network
