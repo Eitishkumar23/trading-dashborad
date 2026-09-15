@@ -7,8 +7,7 @@ on:
       - main
 env:
   ECR_REGISTRY:  752388616527.dkr.ecr.ap-south-1.amazonaws.com
-  BACKEND_IMAGE: 752388616527.dkr.ecr.ap-south-1.amazonaws.com/trading-platform-backend:latest
-  FRONTEND_IMAGE: 752388616527.dkr.ecr.ap-south-1.amazonaws.com/trading-platform-frontend:latest
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   build-backend:
@@ -42,10 +41,10 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Building Backend image
-        run: docker build -t ${{ env.BACKEND_IMAGE }} ./server
+        run: docker build -t ${{ env.ECR_REGISTRY }}/trading-platform-backend:${{ env.IMAGE_TAG }} ./server
         
       - name: Pushing Image to ECR 
-        run: docker push ${{ env.BACKEND_IMAGE }}
+        run: docker push ${{ env.ECR_REGISTRY }}/trading-platform-backend:${{ env.IMAGE_TAG }}
 
 
   build-frontend:
@@ -66,10 +65,10 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build Frontend image
-        run: docker build --no-cache --build-arg VITE_API_URL="${{ secrets.VITE_API_URL }}" --build-arg VITE_GOOGLE_CLIENT_ID="${{ secrets.VITE_GOOGLE_CLIENT_ID }}" -t ${{ env.FRONTEND_IMAGE }} -f Dockerfile.frontend .
+        run: docker build --no-cache --build-arg VITE_API_URL="${{ secrets.VITE_API_URL }}" --build-arg VITE_GOOGLE_CLIENT_ID="${{ secrets.VITE_GOOGLE_CLIENT_ID }}" -t ${{ env.ECR_REGISTRY }}/trading-platform-frontend:${{ env.IMAGE_TAG }} -f Dockerfile.frontend .
 
       - name: Push Frontend image to ECR
-        run: docker push ${{ env.FRONTEND_IMAGE }}
+        run: docker push ${{ env.ECR_REGISTRY }}/trading-platform-frontend:${{ env.IMAGE_TAG }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -97,6 +96,10 @@ jobs:
           script: |
              export AWS_REGION="${{ secrets.AWS_REGION }}"
              export ECR_REGISTRY="${{ env.ECR_REGISTRY }}"
+             export IMAGE_TAG="${{ env.IMAGE_TAG }}"
              aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
              docker compose pull
              docker compose up -d --force-recreate --remove-orphans
+             sleep 15
+             curl --fail --retry 3 --retry-delay 5 http://localhost
+             echo "Health check passed - Deployment success"

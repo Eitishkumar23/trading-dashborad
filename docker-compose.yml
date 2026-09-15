@@ -26,7 +26,7 @@ services:
 
 #second container ---> again you can give any name to second container like trading-app
   trading-app:
-    image: "752388616527.dkr.ecr.ap-south-1.amazonaws.com/trading-platform-backend:latest"
+    image: "${ECR_REGISTRY}/trading-platform-backend:${IMAGE_TAG}"
 
 #mention the custom network if you made for these container
     networks:
@@ -43,7 +43,8 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: "752388616527.dkr.ecr.ap-south-1.amazonaws.com/trading-platform-frontend:latest"
+    image: "${ECR_REGISTRY}/trading-platform-frontend:${IMAGE_TAG}"
+
 
     ports:
      - "80:80"
